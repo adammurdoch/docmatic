@@ -5,42 +5,40 @@ import net.rubygrapefruit.docs.model.*;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.*;
+import java.io.OutputStream;
 
 public class HtmlRenderer extends Renderer {
     private final String EOL = String.format("%n");
 
-    public void render(Document document, OutputStream outputStream) {
+    @Override
+    protected void doRender(Document document, OutputStream outputStream) throws Exception {
+        XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream);
         try {
-            XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream);
-            try {
-                writer.writeDTD("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
-                writer.writeCharacters(EOL);
-                writer.writeStartElement("html");
-                writer.writeCharacters(EOL);
-                writer.writeStartElement("head");
-                writer.writeCharacters(EOL);
-                writer.writeStartElement("style");
-                writer.writeCharacters(EOL);
-                writer.writeCharacters("html { font-family: sans-serif; font-size: 12pt; }");
-                writer.writeCharacters("body { margin: 5em; }");
-                writer.writeCharacters(".unknown { color: red; }");
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-                writer.writeStartElement("body");
-                writer.writeCharacters(EOL);
-                writeSection(document, 0, writer);
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-            } finally {
-                writer.close();
-            }
-        } catch (XMLStreamException e) {
-            throw new RuntimeException("Could not write document.", e);
+            writer.writeDTD(
+                    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
+            writer.writeCharacters(EOL);
+            writer.writeStartElement("html");
+            writer.writeCharacters(EOL);
+            writer.writeStartElement("head");
+            writer.writeCharacters(EOL);
+            writer.writeStartElement("style");
+            writer.writeCharacters(EOL);
+            writer.writeCharacters("html { font-family: sans-serif; font-size: 12pt; }");
+            writer.writeCharacters("body { margin: 5em; }");
+            writer.writeCharacters(".unknown { color: red; }");
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+            writer.writeStartElement("body");
+            writer.writeCharacters(EOL);
+            writeSection(document, 0, writer);
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } finally {
+            writer.close();
         }
     }
 
@@ -48,7 +46,7 @@ public class HtmlRenderer extends Renderer {
         for (Block block : section.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                writer.writeStartElement("h" + (depth+1));
+                writer.writeStartElement("h" + (depth + 1));
                 writer.writeCharacters(child.getTitle());
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
@@ -73,7 +71,6 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getColumn()));
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
-                
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                         block.getClass().getSimpleName()));
