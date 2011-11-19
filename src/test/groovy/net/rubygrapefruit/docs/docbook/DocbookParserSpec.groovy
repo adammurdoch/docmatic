@@ -7,7 +7,7 @@ class DocbookParserSpec extends Specification {
 
     def "converts chapter elements to sections"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 <book>
     <chapter>
         <title>chapter 1</title>
@@ -25,7 +25,7 @@ class DocbookParserSpec extends Specification {
 
     def "converts section elements to sections"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 <book>
     <chapter>
         <title>chapter 1</title>
@@ -51,7 +51,7 @@ class DocbookParserSpec extends Specification {
 
     def "converts para elements to paragraphs"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 <book>
     <chapter>
         <para>para 1</para>
@@ -65,4 +65,28 @@ class DocbookParserSpec extends Specification {
         doc.contents[0].contents[1].text == 'para 2'
     }
 
+    def "converts unexpected element and text"() {
+        when:
+        def doc = parse '''
+<book>
+    <para>para 1</para>
+    unexpected
+</book>'''
+
+        then:
+        doc.contents.size() == 2
+        doc.contents[0].name == '<para>'
+        doc.contents[0].location.file == 'book.xml'
+        doc.contents[0].location.line == 3
+        doc.contents[0].location.column == 11
+
+        doc.contents[1].name == 'text'
+        doc.contents[1].location.file == 'book.xml'
+        doc.contents[1].location.line == 5
+        doc.contents[1].location.column == 1
+    }
+
+    def parse(String string) {
+        return parser.parse(string, "book.xml")
+    }
 }

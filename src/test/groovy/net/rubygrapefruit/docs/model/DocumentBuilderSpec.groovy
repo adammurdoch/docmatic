@@ -90,4 +90,13 @@ class DocumentBuilderSpec extends Specification {
         then:
         section1.contents[0] == para
     }
+
+    def "appends unknown block to most recently appended section"() {
+        when:
+        def section1 = builder.appendSection(1)
+        def block = builder.appendUnknown("unknown", "file", 23, 4)
+
+        then:
+        section1.contents[0] == block
+    }
 }

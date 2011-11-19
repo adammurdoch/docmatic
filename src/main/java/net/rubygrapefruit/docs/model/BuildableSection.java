@@ -40,4 +40,23 @@ public class BuildableSection implements Section {
         contents.add(section);
         return section;
     }
+    
+    public DefaultUnknownBlock addUnknown(String name, final String fileName, final int lineNumber, final int columnNumber) {
+        Location location = new Location() {
+            public String getFile() {
+                return fileName;
+            }
+
+            public int getLine() {
+                return lineNumber;
+            }
+
+            public int getColumn() {
+                return columnNumber;
+            }
+        };
+        DefaultUnknownBlock block = new DefaultUnknownBlock(name, location);
+        contents.add(block);
+        return block;
+    }
 }

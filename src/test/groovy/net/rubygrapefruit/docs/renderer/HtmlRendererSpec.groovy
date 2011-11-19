@@ -85,7 +85,7 @@ para 3
     }
 
     def document(String text) {
-        return new MarkdownParser().parse(text)
+        return new MarkdownParser().parse(text, "document.md")
     }
     
     def render(Document document) {

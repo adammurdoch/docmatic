@@ -9,23 +9,37 @@ import java.io.*;
 public abstract class Parser {
     private static final Logger LOGGER = LoggerFactory.getLogger(Parser.class);
     
-    public Document parse(File input) {
+    public Document parse(File input) throws ParseException {
         LOGGER.info("Parsing {}.", input);
         try {
             BufferedReader reader = new BufferedReader(new FileReader(input));
             try {
-                return parse(reader);
+                return doParse(reader, input.getPath());
             } finally {
                 reader.close();
             }
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Could not parse '%s'.", input), e);
+        } catch (Exception e) {
+            throw new ParseException(String.format("Could not parse '%s'.", input), e);
         }
     }
 
-    public Document parse(String text) {
-        return parse(new StringReader(text));
+    public Document parse(String text, String fileName) throws ParseException {
+        LOGGER.info("Parsing {}.", fileName);
+        try {
+            return doParse(new StringReader(text), fileName);
+        } catch (Exception e) {
+            throw new ParseException(String.format("Could not parse '%s'.", fileName), e);
+        }
     }
 
-    public abstract Document parse(Reader input);
+    public Document parse(Reader input, String fileName) throws ParseException {
+        LOGGER.info("Parsing {}.", fileName);
+        try {
+            return doParse(input, fileName);
+        } catch (Exception e) {
+            throw new ParseException(String.format("Could not parse '%s'.", fileName), e);
+        }
+    }
+    
+    protected abstract Document doParse(Reader input, String fileName) throws Exception;
 }

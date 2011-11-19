@@ -1,6 +1,9 @@
 package net.rubygrapefruit.docs.markdown;
 
-import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.BuildableDocument;
+import net.rubygrapefruit.docs.model.BuildableParagraph;
+import net.rubygrapefruit.docs.model.Document;
+import net.rubygrapefruit.docs.model.DocumentBuilder;
 import net.rubygrapefruit.docs.parser.Parser;
 
 import java.io.IOException;
@@ -13,51 +16,46 @@ import java.util.List;
  */
 public class MarkdownParser extends Parser {
     @Override
-    public Document parse(Reader input) {
-        try {
-            BuildableDocument document = new BuildableDocument();
-            DocumentBuilder builder = new DocumentBuilder(document);
-            Lexer lexer = new Lexer(input);
-            List<Line> currentPara = new ArrayList<Line>();
-            while (true) {
-                Line line = nextLine(lexer);
-                if (line == null) {
-                    addPara(currentPara, builder);
-                    break;
-                }
-                switch (line.type) {
-                    case Empty:
-                        addPara(currentPara, builder);
-                        currentPara.clear();
-                        break;
-                    case Text:
-                        currentPara.add(line);
-                        break;
-                    case Equals:
-                        if (currentPara.size() == 1) {
-                            builder.appendSection(1).setTitle(currentPara.get(0).content);
-                            currentPara.clear();
-                        } else {
-                            currentPara.add(line);
-                        }
-                        break;
-                    case Dashes:
-                        if (currentPara.size() == 1) {
-                            builder.appendSection(2).setTitle(currentPara.get(0).content);
-                            currentPara.clear();
-                        } else {
-                            currentPara.add(line);
-                        }
-                        break;
-                    default:
-                        throw new UnsupportedOperationException(String.format("Got unexpected line type '%s'.",
-                                line.type));
-                }
+    protected Document doParse(Reader input, String fileName) throws Exception {
+        BuildableDocument document = new BuildableDocument();
+        DocumentBuilder builder = new DocumentBuilder(document);
+        Lexer lexer = new Lexer(input);
+        List<Line> currentPara = new ArrayList<Line>();
+        while (true) {
+            Line line = nextLine(lexer);
+            if (line == null) {
+                addPara(currentPara, builder);
+                break;
             }
-            return document;
-        } catch (IOException e) {
-            throw new RuntimeException("Could not parse markdown document.", e);
+            switch (line.type) {
+                case Empty:
+                    addPara(currentPara, builder);
+                    currentPara.clear();
+                    break;
+                case Text:
+                    currentPara.add(line);
+                    break;
+                case Equals:
+                    if (currentPara.size() == 1) {
+                        builder.appendSection(1).setTitle(currentPara.get(0).content);
+                        currentPara.clear();
+                    } else {
+                        currentPara.add(line);
+                    }
+                    break;
+                case Dashes:
+                    if (currentPara.size() == 1) {
+                        builder.appendSection(2).setTitle(currentPara.get(0).content);
+                        currentPara.clear();
+                    } else {
+                        currentPara.add(line);
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(String.format("Got unexpected line type '%s'.", line.type));
+            }
         }
+        return document;
     }
 
     private void addPara(List<Line> lines, DocumentBuilder builder) {

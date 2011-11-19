@@ -10,7 +10,7 @@ public class DocumentBuilder {
     }
 
     public BuildableParagraph appendParagraph() {
-        return sections.getLast().addParagraph();
+        return getCurrentSection().addParagraph();
     }
 
     public BuildableSection getCurrentSection() {
@@ -37,5 +37,9 @@ public class DocumentBuilder {
     public BuildableSection popSection() {
         assert sections.size() > 1;
         return sections.removeLast();
+    }
+
+    public DefaultUnknownBlock appendUnknown(String name, final String fileName, final int lineNumber, final int columnNumber) {
+        return getCurrentSection().addUnknown(name, fileName, lineNumber, columnNumber);
     }
 }

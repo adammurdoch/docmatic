@@ -1,9 +1,6 @@
 package net.rubygrapefruit.docs.renderer;
 
-import net.rubygrapefruit.docs.model.Block;
-import net.rubygrapefruit.docs.model.Document;
-import net.rubygrapefruit.docs.model.Paragraph;
-import net.rubygrapefruit.docs.model.Section;
+import net.rubygrapefruit.docs.model.*;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -27,6 +24,7 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(EOL);
                 writer.writeCharacters("html { font-family: sans-serif; font-size: 12pt; }");
                 writer.writeCharacters("body { margin: 5em; }");
+                writer.writeCharacters(".unknown { color: red; }");
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writer.writeEndElement();
@@ -55,12 +53,30 @@ public class HtmlRenderer extends Renderer {
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writeSection(child, depth + 1, writer);
-            } else {
+            } else if (block instanceof Paragraph) {
                 Paragraph paragraph = (Paragraph) block;
                 writer.writeStartElement("p");
                 writer.writeCharacters(paragraph.getText());
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
+            } else if (block instanceof UnknownBlock) {
+                UnknownBlock unknownBlock = (UnknownBlock) block;
+                writer.writeStartElement("div");
+                writer.writeAttribute("class", "unknown");
+                writer.writeCharacters("Unexpected ");
+                writer.writeCharacters(unknownBlock.getName());
+                writer.writeCharacters(" found at ");
+                writer.writeCharacters(unknownBlock.getLocation().getFile());
+                writer.writeCharacters(", line: ");
+                writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getLine()));
+                writer.writeCharacters(", column: ");
+                writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getColumn()));
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
+                
+            } else {
+                throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
+                        block.getClass().getSimpleName()));
             }
         }
     }

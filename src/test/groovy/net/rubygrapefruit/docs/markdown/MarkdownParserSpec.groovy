@@ -1,15 +1,14 @@
 package net.rubygrapefruit.docs.markdown
 
-import spock.lang.Specification
 import net.rubygrapefruit.docs.model.Paragraph
-import net.rubygrapefruit.docs.model.Section
+import spock.lang.Specification
 
 class MarkdownParserSpec extends Specification {
     final MarkdownParser parser = new MarkdownParser()
 
     def "an empty string converts to an empty document"() {
         when:
-        def doc = parser.parse ""
+        def doc = parse ""
 
         then:
         def paras = doc.getContents(Paragraph)
@@ -18,7 +17,7 @@ class MarkdownParserSpec extends Specification {
 
     def "an whitespace only string converts to an empty document"() {
         when:
-        def doc = parser.parse "  \n  \r\n  "
+        def doc = parse "  \n  \r\n  "
 
         then:
         def paras = doc.getContents(Paragraph)
@@ -27,7 +26,7 @@ class MarkdownParserSpec extends Specification {
 
     def "a white-space only line separates paragraphs"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 para 1. sentence 1.2
 
 para 2. sentence 2.2
@@ -43,7 +42,7 @@ para 2. sentence 2.2
     def "a paragraph can span multiple lines"() {
 
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 sentence 1.1
     sentence 1.2
 sentence 1.3
@@ -58,7 +57,7 @@ sentence 1.4
 
     def "last paragraph does not need trailing end-of-line"() {
         when:
-        def doc = parser.parse '''para 1. sentence 1.2'''
+        def doc = parse '''para 1. sentence 1.2'''
 
         then:
         def paras = doc.getContents(Paragraph)
@@ -68,7 +67,7 @@ sentence 1.4
 
     def "underline with equals creates a level 1 section"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 title
 =====
 para 1. sentence 1.2
@@ -93,7 +92,7 @@ title 2
 
     def "underline with dash creates a level 2 section"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 title
 =====
 
@@ -123,7 +122,7 @@ title 2
 
     def "can have equals and dash characters inside heading"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 ===
 ===
 
@@ -143,7 +142,7 @@ a-b
 
     def "can have equals and dash characters inside paragraph"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 para == -- para
 
 para
@@ -174,7 +173,7 @@ para
 
     def "can have equals and dash characters at end of paragraph"() {
         when:
-        def doc = parser.parse '''
+        def doc = parse '''
 para ==
 
 para
@@ -201,11 +200,15 @@ para
 
     def "can parse from Reader"() {
         when:
-        def doc = parser.parse new StringReader('''para 1. sentence 1.2''')
+        def doc = parse new StringReader('''para 1. sentence 1.2''')
 
         then:
         def paras = doc.getContents(Paragraph)
         paras.size() == 1
         paras[0].text == 'para 1. sentence 1.2'
+    }
+
+    def parse(def text) {
+        return parser.parse(text, "document.md")
     }
 }
