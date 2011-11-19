@@ -1,7 +1,9 @@
 package net.rubygrapefruit.docs.renderer;
 
+import net.rubygrapefruit.docs.model.Block;
 import net.rubygrapefruit.docs.model.Document;
 import net.rubygrapefruit.docs.model.Paragraph;
+import net.rubygrapefruit.docs.model.Section;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -31,12 +33,7 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(EOL);
                 writer.writeStartElement("body");
                 writer.writeCharacters(EOL);
-                for (Paragraph paragraph : document.getContents(Paragraph.class)) {
-                    writer.writeStartElement("p");
-                    writer.writeCharacters(paragraph.getText());
-                    writer.writeEndElement();
-                    writer.writeCharacters(EOL);
-                }
+                writeSection(document, 0, writer);
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writer.writeEndElement();
@@ -46,6 +43,25 @@ public class HtmlRenderer extends Renderer {
             }
         } catch (XMLStreamException e) {
             throw new RuntimeException("Could not write document.", e);
+        }
+    }
+
+    private void writeSection(Section section, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        for (Block block : section.getContents()) {
+            if (block instanceof Section) {
+                Section child = (Section) block;
+                writer.writeStartElement("h" + (depth+1));
+                writer.writeCharacters(child.getTitle());
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
+                writeSection(child, depth + 1, writer);
+            } else {
+                Paragraph paragraph = (Paragraph) block;
+                writer.writeStartElement("p");
+                writer.writeCharacters(paragraph.getText());
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
+            }
         }
     }
 }

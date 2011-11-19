@@ -36,7 +36,54 @@ para 2.
 </html>
 '''
     }
-    
+
+    def "renders the sections of a document"() {
+        given:
+        def doc = document '''
+section 1
+=========
+
+section 2
+---------
+'''
+
+        expect:
+        render(doc) == '''<html>
+<body>
+<h1>section 1</h1>
+<h2>section 2</h2>
+</body>
+</html>
+'''
+    }
+
+    def "renders the contents of the sections of a document"() {
+        given:
+        def doc = document '''
+section 1
+=========
+para 1
+
+para 2
+
+section 2
+---------
+para 3
+'''
+
+        expect:
+        render(doc) == '''<html>
+<body>
+<h1>section 1</h1>
+<p>para 1</p>
+<p>para 2</p>
+<h2>section 2</h2>
+<p>para 3</p>
+</body>
+</html>
+'''
+    }
+
     def document(String text) {
         return new MarkdownParser().parse(text)
     }
