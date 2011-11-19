@@ -16,6 +16,9 @@ configurations {
 
 dependencies {
     groovy 'org.codehaus.groovy:groovy-all:1.8.4'
+    compile 'org.slf4j:slf4j-api:1.6.4'
+    compile 'com.itextpdf:itextpdf:5.1.2'
+    runtime 'org.slf4j:slf4j-simple:1.6.4'
     testCompile 'junit:junit-dep:4.10'
     testCompile 'org.spockframework:spock-core:0.6-groovy-1.8-SNAPSHOT'
 }

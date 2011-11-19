@@ -8,22 +8,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
 
-public class HtmlRenderer {
+public class HtmlRenderer extends Renderer {
     private final String EOL = String.format("%n");
-
-    public void render(Document document, File output) {
-        try {
-            output.getParentFile().mkdirs();
-            BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(output));
-            try {
-                render(document, stream);
-            } finally {
-                stream.close();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Could not render document to '%s'.", output), e);
-        }
-    }
 
     public void render(Document document, OutputStream outputStream) {
         try {
