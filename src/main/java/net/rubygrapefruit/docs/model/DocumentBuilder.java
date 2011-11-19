@@ -13,6 +13,16 @@ public class DocumentBuilder {
         return sections.getLast().addParagraph();
     }
 
+    public BuildableSection getCurrentSection() {
+        return sections.getLast();
+    }
+
+    public BuildableSection appendSection() {
+        BuildableSection section = sections.getLast().addSection();
+        sections.add(section);
+        return section;
+    }
+
     public BuildableSection appendSection(int depth) {
         if (depth < sections.size()) {
             sections.subList(depth, sections.size()).clear();
@@ -21,8 +31,11 @@ public class DocumentBuilder {
             BuildableSection parent = sections.getLast().addSection();
             sections.add(parent);
         }
-        BuildableSection section = sections.getLast().addSection();
-        sections.add(section);
-        return section;
+        return appendSection();
+    }
+
+    public BuildableSection popSection() {
+        assert sections.size() > 1;
+        return sections.removeLast();
     }
 }
