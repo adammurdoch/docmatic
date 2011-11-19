@@ -24,8 +24,8 @@ public class PdfRenderer extends Renderer {
         pdfDocument.close();
     }
 
-    private void writeContents(Section section, int depth, com.itextpdf.text.Document target) throws DocumentException {
-        for (Block block : section.getContents()) {
+    private void writeContents(Component component, int depth, com.itextpdf.text.Document target) throws DocumentException {
+        for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
                 target.add(new com.itextpdf.text.Paragraph(child.getTitle(), depth == 0 ? h1 : h2));

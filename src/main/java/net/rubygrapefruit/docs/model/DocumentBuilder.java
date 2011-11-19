@@ -3,17 +3,17 @@ package net.rubygrapefruit.docs.model;
 import java.util.LinkedList;
 
 public class DocumentBuilder {
-    private final LinkedList<BuildableSection> sections = new LinkedList<BuildableSection>();
+    private final LinkedList<BuildableComponent> sections = new LinkedList<BuildableComponent>();
 
-    public DocumentBuilder(BuildableDocument document) {
-        sections.add(document);
+    public DocumentBuilder(BuildableComponent owner) {
+        sections.add(owner);
     }
 
     public BuildableParagraph appendParagraph() {
         return getCurrentSection().addParagraph();
     }
 
-    public BuildableSection getCurrentSection() {
+    public BuildableComponent getCurrentSection() {
         return sections.getLast();
     }
 
@@ -34,7 +34,7 @@ public class DocumentBuilder {
         return appendSection();
     }
 
-    public BuildableSection popSection() {
+    public BuildableComponent popSection() {
         assert sections.size() > 1;
         return sections.removeLast();
     }

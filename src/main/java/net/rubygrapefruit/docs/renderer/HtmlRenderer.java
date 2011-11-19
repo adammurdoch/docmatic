@@ -42,8 +42,8 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
-    private void writeSection(Section section, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        for (Block block : section.getContents()) {
+    private void writeSection(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
                 writer.writeStartElement("h" + (depth + 1));
