@@ -1,7 +1,7 @@
 package net.rubygrapefruit.docs.model;
 
-import java.util.List;
-
-public interface Document {
-    List<? extends Paragraph> getParagraphs();
+/**
+ * A top-level document.
+ */
+public interface Document extends Section {
 }

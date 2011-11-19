@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.BuildableDocument;
+import net.rubygrapefruit.docs.model.BuildableParagraph;
 import net.rubygrapefruit.docs.model.Document;
 import net.rubygrapefruit.docs.parser.Parser;
 
@@ -20,23 +21,22 @@ public class DocbookParser extends Parser {
         try {
             XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(input);
             try {
-                StringBuilder paraContents = new StringBuilder();
+                BuildableParagraph currentPara = null;
                 while (reader.hasNext()) {
                     XMLEvent event = reader.nextEvent();
                     if (event.isStartElement()) {
                         String elementName = event.asStartElement().getName().getLocalPart();
                         if (elementName.equals("para")) {
-                            paraContents.setLength(0);
+                            currentPara = document.addParagraph();
                         }
                     }
                     else if (event.isEndElement()) {
                         String elementName = event.asEndElement().getName().getLocalPart();
                         if (elementName.equals("para")) {
-                            document.addParagraph().setText(paraContents.toString());
-                            paraContents.setLength(0);
+                            currentPara = null;
                         }
-                    } else if (event.isCharacters()) {
-                        paraContents.append(event.asCharacters().getData());
+                    } else if (event.isCharacters() && currentPara != null) {
+                        currentPara.append(event.asCharacters().getData());
                     }
                 }
             } finally {

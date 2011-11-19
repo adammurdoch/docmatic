@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.docbook
 
 import spock.lang.Specification
+import net.rubygrapefruit.docs.model.Paragraph
 
 class DocbookParserSpec extends Specification {
     final DocbookParser parser = new DocbookParser()
@@ -16,9 +17,9 @@ class DocbookParserSpec extends Specification {
 </book>'''
 
         then:
-        doc.paragraphs.size() == 2
-        doc.paragraphs[0].text == 'para 1'
-        doc.paragraphs[1].text == 'para 2'
+        def paras = doc.getContents(Paragraph)
+        paras.size() == 2
+        paras[0].text == 'para 1'
+        paras[1].text == 'para 2'
     }
-
 }

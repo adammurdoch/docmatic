@@ -1,10 +1,12 @@
 package net.rubygrapefruit.docs.markdown;
 
-import net.rubygrapefruit.docs.model.BuildableDocument;
-import net.rubygrapefruit.docs.model.Document;
+import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Builds a document for some Markdown input.
@@ -14,37 +16,43 @@ public class MarkdownParser extends Parser {
     public Document parse(Reader input) {
         try {
             BuildableDocument document = new BuildableDocument();
+            DocumentBuilder builder = new DocumentBuilder(document);
             Lexer lexer = new Lexer(input);
-            StringBuilder currentPara = new StringBuilder();
-            boolean currentLineHasText = false;
-            boolean currentParaHasText = false;
-            while (lexer.next()) {
-                switch (lexer.getToken()) {
-                    case Word:
-                        currentPara.append(lexer.getValue());
-                        currentParaHasText = true;
-                        currentLineHasText = true;
+            List<Line> currentPara = new ArrayList<Line>();
+            while (true) {
+                Line line = nextLine(lexer);
+                if (line == null) {
+                    addPara(currentPara, builder);
+                    break;
+                }
+                switch (line.type) {
+                    case Empty:
+                        addPara(currentPara, builder);
+                        currentPara.clear();
                         break;
-                    case WhiteSpace:
-                        currentPara.append(lexer.getValue());
+                    case Text:
+                        currentPara.add(line);
                         break;
-                    case EOL:
-                        if (!currentLineHasText) {
-                            if (currentParaHasText) {
-                                document.addParagraph().setText(currentPara.toString());
-                            }
-                            currentParaHasText = false;
-                            currentLineHasText = false;
-                            currentPara.setLength(0);
+                    case Equals:
+                        if (currentPara.size() == 1) {
+                            builder.appendSection(1).setTitle(currentPara.get(0).content);
+                            currentPara.clear();
                         } else {
-                            currentPara.append(lexer.getValue());
-                            currentLineHasText = false;
+                            currentPara.add(line);
                         }
                         break;
+                    case Dashes:
+                        if (currentPara.size() == 1) {
+                            builder.appendSection(2).setTitle(currentPara.get(0).content);
+                            currentPara.clear();
+                        } else {
+                            currentPara.add(line);
+                        }
+                        break;
+                    default:
+                        throw new UnsupportedOperationException(String.format("Got unexpected line type '%s'.",
+                                line.type));
                 }
-            }
-            if (currentParaHasText) {
-                document.addParagraph().setText(currentPara.toString());
             }
             return document;
         } catch (IOException e) {
@@ -52,11 +60,94 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class Lexer {
-
-        enum Token {
-            WhiteSpace, Word, EOL, EOT
+    private void addPara(List<Line> lines, DocumentBuilder builder) {
+        if (lines.isEmpty()) {
+            return;
         }
+        BuildableParagraph paragraph = builder.appendParagraph();
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0) {
+                paragraph.append(" ");
+            }
+            Line line = lines.get(i);
+            paragraph.append(line.content);
+        }
+    }
+
+    private Line nextLine(Lexer lexer) throws IOException {
+        LineType lineType = LineType.Empty;
+        StringBuilder text = new StringBuilder();
+        while (lexer.next()) {
+            switch (lexer.token.type) {
+                case WhiteSpace:
+                    if (lineType == LineType.Empty) {
+                        continue;
+                    }
+                    break;
+                case Equals:
+                    if (lineType == LineType.Empty) {
+                        lineType = LineType.Equals;
+                    } else {
+                        lineType = LineType.Text;
+                    }
+                    break;
+                case Word:
+                    lineType = LineType.Text;
+                    break;
+                case Dashes:
+                    if (lineType == LineType.Empty) {
+                        lineType = LineType.Dashes;
+                    } else {
+                        lineType = LineType.Text;
+                    }
+                    break;
+                case EOL:
+                    return new Line(lineType, text);
+                default:
+                    throw new IllegalStateException(String.format("Unexpected token '%s' found.", lexer.token.value));
+            }
+            text.append(lexer.token.value);
+        }
+        if (lineType == LineType.Empty) {
+            return null;
+        }
+        return new Line(lineType, text);
+    }
+
+    enum LineType {
+        Empty, Text, Equals, Dashes
+    }
+
+    private static class Line {
+        final LineType type;
+        final CharSequence content;
+
+        private Line(LineType type, CharSequence content) {
+            this.type = type;
+            this.content = content;
+        }
+    }
+
+    enum TokenType {
+        WhiteSpace, Word, Equals, Dashes, EOL
+    }
+
+    private static class Token {
+        final TokenType type;
+        final String value;
+
+        private Token(TokenType type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+    }
+
+    private static class Lexer {
+        private final EndOfLineSpec endOfLineSpec = new EndOfLineSpec();
+        private final WordSpec wordSpec = new WordSpec();
+        private final TokenSpec whiteSpaceSpec = new SequenceSpec(' ', '\t');
+        private final TokenSpec equalsSpec = new SequenceSpec('=');
+        private final TokenSpec dashesSpec = new SequenceSpec('-');
 
         final Buffer buffer;
         Token token;
@@ -66,28 +157,28 @@ public class MarkdownParser extends Parser {
         }
 
         boolean next() throws IOException {
-            if (buffer.scanFor(new EndOfLineSpec())) {
-                token = Token.EOL;
+            if (buffer.scanFor(endOfLineSpec)) {
+                token = new Token(TokenType.EOL, buffer.getValue());
                 return true;
             }
-            if (buffer.scanFor(new WordSpec())) {
-                token = Token.Word;
+            if (buffer.scanFor(equalsSpec)) {
+                token = new Token(TokenType.Equals, buffer.getValue());
                 return true;
             }
-            if (buffer.scanFor(new WhiteSpaceSpec())) {
-                token = Token.WhiteSpace;
+            if (buffer.scanFor(dashesSpec)) {
+                token = new Token(TokenType.Dashes, buffer.getValue());
                 return true;
             }
-            token = Token.EOT;
+            if (buffer.scanFor(wordSpec)) {
+                token = new Token(TokenType.Word, buffer.getValue());
+                return true;
+            }
+            if (buffer.scanFor(whiteSpaceSpec)) {
+                token = new Token(TokenType.WhiteSpace, buffer.getValue());
+                return true;
+            }
+            token = null;
             return false;
-        }
-
-        public Token getToken() {
-            return token;
-        }
-
-        public String getValue() {
-            return buffer.getValue();
         }
     }
 
@@ -104,10 +195,16 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class WhiteSpaceSpec extends TokenSpec {
+    private static class SequenceSpec extends TokenSpec {
+        private final char[] candidates;
+
+        private SequenceSpec(char... candidates) {
+            this.candidates = candidates;
+        }
+
         @Override
         public void match(Buffer buffer) throws IOException {
-            while (buffer.moveOver(' ', '\t')) {
+            while (buffer.moveOver(candidates)) {
             }
         }
     }

@@ -1,13 +1,13 @@
 package net.rubygrapefruit.docs.model;
 
 public class BuildableParagraph implements Paragraph {
-    private String text;
+    private StringBuilder text = new StringBuilder();
 
     public String getText() {
-        return text;
+        return text.toString();
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void append(CharSequence text) {
+        this.text.append(text);
     }
 }

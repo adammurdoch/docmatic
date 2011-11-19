@@ -13,9 +13,9 @@ public class PdfRenderer extends Renderer {
     public void render(Document document, OutputStream stream) {
         try {
             com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4);
-            PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, stream);
+            PdfWriter.getInstance(pdfDocument, stream);
             pdfDocument.open();
-            for (Paragraph paragraph : document.getParagraphs()) {
+            for (Paragraph paragraph : document.getContents(Paragraph.class)) {
                 pdfDocument.add(new com.itextpdf.text.Paragraph(paragraph.getText()));
             }
             pdfDocument.close();

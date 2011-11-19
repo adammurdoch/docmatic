@@ -31,7 +31,7 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(EOL);
                 writer.writeStartElement("body");
                 writer.writeCharacters(EOL);
-                for (Paragraph paragraph : document.getParagraphs()) {
+                for (Paragraph paragraph : document.getContents(Paragraph.class)) {
                     writer.writeStartElement("p");
                     writer.writeCharacters(paragraph.getText());
                     writer.writeEndElement();
