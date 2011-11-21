@@ -1,13 +1,30 @@
-section 1
+Section 1
 =========
-this is a para.
+This is a paragraph.
 
-this is another para.
+This is another paragraph
+that spans multiple lines.
 
-section 2
+Section 2
 ---------
-section 2 has some paras too.
+This is a list:
 
-another main section
+* item 1
+* item 2
+spans multiple lines
+* This item has multiple paragraphs.
+
+    This is another paragraph in the same item.
+It spans multiple lines.
+
+Here is another list, with blank lines between the items:
+
+- item 1
+
+- item 2
+
+- item 3
+
+Another main section
 ====================
-not much here.
+Not much here.

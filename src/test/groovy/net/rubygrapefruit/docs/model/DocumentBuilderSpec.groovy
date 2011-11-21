@@ -73,30 +73,4 @@ class DocumentBuilderSpec extends Specification {
         document.contents[0] == section1
         document.contents[1] == section2
     }
-
-    def "appends paragraph to document when there is no current section"() {
-        when:
-        def para = builder.appendParagraph()
-
-        then:
-        document.contents[0] == para
-    }
-
-    def "appends paragraph to most recently appended section"() {
-        when:
-        def section1 = builder.appendSection(1)
-        def para = builder.appendParagraph()
-
-        then:
-        section1.contents[0] == para
-    }
-
-    def "appends unknown block to most recently appended section"() {
-        when:
-        def section1 = builder.appendSection(1)
-        def block = builder.appendUnknown("unknown", "file", 23, 4)
-
-        then:
-        section1.contents[0] == block
-    }
 }

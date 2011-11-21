@@ -15,7 +15,7 @@ class MarkdownParserSpec extends Specification {
         paras.empty
     }
 
-    def "an whitespace only string converts to an empty document"() {
+    def "a whitespace only string converts to an empty document"() {
         when:
         def doc = parse "  \n  \r\n  "
 
@@ -53,6 +53,20 @@ sentence 1.4
         def paras = doc.getContents(Paragraph)
         paras.size() == 1
         paras[0].text == '''sentence 1.1 sentence 1.2 sentence 1.3 sentence 1.4'''
+    }
+
+    def "normalises whitespace in paragraph"() {
+
+        when:
+        def doc = parse '''
+sentence 1.1\t    \tsentence 1.2
+sentence       1.3\t\t\t
+'''
+
+        then:
+        def paras = doc.getContents(Paragraph)
+        paras.size() == 1
+        paras[0].text == '''sentence 1.1 sentence 1.2 sentence 1.3'''
     }
 
     def "last paragraph does not need trailing end-of-line"() {
@@ -196,6 +210,96 @@ para
         doc.contents[2].text == 'para para ----'
         doc.contents[3].text == '---'
         doc.contents[4].text == '===='
+    }
+
+    def "a leading * defines a list item"() {
+        when:
+        def doc = parse '''
+* item 1
+* item 2
+* item 3
+'''
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].items.size() == 3
+        doc.contents[0].items[0].contents[0].text == 'item 1'
+        doc.contents[0].items[1].contents[0].text == 'item 2'
+        doc.contents[0].items[2].contents[0].text == 'item 3'
+    }
+
+    def "a list item can span multiple lines"() {
+        when:
+        def doc = parse '''
+* item 1
+line 1.2
+* item 2
+    line 2.2
+'''
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].items.size() == 2
+        doc.contents[0].items[0].contents[0].text == 'item 1 line 1.2'
+        doc.contents[0].items[1].contents[0].text == 'item 2 line 2.2'
+    }
+
+    def "can separate list items with blank lines"() {
+        when:
+        def doc = parse '''
+* item 1
+line 1.2
+
+* item 2
+
+\t\t\t
+
+* item 3
+'''
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].items.size() == 3
+        doc.contents[0].items[0].contents[0].text == 'item 1 line 1.2'
+        doc.contents[0].items[1].contents[0].text == 'item 2'
+        doc.contents[0].items[2].contents[0].text == 'item 3'
+    }
+
+    def "a list item can have multiple paragraphs"() {
+        when:
+        def doc = parse '''
+* item 1
+line 1.2
+
+    para 2
+line 2.2
+
+\tpara 3
+    line 3.3
+
+\t \t    para 4
+* item 2
+   not a para
+'''
+
+        then:
+        doc.contents.size() == 2
+        doc.contents[0].items.size() == 2
+        doc.contents[0].items[0].contents.size() == 4
+        doc.contents[0].items[0].contents[0].text == 'item 1 line 1.2'
+        doc.contents[0].items[0].contents[1].text == 'para 2 line 2.2'
+        doc.contents[0].items[0].contents[2].text == 'para 3 line 3.3'
+        doc.contents[0].items[0].contents[3].text == 'para 4'
+        doc.contents[0].items[1].contents[0].text == 'item 2'
+        doc.contents[1].text == 'not a para'
+    }
+
+    def "a paragraph between list items starts a new list"() {
+        expect: false
+    }
+
+    def "a paragraph can contain list item marker characters"() {
+        expect: false
     }
 
     def "can parse from Reader"() {

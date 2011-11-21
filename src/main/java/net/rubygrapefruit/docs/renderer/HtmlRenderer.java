@@ -21,6 +21,11 @@ public class HtmlRenderer extends Renderer {
             writer.writeCharacters(EOL);
             writer.writeStartElement("head");
             writer.writeCharacters(EOL);
+            writer.writeStartElement("meta");
+            writer.writeAttribute("http-equiv", "Content-Type");
+            writer.writeAttribute("content", "text/html; charset=UTF-8");
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
             writer.writeStartElement("style");
             writer.writeCharacters(EOL);
             writer.writeCharacters("html { font-family: sans-serif; font-size: 12pt; }");
@@ -42,8 +47,8 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
-    private void writeSection(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        for (Block block : component.getContents()) {
+    private void writeSection(Container container, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        for (Block block : container.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
                 writer.writeStartElement("h" + (depth + 1));
@@ -51,30 +56,51 @@ public class HtmlRenderer extends Renderer {
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writeSection(child, depth + 1, writer);
-            } else if (block instanceof Paragraph) {
-                Paragraph paragraph = (Paragraph) block;
-                writer.writeStartElement("p");
-                writer.writeCharacters(paragraph.getText());
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-            } else if (block instanceof UnknownBlock) {
-                UnknownBlock unknownBlock = (UnknownBlock) block;
-                writer.writeStartElement("div");
-                writer.writeAttribute("class", "unknown");
-                writer.writeCharacters("Unexpected ");
-                writer.writeCharacters(unknownBlock.getName());
-                writer.writeCharacters(" found at ");
-                writer.writeCharacters(unknownBlock.getLocation().getFile());
-                writer.writeCharacters(", line: ");
-                writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getLine()));
-                writer.writeCharacters(", column: ");
-                writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getColumn()));
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
             } else {
-                throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
-                        block.getClass().getSimpleName()));
+                writeBlock(block, writer);
             }
+        }
+    }
+
+    private void writeBlock(Block block, XMLStreamWriter writer) throws XMLStreamException {
+        if (block instanceof Paragraph) {
+            Paragraph paragraph = (Paragraph) block;
+            writer.writeStartElement("p");
+            writer.writeCharacters(paragraph.getText());
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } else if (block instanceof ItemisedList) {
+            ItemisedList list = (ItemisedList) block;
+            writer.writeStartElement("ul");
+            writer.writeCharacters(EOL);
+            for (ListItem item : list.getItems()) {
+                writer.writeStartElement("li");
+                writer.writeCharacters(EOL);
+                for (Block childBlock : item.getContents()) {
+                    writeBlock(childBlock, writer);
+                }
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
+            }
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } else if (block instanceof UnknownBlock) {
+            UnknownBlock unknownBlock = (UnknownBlock) block;
+            writer.writeStartElement("div");
+            writer.writeAttribute("class", "unknown");
+            writer.writeCharacters("Unexpected ");
+            writer.writeCharacters(unknownBlock.getName());
+            writer.writeCharacters(" found at ");
+            writer.writeCharacters(unknownBlock.getLocation().getFile());
+            writer.writeCharacters(", line: ");
+            writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getLine()));
+            writer.writeCharacters(", column: ");
+            writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getColumn()));
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } else {
+            throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
+                    block.getClass().getSimpleName()));
         }
     }
 }

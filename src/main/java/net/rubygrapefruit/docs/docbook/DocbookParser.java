@@ -1,9 +1,6 @@
 package net.rubygrapefruit.docs.docbook;
 
-import net.rubygrapefruit.docs.model.BuildableDocument;
-import net.rubygrapefruit.docs.model.BuildableParagraph;
-import net.rubygrapefruit.docs.model.Document;
-import net.rubygrapefruit.docs.model.DocumentBuilder;
+import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
 
 import javax.xml.stream.Location;
@@ -124,7 +121,8 @@ public class DocbookParser extends Parser {
             if (text.matches("\\s+")) {
                 return;
             }
-            context.getBuilder().appendUnknown("text", context.getFileName(), context.getLineNumber(), context.getColumnNumber());
+            context.getBuilder().appendUnknown("text", context.getFileName(), context.getLineNumber(),
+                    context.getColumnNumber());
         }
 
         public void finish(Context context) {
@@ -152,11 +150,16 @@ public class DocbookParser extends Parser {
     }
 
     private static class ParaHandler extends DefaultElementHandler {
+        private final BuildableContainer container;
         private BuildableParagraph paragraph;
+
+        private ParaHandler(BuildableContainer container) {
+            this.container = container;
+        }
 
         @Override
         public void start(String name, Context context) {
-            paragraph = context.getBuilder().appendParagraph();
+            paragraph = container.addParagraph();
         }
 
         @Override
@@ -165,10 +168,24 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class SectionHandler extends DefaultElementHandler {
+    private static class ContainerHandler extends DefaultElementHandler {
+        protected ElementHandler pushChild(String name, Context context, BuildableContainer container) {
+            if (name.equals("para")) {
+                return new ParaHandler(container);
+            }
+            if (name.equals("itemizedlist")) {
+                return new ItemizedListHandler(container);
+            }
+            return super.pushChild(name, context);
+        }
+    }
+
+    private static class SectionHandler extends ContainerHandler {
+        private BuildableSection section;
+
         @Override
         public void start(String name, Context context) {
-            context.getBuilder().appendSection();
+            section = context.getBuilder().appendSection();
         }
 
         @Override
@@ -179,15 +196,53 @@ public class DocbookParser extends Parser {
             if (name.equals("section")) {
                 return new SectionHandler();
             }
-            if (name.equals("para")) {
-                return new ParaHandler();
-            }
-            return super.pushChild(name, context);
+            return super.pushChild(name, context, section);
         }
 
         @Override
         public void finish(Context context) {
             context.getBuilder().popSection();
+        }
+    }
+
+    private static class ItemizedListHandler extends DefaultElementHandler {
+        private final BuildableContainer container;
+        private BuildableItemisedList list;
+
+        private ItemizedListHandler(BuildableContainer container) {
+            this.container = container;
+        }
+
+        @Override
+        public void start(String name, Context context) {
+            list = container.addItemisedList();
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            if (name.equals("listitem")) {
+                return new ListItemHandler(list);
+            }
+            return super.pushChild(name, context);
+        }
+    }
+
+    private static class ListItemHandler extends ContainerHandler {
+        private final BuildableItemisedList list;
+        private BuildableListItem item;
+
+        public ListItemHandler(BuildableItemisedList list) {
+            this.list = list;
+        }
+
+        @Override
+        public void start(String name, Context context) {
+            item = list.addItem();
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            return pushChild(name, context, item);
         }
     }
 
@@ -201,7 +256,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.getBuilder().getCurrentSection().setTitle(content);
+            context.getBuilder().getCurrentComponent().setTitle(content);
         }
     }
 }

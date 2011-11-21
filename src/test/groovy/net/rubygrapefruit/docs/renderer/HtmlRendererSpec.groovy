@@ -84,6 +84,33 @@ para 3
 '''
     }
 
+    def "renders the contents of an itemised list"() {
+        given:
+        def doc = document '''
+* para 1
+* para 2
+* para 3
+'''
+
+        expect:
+        render(doc) == '''<html>
+<body>
+<ul>
+<li>
+<p>para 1</p>
+</li>
+<li>
+<p>para 2</p>
+</li>
+<li>
+<p>para 3</p>
+</li>
+</ul>
+</body>
+</html>
+'''
+    }
+
     def document(String text) {
         return new MarkdownParser().parse(text, "document.md")
     }

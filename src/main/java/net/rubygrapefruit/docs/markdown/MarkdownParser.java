@@ -1,9 +1,6 @@
 package net.rubygrapefruit.docs.markdown;
 
-import net.rubygrapefruit.docs.model.BuildableDocument;
-import net.rubygrapefruit.docs.model.BuildableParagraph;
-import net.rubygrapefruit.docs.model.Document;
-import net.rubygrapefruit.docs.model.DocumentBuilder;
+import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
 
 import java.io.IOException;
@@ -20,119 +17,237 @@ public class MarkdownParser extends Parser {
         BuildableDocument document = new BuildableDocument();
         DocumentBuilder builder = new DocumentBuilder(document);
         Lexer lexer = new Lexer(input);
-        List<Line> currentPara = new ArrayList<Line>();
-        while (true) {
-            Line line = nextLine(lexer);
-            if (line == null) {
-                addPara(currentPara, builder);
-                break;
+        LineParser parser = new LineParser(lexer);
+        while (parser.peek().type != LineType.Finish) {
+            if (empty(parser)) {
+                continue;
             }
-            switch (line.type) {
-                case Empty:
-                    addPara(currentPara, builder);
-                    currentPara.clear();
-                    break;
-                case Text:
-                    currentPara.add(line);
-                    break;
-                case Equals:
-                    if (currentPara.size() == 1) {
-                        builder.appendSection(1).setTitle(currentPara.get(0).content);
-                        currentPara.clear();
-                    } else {
-                        currentPara.add(line);
-                    }
-                    break;
-                case Dashes:
-                    if (currentPara.size() == 1) {
-                        builder.appendSection(2).setTitle(currentPara.get(0).content);
-                        currentPara.clear();
-                    } else {
-                        currentPara.add(line);
-                    }
-                    break;
-                default:
-                    throw new UnsupportedOperationException(String.format("Got unexpected line type '%s'.", line.type));
+            if (header1(parser, builder)) {
+                continue;
             }
+            if (header2(parser, builder)) {
+                continue;
+            }
+            if (list(parser, builder.getCurrentComponent())) {
+                continue;
+            }
+            if (para(parser, builder.getCurrentComponent())) {
+                continue;
+            }
+
+            throw new UnsupportedOperationException(String.format("Did not match any productions."));
         }
+
         return document;
     }
 
-    private void addPara(List<Line> lines, DocumentBuilder builder) {
-        if (lines.isEmpty()) {
-            return;
+    private boolean para(LineParser parser, BuildableContainer container) throws IOException {
+        BuildableParagraph paragraph = container.addParagraph();
+        paragraph.append(parser.next().getContent());
+        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty) {
+            paragraph.append(" ");
+            paragraph.append(parser.next().getContent());
         }
-        BuildableParagraph paragraph = builder.appendParagraph();
-        for (int i = 0; i < lines.size(); i++) {
-            if (i > 0) {
-                paragraph.append(" ");
-            }
-            Line line = lines.get(i);
-            paragraph.append(line.content);
-        }
+        return true;
     }
 
-    private Line nextLine(Lexer lexer) throws IOException {
-        LineType lineType = LineType.Empty;
-        StringBuilder text = new StringBuilder();
-        while (lexer.next()) {
-            switch (lexer.token.type) {
-                case WhiteSpace:
-                    if (lineType == LineType.Empty) {
-                        continue;
-                    }
-                    break;
-                case Equals:
-                    if (lineType == LineType.Empty) {
-                        lineType = LineType.Equals;
-                    } else {
-                        lineType = LineType.Text;
-                    }
-                    break;
-                case Word:
-                    lineType = LineType.Text;
-                    break;
-                case Dashes:
-                    if (lineType == LineType.Empty) {
-                        lineType = LineType.Dashes;
-                    } else {
-                        lineType = LineType.Text;
-                    }
-                    break;
-                case EOL:
-                    return new Line(lineType, text);
-                default:
-                    throw new IllegalStateException(String.format("Unexpected token '%s' found.", lexer.token.value));
-            }
-            text.append(lexer.token.value);
+    private boolean list(LineParser parser, BuildableContainer container) throws IOException {
+        if (parser.peek().type != LineType.ListItem) {
+            return false;
         }
-        if (lineType == LineType.Empty) {
-            return null;
+
+        BuildableItemisedList list = container.addItemisedList();
+        while (listItem(parser, list)) {
         }
-        return new Line(lineType, text);
+
+        return true;
+    }
+
+    private boolean listItem(LineParser parser, BuildableItemisedList list) throws IOException {
+        if (parser.peek().type != LineType.ListItem) {
+            return false;
+        }
+
+        Line line = parser.next();
+        BuildableListItem item = list.addItem();
+        BuildableParagraph paragraph = item.addParagraph();
+        paragraph.append(line.getContent());
+
+        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
+                && parser.peek().type != LineType.ListItem) {
+            line = parser.next();
+            paragraph.append(" ");
+            paragraph.append(line.getContent());
+        }
+
+        while (parser.peek().type == LineType.Empty) {
+            parser.next();
+        }
+
+        if (parser.peek().type == LineType.Continue) {
+            paragraph = item.addParagraph();
+            paragraph.append(parser.next().getContent());
+        }
+
+        return true;
+    }
+
+    private boolean empty(LineParser parser) throws IOException {
+        Line line = parser.peek();
+        if (line.type == LineType.Empty) {
+            parser.next();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean header1(LineParser parser, DocumentBuilder builder) throws IOException {
+        Line line1 = parser.peek();
+        Line line2 = parser.peek(1);
+        if (line2.type == LineType.H1) {
+            parser.next();
+            parser.next();
+            builder.appendSection(1).setTitle(line1.getContent());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean header2(LineParser parser, DocumentBuilder builder) throws IOException {
+        Line line1 = parser.peek();
+        Line line2 = parser.peek(1);
+        if (line2.type == LineType.H2) {
+            parser.next();
+            parser.next();
+            builder.appendSection(2).setTitle(line1.getContent());
+            return true;
+        }
+        return false;
     }
 
     enum LineType {
-        Empty, Text, Equals, Dashes
+        Empty, Text, H1, H2, ListItem, Finish, Continue
     }
 
     private static class Line {
         final LineType type;
-        final CharSequence content;
+        final List<Token> tokens;
 
-        private Line(LineType type, CharSequence content) {
+        private Line(LineType type, List<Token> tokens) {
             this.type = type;
-            this.content = content;
+            this.tokens = tokens;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{%s '%s'}", type, getContent());
+        }
+
+        CharSequence getContent() {
+            if (type == LineType.Continue) {
+                return getContent(1);
+            }
+            if (type == LineType.ListItem) {
+                return getContent(2);
+            }
+            return getContent(0);
+        }
+
+        CharSequence getContent(int startToken) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = startToken; i < tokens.size(); i++) {
+                Token token = tokens.get(i);
+                if (token.type == TokenType.WhiteSpace || token.type == TokenType.Continue) {
+                    builder.append(' ');
+                } else {
+                    builder.append(token.value);
+                }
+            }
+            return builder.toString();
+        }
+    }
+
+    private static class LineParser {
+        final List<Line> queue = new ArrayList<Line>();
+        final Lexer lexer;
+
+        private LineParser(Lexer lexer) {
+            this.lexer = lexer;
+        }
+
+        public Line peek() throws IOException {
+            return peek(0);
+        }
+
+        public Line peek(int depth) throws IOException {
+            while (queue.size() <= depth) {
+                Line line = scanLine();
+                if (line == null) {
+                    return null;
+                }
+                queue.add(line);
+            }
+            return queue.get(depth);
+        }
+
+        public Line next() throws IOException {
+            if (!queue.isEmpty()) {
+                return queue.remove(0);
+            }
+            return scanLine();
+        }
+
+        private Line scanLine() throws IOException {
+            List<Token> tokens = new ArrayList<Token>();
+            boolean hasContent = false;
+            while (lexer.next()) {
+                hasContent = true;
+                if (lexer.getType() == TokenType.EOL) {
+                    break;
+                }
+                tokens.add(lexer.getToken());
+            }
+            if (!hasContent) {
+                return new Line(LineType.Finish, tokens);
+            }
+
+            if (tokens.size() > 0 && tokens.get(0).type == TokenType.WhiteSpace) {
+                tokens.remove(0);
+            }
+            if (tokens.size() > 0 && tokens.get(tokens.size() - 1).type == TokenType.WhiteSpace) {
+                tokens.remove(tokens.size() - 1);
+            }
+            if (tokens.size() == 1 && tokens.get(0).type == TokenType.Continue) {
+                tokens.remove(0);
+            }
+
+            if (tokens.isEmpty()) {
+                return new Line(LineType.Empty, tokens);
+            }
+            if (tokens.get(0).type == TokenType.Continue) {
+                return new Line(LineType.Continue, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == TokenType.ListItem && tokens.get(1).type
+                    == TokenType.WhiteSpace) {
+                return new Line(LineType.ListItem, tokens);
+            }
+            if (tokens.size() == 1 && tokens.get(0).type == TokenType.H1) {
+                return new Line(LineType.H1, tokens);
+            }
+            if (tokens.size() == 1 && tokens.get(0).type == TokenType.H2) {
+                return new Line(LineType.H2, tokens);
+            }
+            return new Line(LineType.Text, tokens);
         }
     }
 
     enum TokenType {
-        WhiteSpace, Word, Equals, Dashes, EOL
+        WhiteSpace, Word, H1, H2, EOL, ListItem, Continue
     }
 
     private static class Token {
-        final TokenType type;
-        final String value;
+        private final TokenType type;
+        private final String value;
 
         private Token(TokenType type, String value) {
             this.type = type;
@@ -146,50 +261,66 @@ public class MarkdownParser extends Parser {
         private final TokenSpec whiteSpaceSpec = new SequenceSpec(' ', '\t');
         private final TokenSpec equalsSpec = new SequenceSpec('=');
         private final TokenSpec dashesSpec = new SequenceSpec('-');
+        private final TokenSpec listItemSpec = new ChoiceSpec('*', '+', '-');
+        private final TokenSpec continueSpec = new ContinueSpec();
 
-        final Buffer buffer;
-        Token token;
+        private final Buffer buffer;
+        private boolean atStartOfLine;
+        private TokenType type;
 
         private Lexer(Reader input) {
             this.buffer = new Buffer(input);
         }
 
+        Token getToken() {
+            return new Token(type, buffer.getValue());
+        }
+
+        TokenType getType() {
+            return type;
+        }
+
         boolean next() throws IOException {
+            type = scanNext();
+            atStartOfLine = (type == TokenType.EOL);
+            return type != null;
+        }
+
+        TokenType scanNext() throws IOException {
             if (buffer.scanFor(endOfLineSpec)) {
-                token = new Token(TokenType.EOL, buffer.getValue());
-                return true;
+                return TokenType.EOL;
             }
-            if (buffer.scanFor(equalsSpec)) {
-                token = new Token(TokenType.Equals, buffer.getValue());
-                return true;
+            if (atStartOfLine && buffer.scanFor(continueSpec)) {
+                return TokenType.Continue;
             }
-            if (buffer.scanFor(dashesSpec)) {
-                token = new Token(TokenType.Dashes, buffer.getValue());
-                return true;
+            if (atStartOfLine && buffer.scanFor(listItemSpec)) {
+                return TokenType.ListItem;
             }
-            if (buffer.scanFor(wordSpec)) {
-                token = new Token(TokenType.Word, buffer.getValue());
-                return true;
+            if (atStartOfLine && buffer.scanFor(equalsSpec)) {
+                return TokenType.H1;
+            }
+            if (atStartOfLine && buffer.scanFor(dashesSpec)) {
+                return TokenType.H2;
             }
             if (buffer.scanFor(whiteSpaceSpec)) {
-                token = new Token(TokenType.WhiteSpace, buffer.getValue());
-                return true;
+                return TokenType.WhiteSpace;
             }
-            token = null;
-            return false;
+            if (buffer.scanFor(wordSpec)) {
+                return TokenType.Word;
+            }
+            return null;
         }
     }
 
-    private static class TokenSpec {
-        public void match(Buffer buffer) throws IOException {
-        }
+    private abstract static class TokenSpec {
+        public abstract void match(Buffer buffer) throws IOException;
     }
 
     private static class EndOfLineSpec extends TokenSpec {
         @Override
         public void match(Buffer buffer) throws IOException {
-            buffer.moveOver('\r');
-            buffer.moveOver('\n');
+            buffer.consume('\r');
+            buffer.consume('\n');
         }
     }
 
@@ -202,7 +333,46 @@ public class MarkdownParser extends Parser {
 
         @Override
         public void match(Buffer buffer) throws IOException {
-            while (buffer.moveOver(candidates)) {
+            while (buffer.consume(candidates)) {
+            }
+        }
+    }
+
+    private static class ChoiceSpec extends TokenSpec {
+        private final char[] candidates;
+
+        private ChoiceSpec(char... candidates) {
+            this.candidates = candidates;
+        }
+
+        @Override
+        public void match(Buffer buffer) throws IOException {
+            for (char candidate : candidates) {
+                if (buffer.consume(candidate)) {
+                    if (!buffer.lookingAt(candidate)) {
+                        return;
+                    }
+                    buffer.unwind();
+                }
+            }
+        }
+    }
+
+    private static class ContinueSpec extends TokenSpec {
+        @Override
+        public void match(Buffer buffer) throws IOException {
+            if (buffer.consume('\t')) {
+            } else {
+                int count = 0;
+                while (buffer.consume(' ')) {
+                    count++;
+                }
+                if (count < 4) {
+                    buffer.unwind();
+                    return;
+                }
+            }
+            while (buffer.consume('\t', ' ')) {
             }
         }
     }
@@ -210,7 +380,7 @@ public class MarkdownParser extends Parser {
     private static class WordSpec extends TokenSpec {
         @Override
         public void match(Buffer buffer) throws IOException {
-            while (buffer.moveOverExcept(' ', '\t', '\r', '\n')) {
+            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n')) {
             }
         }
     }
@@ -238,7 +408,12 @@ public class MarkdownParser extends Parser {
             return new String(buffer, startToken, endToken - startToken);
         }
 
-        boolean moveOver(char... candidates) throws IOException {
+        public void unwind() {
+            endToken = startToken;
+            matched = false;
+        }
+
+        public boolean lookingAt(char... candidates) throws IOException {
             int ch = peek();
             if (ch < 0) {
                 return false;
@@ -246,14 +421,21 @@ public class MarkdownParser extends Parser {
             for (int i = 0; i < candidates.length; i++) {
                 char candidate = candidates[i];
                 if (ch == candidate) {
-                    next();
                     return true;
                 }
             }
             return false;
         }
 
-        public boolean moveOverExcept(char... candidates) throws IOException {
+        boolean consume(char... candidates) throws IOException {
+            if (lookingAt(candidates)) {
+                next();
+                return true;
+            }
+            return false;
+        }
+
+        public boolean consumeAnyExcept(char... candidates) throws IOException {
             int ch = peek();
             if (ch < 0) {
                 return false;

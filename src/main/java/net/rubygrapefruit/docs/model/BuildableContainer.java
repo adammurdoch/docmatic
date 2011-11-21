@@ -26,9 +26,11 @@ public class BuildableContainer implements Container {
     }
 
     public BuildableParagraph addParagraph() {
-        BuildableParagraph paragraph = new BuildableParagraph();
-        contents.add(paragraph);
-        return paragraph;
+        return add(new BuildableParagraph());
+    }
+
+    public BuildableItemisedList addItemisedList() {
+        return add(new BuildableItemisedList());
     }
 
     public DefaultUnknownBlock addUnknown(String name, final String fileName, final int lineNumber, final int columnNumber) {

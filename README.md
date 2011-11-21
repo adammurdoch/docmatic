@@ -14,16 +14,21 @@ Can parse a subset of markdown and DocBook.
 Markdown
 --------
 Supported syntax:
-* Paragraphs
-* Setext style headers
+
+* Paragraphs - text only
+* Setext style headers - text only
 
 DocBook
 -------
 Supported elements:
-* book (chapter)
-* chapter (title, para)
-* section (title, para)
-* para
+
+* book > chapter
+* chapter > title, para
+* section > title, para, itemizedlist
+* title > text only
+* para > text only
+* itemizedlist > listitem
+* listitem > para, itemizedlist
 
 Supported Outputs
 =================
