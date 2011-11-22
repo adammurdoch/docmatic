@@ -73,18 +73,22 @@ public class MarkdownParser extends Parser {
         BuildableParagraph paragraph = item.addParagraph();
         paragraph.append(line.getContent());
 
-        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
-                && parser.peek().type != LineType.ListItem) {
-            line = parser.next();
-            paragraph.append(" ");
-            paragraph.append(line.getContent());
-        }
+        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.ListItem) {
+            while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
+                    && parser.peek().type != LineType.ListItem) {
+                line = parser.next();
+                paragraph.append(" ");
+                paragraph.append(line.getContent());
+            }
 
-        while (parser.peek().type == LineType.Empty) {
-            parser.next();
-        }
+            while (parser.peek().type == LineType.Empty) {
+                parser.next();
+            }
 
-        if (parser.peek().type == LineType.Continue) {
+            if (parser.peek().type != LineType.Continue) {
+                break;
+            }
+
             paragraph = item.addParagraph();
             paragraph.append(parser.next().getContent());
         }

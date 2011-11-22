@@ -21,9 +21,9 @@ Here is another list, with blank lines between the items:
 
 - item 1
 
-- item 2
++ item 2
 
-- item 3
+* item 3
 
 Another main section
 ====================

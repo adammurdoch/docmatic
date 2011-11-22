@@ -1,8 +1,10 @@
-package net.rubygrapefruit.docs.renderer
+package net.rubygrapefruit.docs.html
 
 import net.rubygrapefruit.docs.markdown.MarkdownParser
 import net.rubygrapefruit.docs.model.Document
 import spock.lang.Specification
+import net.rubygrapefruit.docs.html.HtmlRenderer
+import net.rubygrapefruit.docs.renderer.DefaultTheme
 
 class HtmlRendererSpec extends Specification {
     final HtmlRenderer renderer = new HtmlRenderer()
@@ -13,10 +15,8 @@ class HtmlRendererSpec extends Specification {
 '''
 
         expect:
-        render(doc) == '''<html>
-<body>
+        render doc contains '''<body>
 </body>
-</html>
 '''
     }
     
@@ -28,12 +28,10 @@ para 2.
 '''
 
         expect:
-        render(doc) == '''<html>
-<body>
+        render doc contains '''<body>
 <p>para 1.</p>
 <p>para 2.</p>
 </body>
-</html>
 '''
     }
 
@@ -48,12 +46,10 @@ section 2
 '''
 
         expect:
-        render(doc) == '''<html>
-<body>
+        render doc contains '''<body>
 <h1>section 1</h1>
 <h2>section 2</h2>
 </body>
-</html>
 '''
     }
 
@@ -72,15 +68,13 @@ para 3
 '''
 
         expect:
-        render(doc) == '''<html>
-<body>
+        render doc contains '''<body>
 <h1>section 1</h1>
 <p>para 1</p>
 <p>para 2</p>
 <h2>section 2</h2>
 <p>para 3</p>
 </body>
-</html>
 '''
     }
 
@@ -93,8 +87,7 @@ para 3
 '''
 
         expect:
-        render(doc) == '''<html>
-<body>
+        render doc contains '''<body>
 <ul>
 <li>
 <p>para 1</p>
@@ -107,7 +100,6 @@ para 3
 </li>
 </ul>
 </body>
-</html>
 '''
     }
 
@@ -117,7 +109,7 @@ para 3
     
     def render(Document document) {
         def outstr = new ByteArrayOutputStream()
-        renderer.render(document, outstr)
+        renderer.render(document, new DefaultTheme(), outstr)
         return new String(outstr.toByteArray(), "utf-8")
     }
 }

@@ -12,13 +12,13 @@ import java.io.OutputStream;
 public abstract class Renderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(Renderer.class);
 
-    public void render(Document document, File output) throws RenderException {
+    public void render(Document document, Theme theme, File output) throws RenderException {
         LOGGER.info("Generating {}.", output);
         try {
             output.getParentFile().mkdirs();
             BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(output));
             try {
-                doRender(document, stream);
+                doRender(document, theme, stream);
             } finally {
                 stream.close();
             }
@@ -27,13 +27,13 @@ public abstract class Renderer {
         }
     }
 
-    public void render(Document document, OutputStream stream) throws RenderException {
+    public void render(Document document, Theme theme, OutputStream stream) throws RenderException {
         try {
-            doRender(document, stream);
+            doRender(document, theme, stream);
         } catch (Exception e) {
             throw new RenderException("Could not render document.", e);
         }
     }
 
-    protected abstract void doRender(Document document, OutputStream stream) throws Exception;
+    protected abstract void doRender(Document document, Theme theme, OutputStream stream) throws Exception;
 }

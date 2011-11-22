@@ -279,6 +279,7 @@ line 2.2
 
 \t \t    para 4
 * item 2
+
    not a para
 '''
 
@@ -295,10 +296,46 @@ line 2.2
     }
 
     def "a paragraph between list items starts a new list"() {
-        expect: false
+        when:
+        def doc = parse '''
+* item 1
+
+   not a para
+
+* item 2
+
+'''
+
+        then:
+        doc.contents.size() == 3
+        doc.contents[0].items.size() == 1
+        doc.contents[0].items[0].contents[0].text == 'item 1'
+        doc.contents[1].text == 'not a para'
+        doc.contents[2].items[0].contents[0].text == 'item 2'
     }
 
     def "a paragraph can contain list item marker characters"() {
+        when:
+        def doc = parse '''
+*
+
+*not an item
+
+not * an item
+
+not
+* an item
+'''
+
+        then:
+        doc.contents.size() == 4
+        doc.contents[0].text == '*'
+        doc.contents[1].text == '*not an item'
+        doc.contents[2].text == 'not * an item'
+        doc.contents[3].text == 'not * an item'
+    }
+
+    def "header takes precedence over list item"() {
         expect: false
     }
 

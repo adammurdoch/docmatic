@@ -1,6 +1,9 @@
-package net.rubygrapefruit.docs.renderer;
+package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.renderer.Renderer;
+import net.rubygrapefruit.docs.renderer.TextTheme;
+import net.rubygrapefruit.docs.renderer.Theme;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -11,7 +14,7 @@ public class HtmlRenderer extends Renderer {
     private final String EOL = String.format("%n");
 
     @Override
-    protected void doRender(Document document, OutputStream outputStream) throws Exception {
+    protected void doRender(Document document, Theme theme, OutputStream outputStream) throws Exception {
         XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream);
         try {
             writer.writeDTD(
@@ -28,8 +31,15 @@ public class HtmlRenderer extends Renderer {
             writer.writeCharacters(EOL);
             writer.writeStartElement("style");
             writer.writeCharacters(EOL);
-            writer.writeCharacters("html { font-family: sans-serif; font-size: 12pt; }");
-            writer.writeCharacters("body { margin: 5em; }");
+            TextTheme textTheme = theme.asTextTheme();
+            if (textTheme != null) {
+                writer.writeCharacters("html { font-family: ");
+                writer.writeCharacters(textTheme.getFontName());
+                writer.writeCharacters("; font-size: 12pt; color: #");
+                writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(), textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
+                writer.writeCharacters("; }");
+                writer.writeCharacters("body { margin: 5em; }");
+            }
             writer.writeCharacters(".unknown { color: red; }");
             writer.writeEndElement();
             writer.writeCharacters(EOL);
