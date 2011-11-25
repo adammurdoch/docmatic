@@ -1,6 +1,8 @@
 <book>
     <chapter>
-        <title>This is the first chapter</title>
+        <title>
+            This is the first chapter
+        </title>
         <para>This is a para.</para>
         <para>
             This is another para.
@@ -49,7 +51,9 @@
         </section>
     </chapter>
     <chapter>
-        <title>This is the second chapter</title>
+        <title>
+            This is the second chapter
+        </title>
         <section>
             <title>A section</title>
             <para>This is a para in chapter 2.</para>

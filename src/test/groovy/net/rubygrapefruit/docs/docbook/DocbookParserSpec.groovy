@@ -51,6 +51,22 @@ class DocbookParserSpec extends Specification {
         doc.contents[1].contents[0].title == 'section 2'
     }
 
+    def "normalises text in titles"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <title>
+chapter
+1
+</title>
+    </chapter>
+</book>'''
+
+        then:
+        doc.contents[0].title == 'chapter 1'
+    }
+
     def "converts para elements to paragraphs"() {
         when:
         def doc = parse '''
@@ -65,6 +81,22 @@ class DocbookParserSpec extends Specification {
         doc.contents[0].contents.size() == 2
         doc.contents[0].contents[0].text == 'para 1'
         doc.contents[0].contents[1].text == 'para 2'
+    }
+
+    def "normalises text in paragraphs"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para>
+    para
+    1
+</para>
+    </chapter>
+</book>'''
+
+        then:
+        doc.contents[0].contents[0].text == 'para 1'
     }
 
     def "converts itemizedlist elements to itemized list"() {

@@ -1,7 +1,9 @@
 package net.rubygrapefruit.docs.markdown;
 
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.parser.Buffer;
 import net.rubygrapefruit.docs.parser.Parser;
+import net.rubygrapefruit.docs.parser.TokenSpec;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -169,12 +171,12 @@ public class MarkdownParser extends Parser {
         CharSequence getContent(int startToken) {
             StringBuilder builder = new StringBuilder();
             int pos = startToken;
-            if (tokens.get(pos).type == TokenType.WhiteSpace) {
+            if (tokens.get(pos).type == Lexer.whiteSpace) {
                 pos++;
             }
             for (int i = pos; i < tokens.size(); i++) {
                 Token token = tokens.get(i);
-                if (token.type == TokenType.WhiteSpace) {
+                if (token.type == Lexer.whiteSpace) {
                     builder.append(' ');
                 } else {
                     builder.append(token.value);
@@ -219,7 +221,7 @@ public class MarkdownParser extends Parser {
             boolean hasContent = false;
             while (lexer.next()) {
                 hasContent = true;
-                if (lexer.getType() == TokenType.EOL) {
+                if (lexer.getType() == Lexer.endOfLineSpec) {
                     break;
                 }
                 tokens.add(lexer.getToken());
@@ -228,65 +230,61 @@ public class MarkdownParser extends Parser {
                 return new Line(LineType.Finish, tokens);
             }
 
-            if (tokens.size() > 0 && tokens.get(tokens.size() - 1).type == TokenType.WhiteSpace) {
+            if (tokens.size() > 0 && tokens.get(tokens.size() - 1).type == Lexer.whiteSpace) {
                 tokens.remove(tokens.size() - 1);
             }
-            if (tokens.size() > 1 && tokens.get(0).type == TokenType.WhiteSpace) {
+            if (tokens.size() > 1 && tokens.get(0).type == Lexer.whiteSpace) {
                 if (tokens.get(0).value.startsWith("    ") || tokens.get(0).value.startsWith("\t")) {
                     return new Line(LineType.Continue, tokens);
                 }
             }
-            if (tokens.size() > 0 && tokens.get(0).type == TokenType.WhiteSpace) {
+            if (tokens.size() > 0 && tokens.get(0).type == Lexer.whiteSpace) {
                 tokens.remove(0);
             }
 
             if (tokens.isEmpty()) {
                 return new Line(LineType.Empty, tokens);
             }
-            if (tokens.size() > 2 && tokens.get(0).type == TokenType.ItemisedListItem && tokens.get(1).type
-                    == TokenType.WhiteSpace) {
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.itemisedListItem && tokens.get(1).type
+                    == Lexer.whiteSpace) {
                 return new Line(LineType.ItemisedListItem, tokens);
             }
-            if (tokens.size() > 2 && tokens.get(0).type == TokenType.OrderedListItem && tokens.get(1).type
-                    == TokenType.WhiteSpace) {
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.numberedListItem && tokens.get(1).type
+                    == Lexer.whiteSpace) {
                 return new Line(LineType.OrderedListItem, tokens);
             }
-            if (tokens.size() == 1 && tokens.get(0).type == TokenType.H1) {
+            if (tokens.size() == 1 && tokens.get(0).type == Lexer.equalsSpec) {
                 return new Line(LineType.H1, tokens);
             }
-            if (tokens.size() == 1 && tokens.get(0).type == TokenType.H2) {
+            if (tokens.size() == 1 && tokens.get(0).type == Lexer.dashes) {
                 return new Line(LineType.H2, tokens);
             }
             return new Line(LineType.Text, tokens);
         }
     }
 
-    enum TokenType {
-        WhiteSpace, Word, H1, H2, EOL, ItemisedListItem, OrderedListItem
-    }
-
     private static class Token {
-        private final TokenType type;
+        private final TokenSpec type;
         private final String value;
 
-        private Token(TokenType type, String value) {
+        private Token(TokenSpec type, String value) {
             this.type = type;
             this.value = value;
         }
     }
 
     private static class Lexer {
-        private final EndOfLineSpec endOfLineSpec = new EndOfLineSpec();
-        private final WordSpec wordSpec = new WordSpec();
-        private final TokenSpec whiteSpaceSpec = new SequenceSpec(' ', '\t');
-        private final TokenSpec equalsSpec = new SequenceSpec('=');
-        private final TokenSpec dashesSpec = new SequenceSpec('-');
-        private final TokenSpec itemisedListItemSpec = new ChoiceSpec('*', '+', '-');
-        private final TokenSpec numberedListItemSpec = new NumberedItemSpec();
+        static final EndOfLineSpec endOfLineSpec = new EndOfLineSpec();
+        static final WordSpec word = new WordSpec();
+        static final TokenSpec whiteSpace = new SequenceSpec(' ', '\t');
+        static final TokenSpec equalsSpec = new SequenceSpec('=');
+        static final TokenSpec dashes = new SequenceSpec('-');
+        static final TokenSpec itemisedListItem = new ChoiceSpec('*', '+', '-');
+        static final TokenSpec numberedListItem = new NumberedItemSpec();
 
         private final Buffer buffer;
         private boolean atStartOfLine;
-        private TokenType type;
+        private TokenSpec type;
 
         private Lexer(Reader input) {
             this.buffer = new Buffer(input);
@@ -296,76 +294,69 @@ public class MarkdownParser extends Parser {
             return new Token(type, buffer.getValue());
         }
 
-        TokenType getType() {
+        TokenSpec getType() {
             return type;
         }
 
         boolean next() throws IOException {
             type = scanNext();
-            atStartOfLine = (type == TokenType.EOL);
+            atStartOfLine = (type == endOfLineSpec);
             return type != null;
         }
 
-        TokenType scanNext() throws IOException {
+        TokenSpec scanNext() throws IOException {
             if (buffer.scanFor(endOfLineSpec)) {
-                return TokenType.EOL;
+                return endOfLineSpec;
             }
-            if (atStartOfLine && buffer.scanFor(itemisedListItemSpec)) {
-                return TokenType.ItemisedListItem;
+            if (atStartOfLine && buffer.scanFor(itemisedListItem)) {
+                return itemisedListItem;
             }
-            if (atStartOfLine && buffer.scanFor(numberedListItemSpec)) {
-                return TokenType.OrderedListItem;
+            if (atStartOfLine && buffer.scanFor(numberedListItem)) {
+                return numberedListItem;
             }
             if (atStartOfLine && buffer.scanFor(equalsSpec)) {
-                return TokenType.H1;
+                return equalsSpec;
             }
-            if (atStartOfLine && buffer.scanFor(dashesSpec)) {
-                return TokenType.H2;
+            if (atStartOfLine && buffer.scanFor(dashes)) {
+                return dashes;
             }
-            if (buffer.scanFor(whiteSpaceSpec)) {
-                return TokenType.WhiteSpace;
+            if (buffer.scanFor(whiteSpace)) {
+                return whiteSpace;
             }
-            if (buffer.scanFor(wordSpec)) {
-                return TokenType.Word;
+            if (buffer.scanFor(word)) {
+                return word;
             }
             return null;
         }
     }
 
-    private abstract static class TokenSpec {
-        public abstract void match(Buffer buffer) throws IOException;
-    }
-
-    private static class EndOfLineSpec extends TokenSpec {
-        @Override
+    private static class EndOfLineSpec implements TokenSpec {
         public void match(Buffer buffer) throws IOException {
             buffer.consume('\r');
             buffer.consume('\n');
         }
     }
 
-    private static class SequenceSpec extends TokenSpec {
+    private static class SequenceSpec implements TokenSpec {
         private final char[] candidates;
 
         private SequenceSpec(char... candidates) {
             this.candidates = candidates;
         }
 
-        @Override
         public void match(Buffer buffer) throws IOException {
             while (buffer.consume(candidates)) {
             }
         }
     }
 
-    private static class ChoiceSpec extends TokenSpec {
+    private static class ChoiceSpec implements TokenSpec {
         private final char[] candidates;
 
         private ChoiceSpec(char... candidates) {
             this.candidates = candidates;
         }
 
-        @Override
         public void match(Buffer buffer) throws IOException {
             for (char candidate : candidates) {
                 if (buffer.consume(candidate)) {
@@ -378,8 +369,7 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class NumberedItemSpec extends TokenSpec {
-        @Override
+    private static class NumberedItemSpec implements TokenSpec {
         public void match(Buffer buffer) throws IOException {
             if (!buffer.consumeRange('0', '9')) {
                 return;
@@ -393,129 +383,10 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class ContinueSpec extends TokenSpec {
-        @Override
-        public void match(Buffer buffer) throws IOException {
-            if (buffer.consume('\t')) {
-            } else {
-                int count = 0;
-                while (buffer.consume(' ')) {
-                    count++;
-                }
-                if (count < 4) {
-                    buffer.unwind();
-                    return;
-                }
-            }
-            while (buffer.consume('\t', ' ')) {
-            }
-        }
-    }
-
-    private static class WordSpec extends TokenSpec {
-        @Override
+    private static class WordSpec implements TokenSpec {
         public void match(Buffer buffer) throws IOException {
             while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n')) {
             }
-        }
-    }
-
-    private static class Buffer {
-        private final Reader reader;
-        private final char[] buffer = new char[8192];
-        int startToken = 0;
-        int endToken = 0;
-        int endBuffer = 0;
-        boolean matched;
-
-        private Buffer(Reader reader) {
-            this.reader = reader;
-        }
-
-        public boolean scanFor(TokenSpec spec) throws IOException {
-            startToken = endToken;
-            matched = false;
-            spec.match(this);
-            return matched;
-        }
-
-        public String getValue() {
-            return new String(buffer, startToken, endToken - startToken);
-        }
-
-        public void unwind() {
-            endToken = startToken;
-            matched = false;
-        }
-
-        public boolean lookingAt(char... candidates) throws IOException {
-            int ch = peek();
-            if (ch < 0) {
-                return false;
-            }
-            for (int i = 0; i < candidates.length; i++) {
-                char candidate = candidates[i];
-                if (ch == candidate) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        boolean consumeRange(char from, char to) throws IOException {
-            int ch = peek();
-            if (ch >= from && ch <= to) {
-                next();
-                return true;
-            }
-            return false;
-        }
-
-        boolean consume(char... candidates) throws IOException {
-            if (lookingAt(candidates)) {
-                next();
-                return true;
-            }
-            return false;
-        }
-
-        public boolean consumeAnyExcept(char... candidates) throws IOException {
-            int ch = peek();
-            if (ch < 0) {
-                return false;
-            }
-            for (int i = 0; i < candidates.length; i++) {
-                char candidate = candidates[i];
-                if (ch == candidate) {
-                    return false;
-                }
-            }
-            next();
-            return true;
-        }
-
-        private int peek() throws IOException {
-            if (endToken == endBuffer) {
-                if (startToken == 0 && endBuffer == buffer.length) {
-                    throw new UnsupportedOperationException("Buffer overflow not implemented yet.");
-                }
-                System.arraycopy(buffer, startToken, buffer, 0, endBuffer - startToken);
-                endToken -= startToken;
-                endBuffer -= startToken;
-                startToken = 0;
-                int nread = reader.read(buffer, endBuffer, buffer.length - endBuffer);
-                if (nread < 0) {
-                    return -1;
-                }
-                endBuffer += nread;
-            }
-
-            return buffer[endToken];
-        }
-
-        private void next() {
-            endToken++;
-            matched = true;
         }
     }
 }

@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
+import net.rubygrapefruit.docs.parser.WhitespaceNormaliser;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLEventReader;
@@ -152,6 +153,7 @@ public class DocbookParser extends Parser {
     private static class ParaHandler extends DefaultElementHandler {
         private final BuildableContainer container;
         private BuildableParagraph paragraph;
+        private final WhitespaceNormaliser text = new WhitespaceNormaliser();
 
         private ParaHandler(BuildableContainer container) {
             this.container = container;
@@ -164,7 +166,12 @@ public class DocbookParser extends Parser {
 
         @Override
         public void handleText(String text, Context context) {
-            paragraph.append(text);
+            this.text.append(text);
+        }
+
+        @Override
+        public void finish(Context context) {
+            paragraph.append(text.getText());
         }
     }
 
@@ -274,7 +281,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class TitleHandler extends DefaultElementHandler {
-        private final StringBuilder content = new StringBuilder();
+        private final WhitespaceNormaliser content = new WhitespaceNormaliser();
 
         @Override
         public void handleText(String text, Context context) {
@@ -283,7 +290,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.getBuilder().getCurrentComponent().setTitle(content);
+            context.getBuilder().getCurrentComponent().setTitle(content.getText().toString());
         }
     }
 }
