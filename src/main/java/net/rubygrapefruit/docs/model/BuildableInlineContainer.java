@@ -1,13 +1,20 @@
 package net.rubygrapefruit.docs.model;
 
-public class BuildableInlineContainer {
-    private StringBuilder text = new StringBuilder();
+import java.util.*;
+import java.util.List;
+
+public class BuildableInlineContainer implements InlineContainer {
+    private final BuildableText text = new BuildableText();
 
     public String getText() {
-        return text.toString();
+        return text.getText();
     }
 
     public void append(CharSequence text) {
         this.text.append(text);
+    }
+
+    public List<? extends Inline> getContents() {
+        return Arrays.asList(text);
     }
 }

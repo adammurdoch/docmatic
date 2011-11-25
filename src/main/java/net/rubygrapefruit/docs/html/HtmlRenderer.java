@@ -62,7 +62,7 @@ public class HtmlRenderer extends Renderer {
             if (block instanceof Section) {
                 Section child = (Section) block;
                 writer.writeStartElement("h" + (depth + 1));
-                writer.writeCharacters(child.getTitle().getText());
+                writeInline(child.getTitle(), writer);
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writeSection(child, depth + 1, writer);
@@ -76,7 +76,7 @@ public class HtmlRenderer extends Renderer {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             writer.writeStartElement("p");
-            writer.writeCharacters(paragraph.getText());
+            writeInline(paragraph, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof ItemisedList) {
@@ -110,6 +110,18 @@ public class HtmlRenderer extends Renderer {
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
+        }
+    }
+
+    private void writeInline(InlineContainer inline, XMLStreamWriter writer) throws XMLStreamException {
+        for (Inline element : inline.getContents()) {
+            if (element instanceof Text) {
+                Text text = (Text) element;
+                writer.writeCharacters(text.getText());
+            } else {
+                throw new IllegalStateException(String.format("Don't know how to render inlne of type '%s'.",
+                        element.getClass().getSimpleName()));
+            }
         }
     }
 

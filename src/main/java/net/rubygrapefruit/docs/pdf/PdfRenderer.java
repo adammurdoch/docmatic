@@ -49,14 +49,17 @@ public class PdfRenderer extends Renderer {
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph(child.getTitle().getText(),
-                        depth == 0 ? h1 : h2);
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph();
+                title.setFont(depth == 0 ? h1 : h2);
+                writeContents(child.getTitle(), title);
+
                 // TODO - theme spacing
                 title.setSpacingBefore(15);
                 title.setSpacingAfter(8);
                 target.add(title);
                 writeContents(child, depth + 1, target);
             } else {
+
                 target.add(convertBlock(block));
             }
         }
@@ -65,7 +68,9 @@ public class PdfRenderer extends Renderer {
     private Element convertBlock(Block block) throws DocumentException {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
-            com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph(paragraph.getText(), base);
+            com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph();
+            writeContents(paragraph, pdfParagraph);
+            pdfParagraph.setFont(base);
             pdfParagraph.setAlignment(Element.ALIGN_JUSTIFIED);
             // TODO - theme spacing
             pdfParagraph.setSpacingBefore(4);
@@ -101,6 +106,18 @@ public class PdfRenderer extends Renderer {
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
+        }
+    }
+
+    private void writeContents(InlineContainer inlineContainer, com.itextpdf.text.Paragraph paragraph) {
+        for (Inline inline : inlineContainer.getContents()) {
+            if (inline instanceof Text) {
+                Text text = (Text) inline;
+                paragraph.add(text.getText());
+            } else {
+                throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
+                        inline.getClass().getSimpleName()));
+            }
         }
     }
 

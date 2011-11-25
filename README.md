@@ -17,7 +17,7 @@ Supported syntax:
 
 * Paragraphs - text only
 * Setext style headers - text only
-* Unordered lists - text only
+* Unordered lists - paragraphs only (no nested lists, headers, etc).
 
 DocBook 5
 ---------
