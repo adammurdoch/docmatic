@@ -33,6 +33,10 @@ public class BuildableContainer implements Container {
         return add(new BuildableItemisedList());
     }
 
+    public BuildableOrderedList addOrderedList() {
+        return add(new BuildableOrderedList());
+    }
+
     public DefaultUnknownBlock addUnknown(String name, final String fileName, final int lineNumber, final int columnNumber) {
         Location location = new Location() {
             public String getFile() {

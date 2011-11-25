@@ -28,7 +28,10 @@ public class MarkdownParser extends Parser {
             if (header2(parser, builder)) {
                 continue;
             }
-            if (list(parser, builder.getCurrentComponent())) {
+            if (itemisedList(parser, builder.getCurrentComponent())) {
+                continue;
+            }
+            if (orderedList(parser, builder.getCurrentComponent())) {
                 continue;
             }
             if (para(parser, builder.getCurrentComponent())) {
@@ -51,31 +54,43 @@ public class MarkdownParser extends Parser {
         return true;
     }
 
-    private boolean list(LineParser parser, BuildableContainer container) throws IOException {
-        if (parser.peek().type != LineType.ListItem) {
+    private boolean itemisedList(LineParser parser, BuildableContainer container) throws IOException {
+        if (parser.peek().type != LineType.ItemisedListItem) {
             return false;
         }
 
-        BuildableItemisedList list = container.addItemisedList();
-        while (listItem(parser, list)) {
+        BuildableList list = container.addItemisedList();
+        while (listItem(parser, list, LineType.ItemisedListItem)) {
         }
 
         return true;
     }
 
-    private boolean listItem(LineParser parser, BuildableItemisedList list) throws IOException {
-        if (parser.peek().type != LineType.ListItem) {
+    private boolean orderedList(LineParser parser, BuildableContainer container) throws IOException {
+        if (parser.peek().type != LineType.OrderedListItem) {
+            return false;
+        }
+
+        BuildableList list = container.addOrderedList();
+        while (listItem(parser, list, LineType.OrderedListItem)) {
+        }
+
+        return true;
+    }
+
+    private boolean listItem(LineParser parser, BuildableList list, LineType itemType) throws IOException {
+        if (parser.peek().type != itemType) {
             return false;
         }
 
         Line line = parser.next();
         BuildableListItem item = list.addItem();
         BuildableParagraph paragraph = item.addParagraph();
-        paragraph.append(line.getContent());
+        paragraph.append(line.getContent(2));
 
-        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.ListItem) {
+        while (parser.peek().type != LineType.Finish && parser.peek().type != itemType) {
             while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
-                    && parser.peek().type != LineType.ListItem) {
+                    && parser.peek().type != itemType) {
                 line = parser.next();
                 paragraph.append(" ");
                 paragraph.append(line.getContent());
@@ -90,7 +105,7 @@ public class MarkdownParser extends Parser {
             }
 
             paragraph = item.addParagraph();
-            paragraph.append(parser.next().getContent());
+            paragraph.append(parser.next().getContent(1));
         }
 
         return true;
@@ -130,7 +145,7 @@ public class MarkdownParser extends Parser {
     }
 
     enum LineType {
-        Empty, Text, H1, H2, ListItem, Finish, Continue
+        Empty, Text, H1, H2, ItemisedListItem, OrderedListItem, Finish, Continue
     }
 
     private static class Line {
@@ -148,12 +163,6 @@ public class MarkdownParser extends Parser {
         }
 
         CharSequence getContent() {
-            if (type == LineType.Continue) {
-                return getContent(1);
-            }
-            if (type == LineType.ListItem) {
-                return getContent(2);
-            }
             return getContent(0);
         }
 
@@ -231,9 +240,13 @@ public class MarkdownParser extends Parser {
             if (tokens.get(0).type == TokenType.Continue) {
                 return new Line(LineType.Continue, tokens);
             }
-            if (tokens.size() > 2 && tokens.get(0).type == TokenType.ListItem && tokens.get(1).type
+            if (tokens.size() > 2 && tokens.get(0).type == TokenType.ItemisedListItem && tokens.get(1).type
                     == TokenType.WhiteSpace) {
-                return new Line(LineType.ListItem, tokens);
+                return new Line(LineType.ItemisedListItem, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == TokenType.OrderedListItem && tokens.get(1).type
+                    == TokenType.WhiteSpace) {
+                return new Line(LineType.OrderedListItem, tokens);
             }
             if (tokens.size() == 1 && tokens.get(0).type == TokenType.H1) {
                 return new Line(LineType.H1, tokens);
@@ -246,7 +259,7 @@ public class MarkdownParser extends Parser {
     }
 
     enum TokenType {
-        WhiteSpace, Word, H1, H2, EOL, ListItem, Continue
+        WhiteSpace, Word, H1, H2, EOL, ItemisedListItem, OrderedListItem, Continue
     }
 
     private static class Token {
@@ -265,7 +278,8 @@ public class MarkdownParser extends Parser {
         private final TokenSpec whiteSpaceSpec = new SequenceSpec(' ', '\t');
         private final TokenSpec equalsSpec = new SequenceSpec('=');
         private final TokenSpec dashesSpec = new SequenceSpec('-');
-        private final TokenSpec listItemSpec = new ChoiceSpec('*', '+', '-');
+        private final TokenSpec itemisedListItemSpec = new ChoiceSpec('*', '+', '-');
+        private final TokenSpec numberedListItemSpec = new NumberedItemSpec();
         private final TokenSpec continueSpec = new ContinueSpec();
 
         private final Buffer buffer;
@@ -297,8 +311,11 @@ public class MarkdownParser extends Parser {
             if (atStartOfLine && buffer.scanFor(continueSpec)) {
                 return TokenType.Continue;
             }
-            if (atStartOfLine && buffer.scanFor(listItemSpec)) {
-                return TokenType.ListItem;
+            if (atStartOfLine && buffer.scanFor(itemisedListItemSpec)) {
+                return TokenType.ItemisedListItem;
+            }
+            if (atStartOfLine && buffer.scanFor(numberedListItemSpec)) {
+                return TokenType.OrderedListItem;
             }
             if (atStartOfLine && buffer.scanFor(equalsSpec)) {
                 return TokenType.H1;
@@ -358,6 +375,21 @@ public class MarkdownParser extends Parser {
                     }
                     buffer.unwind();
                 }
+            }
+        }
+    }
+
+    private static class NumberedItemSpec extends TokenSpec {
+        @Override
+        public void match(Buffer buffer) throws IOException {
+            if (!buffer.consumeRange('0', '9')) {
+                return;
+            }
+            while (buffer.consumeRange('0', '9')) {
+                ;
+            }
+            if (!buffer.consume('.')) {
+                buffer.unwind();
             }
         }
     }
@@ -427,6 +459,15 @@ public class MarkdownParser extends Parser {
                 if (ch == candidate) {
                     return true;
                 }
+            }
+            return false;
+        }
+
+        boolean consumeRange(char from, char to) throws IOException {
+            int ch = peek();
+            if (ch >= from && ch <= to) {
+                next();
+                return true;
             }
             return false;
         }

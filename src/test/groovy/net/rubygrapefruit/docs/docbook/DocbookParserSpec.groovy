@@ -1,7 +1,8 @@
 package net.rubygrapefruit.docs.docbook
 
-import spock.lang.Specification
 import net.rubygrapefruit.docs.model.ItemisedList
+import net.rubygrapefruit.docs.model.OrderedList
+import spock.lang.Specification
 
 class DocbookParserSpec extends Specification {
     final DocbookParser parser = new DocbookParser()
@@ -81,6 +82,26 @@ class DocbookParserSpec extends Specification {
         then:
         doc.contents[0].contents.size() == 1
         doc.contents[0].contents[0] instanceof ItemisedList
+        doc.contents[0].contents[0].items.size() == 2
+        doc.contents[0].contents[0].items[0].contents[0].text == 'item 1'
+        doc.contents[0].contents[0].items[1].contents[0].text == 'item 2'
+    }
+
+    def "converts orderedlist elements to ordered list"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <orderedlist>
+            <listitem><para>item 1</para></listitem>
+            <listitem><para>item 2</para></listitem>
+        </orderedlist>
+    </chapter>
+</book>'''
+
+        then:
+        doc.contents[0].contents.size() == 1
+        doc.contents[0].contents[0] instanceof OrderedList
         doc.contents[0].contents[0].items.size() == 2
         doc.contents[0].contents[0].items[0].contents[0].text == 'item 1'
         doc.contents[0].contents[0].items[1].contents[0].text == 'item 2'

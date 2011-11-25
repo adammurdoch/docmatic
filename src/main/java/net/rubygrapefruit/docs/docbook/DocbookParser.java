@@ -176,6 +176,9 @@ public class DocbookParser extends Parser {
             if (name.equals("itemizedlist")) {
                 return new ItemizedListHandler(container);
             }
+            if (name.equals("orderedlist")) {
+                return new OrderedListHandler(container);
+            }
             return super.pushChild(name, context);
         }
     }
@@ -205,17 +208,19 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class ItemizedListHandler extends DefaultElementHandler {
-        private final BuildableContainer container;
-        private BuildableItemisedList list;
+    private abstract static class ListHandler extends DefaultElementHandler {
+        protected final BuildableContainer container;
+        private BuildableList list;
 
-        private ItemizedListHandler(BuildableContainer container) {
+        private ListHandler(BuildableContainer container) {
             this.container = container;
         }
 
+        abstract BuildableList create();
+
         @Override
         public void start(String name, Context context) {
-            list = container.addItemisedList();
+            list = create();
         }
 
         @Override
@@ -227,11 +232,33 @@ public class DocbookParser extends Parser {
         }
     }
 
+    private static class ItemizedListHandler extends ListHandler {
+        private ItemizedListHandler(BuildableContainer container) {
+            super(container);
+        }
+
+        @Override
+        BuildableList create() {
+            return container.addItemisedList();
+        }
+    }
+
+    private static class OrderedListHandler extends ListHandler {
+        private OrderedListHandler(BuildableContainer container) {
+            super(container);
+        }
+
+        @Override
+        BuildableList create() {
+            return container.addOrderedList();
+        }
+    }
+
     private static class ListItemHandler extends ContainerHandler {
-        private final BuildableItemisedList list;
+        private final BuildableList list;
         private BuildableListItem item;
 
-        public ListItemHandler(BuildableItemisedList list) {
+        public ListItemHandler(BuildableList list) {
             this.list = list;
         }
 

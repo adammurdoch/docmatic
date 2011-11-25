@@ -103,6 +103,31 @@ para 3
 '''
     }
 
+    def "renders the contents of an ordered list"() {
+        given:
+        def doc = document '''
+1. para 1
+1. para 2
+1. para 3
+'''
+
+        expect:
+        render doc contains '''<body>
+<ol>
+<li>
+<p>para 1</p>
+</li>
+<li>
+<p>para 2</p>
+</li>
+<li>
+<p>para 3</p>
+</li>
+</ol>
+</body>
+'''
+    }
+
     def document(String text) {
         return new MarkdownParser().parse(text, "document.md")
     }

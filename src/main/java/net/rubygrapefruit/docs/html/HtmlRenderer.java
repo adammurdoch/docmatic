@@ -83,15 +83,14 @@ public class HtmlRenderer extends Renderer {
             ItemisedList list = (ItemisedList) block;
             writer.writeStartElement("ul");
             writer.writeCharacters(EOL);
-            for (ListItem item : list.getItems()) {
-                writer.writeStartElement("li");
-                writer.writeCharacters(EOL);
-                for (Block childBlock : item.getContents()) {
-                    writeBlock(childBlock, writer);
-                }
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
-            }
+            writeItems(list, writer);
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } else if (block instanceof OrderedList) {
+            OrderedList list = (OrderedList) block;
+            writer.writeStartElement("ol");
+            writer.writeCharacters(EOL);
+            writeItems(list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof UnknownBlock) {
@@ -111,6 +110,18 @@ public class HtmlRenderer extends Renderer {
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
+        }
+    }
+
+    private void writeItems(List list, XMLStreamWriter writer) throws XMLStreamException {
+        for (ListItem item : list.getItems()) {
+            writer.writeStartElement("li");
+            writer.writeCharacters(EOL);
+            for (Block childBlock : item.getContents()) {
+                writeBlock(childBlock, writer);
+            }
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
         }
     }
 }

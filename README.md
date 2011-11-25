@@ -9,7 +9,7 @@ Existing tool-chains for the JVM are unwieldy, slow and hard to customise.
 
 Supported Inputs
 ================
-Can parse a subset of markdown and DocBook. You can also use the API to build a document programmatically.
+Can parse a subset of Markdown and DocBook 5. You can also use the API to build a document programmatically.
 
 Markdown
 --------
@@ -19,17 +19,18 @@ Supported syntax:
 * Setext style headers - text only
 * Unordered lists - text only
 
-DocBook
--------
+DocBook 5
+---------
 Supported elements:
 
 * book > chapter
 * chapter > title, para
-* section > title, para, itemizedlist
+* section > title, para, itemizedlist, orderedlist
 * title > text only
 * para > text only
 * itemizedlist > listitem
-* listitem > para, itemizedlist
+* orderedlist > listitem
+* listitem > para, itemizedlist, orderedlist
 
 Supported Outputs
 =================

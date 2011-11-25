@@ -2,6 +2,8 @@ package net.rubygrapefruit.docs.markdown
 
 import net.rubygrapefruit.docs.model.Paragraph
 import spock.lang.Specification
+import net.rubygrapefruit.docs.model.ItemisedList
+import net.rubygrapefruit.docs.model.OrderedList
 
 class MarkdownParserSpec extends Specification {
     final MarkdownParser parser = new MarkdownParser()
@@ -212,7 +214,7 @@ para
         doc.contents[4].text == '===='
     }
 
-    def "a leading * defines a list item"() {
+    def "a leading * defines an itemised list item"() {
         when:
         def doc = parse '''
 * item 1
@@ -222,6 +224,7 @@ para
 
         then:
         doc.contents.size() == 1
+        doc.contents[0] instanceof ItemisedList
         doc.contents[0].items.size() == 3
         doc.contents[0].items[0].contents[0].text == 'item 1'
         doc.contents[0].items[1].contents[0].text == 'item 2'
@@ -335,7 +338,65 @@ not
         doc.contents[3].text == 'not * an item'
     }
 
+    def "list item can contain list item marker characters"() {
+        when:
+        def doc = parse '''
+* - item
++ item + item
+- -+*
+* *
+*no whitespace
+'''
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].items.size() == 4
+        doc.contents[0].items[0].contents[0].text == '- item'
+        doc.contents[0].items[1].contents[0].text == 'item + item'
+        doc.contents[0].items[2].contents[0].text == '-+*'
+        doc.contents[0].items[3].contents[0].text == '* *no whitespace'
+    }
+
     def "header takes precedence over list item"() {
+        when:
+        def doc = parse '''
+* item
+-
+
+- item
+-----
+para
+'''
+
+        then:
+        doc.contents.size() == 2
+        doc.contents[0].title == '* item'
+        doc.contents[1].title == '- item'
+        doc.contents[1].contents[0].text == 'para'
+    }
+
+    def "a leading digits and . defines an ordered list item"() {
+        when:
+        def doc = parse '''
+1. item 1
+1. item 2
+78. item 3
+'''
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0] instanceof OrderedList
+        doc.contents[0].items.size() == 3
+        doc.contents[0].items[0].contents[0].text == 'item 1'
+        doc.contents[0].items[1].contents[0].text == 'item 2'
+        doc.contents[0].items[2].contents[0].text == 'item 3'
+    }
+
+    def "can interleave list types"() {
+        expect: false
+    }
+
+    def "paragraphs can contain ordered list item marker"() {
         expect: false
     }
 

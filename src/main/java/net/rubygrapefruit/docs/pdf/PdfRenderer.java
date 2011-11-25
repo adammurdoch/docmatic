@@ -4,6 +4,7 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.model.Document;
+import net.rubygrapefruit.docs.model.List;
 import net.rubygrapefruit.docs.model.ListItem;
 import net.rubygrapefruit.docs.model.Paragraph;
 import net.rubygrapefruit.docs.model.Section;
@@ -59,15 +60,14 @@ public class PdfRenderer extends Renderer {
             return new com.itextpdf.text.Paragraph(paragraph.getText(), base);
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
-            List pdfList = new List(false);
+            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(false);
             pdfList.setListSymbol("\u2022   ");
-            for (ListItem item : list.getItems()) {
-                com.itextpdf.text.ListItem pdfItem = new com.itextpdf.text.ListItem();
-                for (Block childBlock : item.getContents()) {
-                    pdfItem.add(convertBlock(childBlock));
-                }
-                pdfList.add(pdfItem);
-            }
+            addItems(list, pdfList);
+            return pdfList;
+        } else if (block instanceof OrderedList) {
+            OrderedList list = (OrderedList) block;
+            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true);
+            addItems(list, pdfList);
             return pdfList;
         } else if (block instanceof UnknownBlock) {
             UnknownBlock unknownBlock = (UnknownBlock) block;
@@ -85,6 +85,17 @@ public class PdfRenderer extends Renderer {
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
+        }
+    }
+
+    private void addItems(List list, com.itextpdf.text.List pdfList) throws DocumentException {
+        for (ListItem item : list.getItems()) {
+            com.itextpdf.text.ListItem pdfItem = new com.itextpdf.text.ListItem();
+            for (Block childBlock : item.getContents()) {
+                pdfItem.add(convertBlock(childBlock));
+            }
+            pdfList.add(pdfItem);
+            pdfItem.getListSymbol().setFont(base);
         }
     }
 }
