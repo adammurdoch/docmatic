@@ -48,13 +48,14 @@ para 2. sentence 2.2
 sentence 1.1
     sentence 1.2
 sentence 1.3
-sentence 1.4
+ sentence 1.4
+\tsentence 1.5
 '''
 
         then:
         def paras = doc.getContents(Paragraph)
         paras.size() == 1
-        paras[0].text == '''sentence 1.1 sentence 1.2 sentence 1.3 sentence 1.4'''
+        paras[0].text == '''sentence 1.1 sentence 1.2 sentence 1.3 sentence 1.4 sentence 1.5'''
     }
 
     def "normalises whitespace in paragraph"() {

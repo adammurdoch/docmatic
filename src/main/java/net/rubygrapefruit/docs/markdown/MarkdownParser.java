@@ -168,9 +168,13 @@ public class MarkdownParser extends Parser {
 
         CharSequence getContent(int startToken) {
             StringBuilder builder = new StringBuilder();
-            for (int i = startToken; i < tokens.size(); i++) {
+            int pos = startToken;
+            if (tokens.get(pos).type == TokenType.WhiteSpace) {
+                pos++;
+            }
+            for (int i = pos; i < tokens.size(); i++) {
                 Token token = tokens.get(i);
-                if (token.type == TokenType.WhiteSpace || token.type == TokenType.Continue) {
+                if (token.type == TokenType.WhiteSpace) {
                     builder.append(' ');
                 } else {
                     builder.append(token.value);
@@ -224,21 +228,20 @@ public class MarkdownParser extends Parser {
                 return new Line(LineType.Finish, tokens);
             }
 
-            if (tokens.size() > 0 && tokens.get(0).type == TokenType.WhiteSpace) {
-                tokens.remove(0);
-            }
             if (tokens.size() > 0 && tokens.get(tokens.size() - 1).type == TokenType.WhiteSpace) {
                 tokens.remove(tokens.size() - 1);
             }
-            if (tokens.size() == 1 && tokens.get(0).type == TokenType.Continue) {
+            if (tokens.size() > 1 && tokens.get(0).type == TokenType.WhiteSpace) {
+                if (tokens.get(0).value.startsWith("    ") || tokens.get(0).value.startsWith("\t")) {
+                    return new Line(LineType.Continue, tokens);
+                }
+            }
+            if (tokens.size() > 0 && tokens.get(0).type == TokenType.WhiteSpace) {
                 tokens.remove(0);
             }
 
             if (tokens.isEmpty()) {
                 return new Line(LineType.Empty, tokens);
-            }
-            if (tokens.get(0).type == TokenType.Continue) {
-                return new Line(LineType.Continue, tokens);
             }
             if (tokens.size() > 2 && tokens.get(0).type == TokenType.ItemisedListItem && tokens.get(1).type
                     == TokenType.WhiteSpace) {
@@ -259,7 +262,7 @@ public class MarkdownParser extends Parser {
     }
 
     enum TokenType {
-        WhiteSpace, Word, H1, H2, EOL, ItemisedListItem, OrderedListItem, Continue
+        WhiteSpace, Word, H1, H2, EOL, ItemisedListItem, OrderedListItem
     }
 
     private static class Token {
@@ -280,7 +283,6 @@ public class MarkdownParser extends Parser {
         private final TokenSpec dashesSpec = new SequenceSpec('-');
         private final TokenSpec itemisedListItemSpec = new ChoiceSpec('*', '+', '-');
         private final TokenSpec numberedListItemSpec = new NumberedItemSpec();
-        private final TokenSpec continueSpec = new ContinueSpec();
 
         private final Buffer buffer;
         private boolean atStartOfLine;
@@ -307,9 +309,6 @@ public class MarkdownParser extends Parser {
         TokenType scanNext() throws IOException {
             if (buffer.scanFor(endOfLineSpec)) {
                 return TokenType.EOL;
-            }
-            if (atStartOfLine && buffer.scanFor(continueSpec)) {
-                return TokenType.Continue;
             }
             if (atStartOfLine && buffer.scanFor(itemisedListItemSpec)) {
                 return TokenType.ItemisedListItem;
