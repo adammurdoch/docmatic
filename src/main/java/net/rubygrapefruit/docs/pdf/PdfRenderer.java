@@ -29,12 +29,15 @@ public class PdfRenderer extends Renderer {
             fontFamily = textTheme.getFontName().equals("sans-serif") ? Font.FontFamily.HELVETICA : Font.FontFamily.TIMES_ROMAN;
             textColor = new BaseColor(textTheme.getColour());
         }
+
+        // TODO - theme font sizes
         base = new Font(fontFamily, 12, Font.NORMAL, textColor);
         h1 = new Font(fontFamily, 22, Font.BOLD, textColor);
         h2 = new Font(fontFamily, 16, Font.BOLD, textColor);
         unknown = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
 
-        com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4);
+        // TODO - theme margins
+        com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4, 40, 20, 40, 20);
         PdfWriter.getInstance(pdfDocument, stream);
         pdfDocument.open();
         writeContents(document, 0, pdfDocument);
@@ -46,7 +49,12 @@ public class PdfRenderer extends Renderer {
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                target.add(new com.itextpdf.text.Paragraph(child.getTitle(), depth == 0 ? h1 : h2));
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph(child.getTitle(),
+                        depth == 0 ? h1 : h2);
+                // TODO - theme spacing
+                title.setSpacingBefore(15);
+                title.setSpacingAfter(8);
+                target.add(title);
                 writeContents(child, depth + 1, target);
             } else {
                 target.add(convertBlock(block));
@@ -57,16 +65,22 @@ public class PdfRenderer extends Renderer {
     private Element convertBlock(Block block) throws DocumentException {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
-            return new com.itextpdf.text.Paragraph(paragraph.getText(), base);
+            com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph(paragraph.getText(), base);
+            // TODO - theme spacing
+            pdfParagraph.setSpacingBefore(2);
+            pdfParagraph.setSpacingAfter(2);
+            return pdfParagraph;
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
-            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(false);
+            // TODO - theme indent
+            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(false, 24);
             pdfList.setListSymbol("\u2022   ");
             addItems(list, pdfList);
             return pdfList;
         } else if (block instanceof OrderedList) {
             OrderedList list = (OrderedList) block;
-            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true);
+            // TODO - theme indent
+            com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true, 24);
             addItems(list, pdfList);
             return pdfList;
         } else if (block instanceof UnknownBlock) {
@@ -91,10 +105,14 @@ public class PdfRenderer extends Renderer {
     private void addItems(List list, com.itextpdf.text.List pdfList) throws DocumentException {
         for (ListItem item : list.getItems()) {
             com.itextpdf.text.ListItem pdfItem = new com.itextpdf.text.ListItem();
+            pdfList.add(pdfItem);
+
+            // TODO - theme spacing
+            pdfItem.setSpacingBefore(2);
+            pdfItem.setSpacingAfter(2);
             for (Block childBlock : item.getContents()) {
                 pdfItem.add(convertBlock(childBlock));
             }
-            pdfList.add(pdfItem);
             pdfItem.getListSymbol().setFont(base);
         }
     }
