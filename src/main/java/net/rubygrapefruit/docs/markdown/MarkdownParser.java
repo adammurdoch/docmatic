@@ -17,26 +17,25 @@ public class MarkdownParser extends Parser {
     @Override
     protected Document doParse(Reader input, String fileName) throws Exception {
         BuildableDocument document = new BuildableDocument();
-        DocumentBuilder builder = new DocumentBuilder(document);
         Lexer lexer = new Lexer(input);
         LineParser parser = new LineParser(lexer);
         while (parser.peek().type != LineType.Finish) {
             if (empty(parser)) {
                 continue;
             }
-            if (header1(parser, builder)) {
+            if (header1(parser, document)) {
                 continue;
             }
-            if (header2(parser, builder)) {
+            if (header2(parser, document)) {
                 continue;
             }
-            if (itemisedList(parser, builder.getCurrentComponent())) {
+            if (itemisedList(parser, document.getCurrent())) {
                 continue;
             }
-            if (orderedList(parser, builder.getCurrentComponent())) {
+            if (orderedList(parser, document.getCurrent())) {
                 continue;
             }
-            if (para(parser, builder.getCurrentComponent())) {
+            if (para(parser, document.getCurrent())) {
                 continue;
             }
 
@@ -122,25 +121,25 @@ public class MarkdownParser extends Parser {
         return false;
     }
 
-    private boolean header1(LineParser parser, DocumentBuilder builder) throws IOException {
+    private boolean header1(LineParser parser, BuildableComponent component) throws IOException {
         Line line1 = parser.peek();
         Line line2 = parser.peek(1);
         if (line2.type == LineType.H1) {
             parser.next();
             parser.next();
-            builder.appendSection(1).getTitle().append(line1.getContent());
+            component.addSection(1).getTitle().append(line1.getContent());
             return true;
         }
         return false;
     }
 
-    private boolean header2(LineParser parser, DocumentBuilder builder) throws IOException {
+    private boolean header2(LineParser parser, BuildableComponent component) throws IOException {
         Line line1 = parser.peek();
         Line line2 = parser.peek(1);
         if (line2.type == LineType.H2) {
             parser.next();
             parser.next();
-            builder.appendSection(2).getTitle().append(line1.getContent());
+            component.addSection(2).getTitle().append(line1.getContent());
             return true;
         }
         return false;

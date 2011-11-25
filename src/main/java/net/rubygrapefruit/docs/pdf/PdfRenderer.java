@@ -90,18 +90,18 @@ public class PdfRenderer extends Renderer {
             com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true, 24);
             addItems(list, pdfList);
             return pdfList;
-        } else if (block instanceof UnknownBlock) {
-            UnknownBlock unknownBlock = (UnknownBlock) block;
+        } else if (block instanceof Unknown) {
+            Unknown unknown = (Unknown) block;
             com.itextpdf.text.Paragraph paragraph = new com.itextpdf.text.Paragraph();
-            paragraph.setFont(unknown);
+            paragraph.setFont(this.unknown);
             paragraph.add("Unexpected ");
-            paragraph.add(unknownBlock.getName());
+            paragraph.add(unknown.getName());
             paragraph.add(" found at ");
-            paragraph.add(unknownBlock.getLocation().getFile());
+            paragraph.add(unknown.getLocation().getFile());
             paragraph.add(", line: ");
-            paragraph.add(String.valueOf(unknownBlock.getLocation().getLine()));
+            paragraph.add(String.valueOf(unknown.getLocation().getLine()));
             paragraph.add(", column: ");
-            paragraph.add(String.valueOf(unknownBlock.getLocation().getColumn()));
+            paragraph.add(String.valueOf(unknown.getLocation().getColumn()));
             return paragraph;
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",

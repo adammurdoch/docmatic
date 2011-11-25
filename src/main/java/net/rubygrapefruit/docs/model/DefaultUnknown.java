@@ -1,10 +1,10 @@
 package net.rubygrapefruit.docs.model;
 
-public class DefaultUnknownBlock implements UnknownBlock {
+public class DefaultUnknown implements Unknown {
     private final Location location;
     private final String name;
 
-    public DefaultUnknownBlock(String name, Location location) {
+    public DefaultUnknown(String name, Location location) {
         this.location = location;
         this.name = name;
     }

@@ -93,18 +93,18 @@ public class HtmlRenderer extends Renderer {
             writeItems(list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
-        } else if (block instanceof UnknownBlock) {
-            UnknownBlock unknownBlock = (UnknownBlock) block;
+        } else if (block instanceof Unknown) {
+            Unknown unknown = (Unknown) block;
             writer.writeStartElement("div");
             writer.writeAttribute("class", "unknown");
             writer.writeCharacters("Unexpected ");
-            writer.writeCharacters(unknownBlock.getName());
+            writer.writeCharacters(unknown.getName());
             writer.writeCharacters(" found at ");
-            writer.writeCharacters(unknownBlock.getLocation().getFile());
+            writer.writeCharacters(unknown.getLocation().getFile());
             writer.writeCharacters(", line: ");
-            writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getLine()));
+            writer.writeCharacters(String.valueOf(unknown.getLocation().getLine()));
             writer.writeCharacters(", column: ");
-            writer.writeCharacters(String.valueOf(unknownBlock.getLocation().getColumn()));
+            writer.writeCharacters(String.valueOf(unknown.getLocation().getColumn()));
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else {

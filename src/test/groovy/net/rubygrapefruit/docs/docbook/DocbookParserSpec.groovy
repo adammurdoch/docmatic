@@ -139,16 +139,18 @@ chapter
         doc.contents[0].contents[0].items[1].contents[0].text == 'item 2'
     }
 
-    def "converts unexpected element and text"() {
+    def "converts unexpected elements and text"() {
         when:
         def doc = parse '''
 <book>
-    <para>para 1</para>
+    <para>para is not allowed here</para>
     unexpected
+    <section><para><unexpected-inline/></para></section>
 </book>'''
 
         then:
-        doc.contents.size() == 2
+        doc.contents.size() == 3
+
         doc.contents[0].name == '<para>'
         doc.contents[0].location.file == 'book.xml'
         doc.contents[0].location.line == 3
@@ -157,7 +159,12 @@ chapter
         doc.contents[1].name == 'text'
         doc.contents[1].location.file == 'book.xml'
         doc.contents[1].location.line == 5
-        doc.contents[1].location.column == 1
+        doc.contents[1].location.column == 5
+
+        doc.contents[2].contents[0].contents[0].name == 'unexpected-inline'
+        doc.contents[2].contents[0].contents[0].location.file == 'book.xml'
+        doc.contents[2].contents[0].contents[0].location.line == 6
+        doc.contents[2].contents[0].contents[0].location.column == 1
     }
 
     def parse(String string) {

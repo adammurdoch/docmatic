@@ -19,10 +19,10 @@ public class DocbookParser extends Parser {
     @Override
     protected Document doParse(Reader input, String fileName) throws XMLStreamException {
         BuildableDocument document = new BuildableDocument();
-        DocumentBuilder builder = new DocumentBuilder(document);
         XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(input);
         LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
-        DefaultContext context = new DefaultContext(builder, fileName);
+        DefaultContext context = new DefaultContext(fileName);
+        context.push(document);
         stack.add(new RootHandler());
         try {
             while (reader.hasNext()) {
@@ -53,21 +53,23 @@ public class DocbookParser extends Parser {
         
         int getColumnNumber();
         
-        DocumentBuilder getBuilder();
+        BuildableComponent currentComponent();
+
+        BuildableBlockContainer currentContainer();
+
+        void push(BuildableBlockContainer container);
+
+        void pop();
     }
     
     private static class DefaultContext implements Context {
         final String fileName;
-        final DocumentBuilder builder;
+        final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
+        final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
         Location location;
         
-        private DefaultContext(DocumentBuilder builder, String fileName) {
-            this.builder = builder;
+        private DefaultContext(String fileName) {
             this.fileName = fileName;
-        }
-
-        public DocumentBuilder getBuilder() {
-            return builder;
         }
 
         public String getFileName() {
@@ -80,6 +82,28 @@ public class DocbookParser extends Parser {
 
         public int getColumnNumber() {
             return location.getColumnNumber();
+        }
+
+        public BuildableComponent currentComponent() {
+            return componentStack.getLast();
+        }
+
+        public BuildableBlockContainer currentContainer() {
+            return containerStack.getLast();
+        }
+
+        public void push(BuildableBlockContainer container) {
+            containerStack.add(container);
+            if (container instanceof BuildableComponent) {
+                componentStack.add((BuildableComponent) container);
+            }
+        }
+
+        public void pop() {
+            BuildableBlockContainer old = containerStack.removeLast();
+            if (old == componentStack.getLast()) {
+                componentStack.removeLast();
+            }
         }
     }
     
@@ -113,7 +137,7 @@ public class DocbookParser extends Parser {
         }
 
         public ElementHandler pushChild(String name, Context context) {
-            context.getBuilder().appendUnknown(String.format("<%s>", name), context.getFileName(),
+            context.currentContainer().addUnknown(String.format("<%s>", name), context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber());
             return new NoOpElementHandler();
         }
@@ -122,7 +146,7 @@ public class DocbookParser extends Parser {
             if (text.matches("\\s+")) {
                 return;
             }
-            context.getBuilder().appendUnknown("text", context.getFileName(), context.getLineNumber(),
+            context.currentContainer().addUnknown("text", context.getFileName(), context.getLineNumber(),
                     context.getColumnNumber());
         }
 
@@ -151,17 +175,10 @@ public class DocbookParser extends Parser {
     }
 
     private static class ParaHandler extends DefaultElementHandler {
-        private final BuildableBlockContainer container;
-        private BuildableParagraph paragraph;
         private final WhitespaceNormaliser text = new WhitespaceNormaliser();
-
-        private ParaHandler(BuildableBlockContainer container) {
-            this.container = container;
-        }
 
         @Override
         public void start(String name, Context context) {
-            paragraph = container.addParagraph();
         }
 
         @Override
@@ -171,31 +188,30 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
+            BuildableParagraph paragraph = context.currentContainer().addParagraph();
             paragraph.append(text.getText());
         }
     }
 
     private static class ContainerHandler extends DefaultElementHandler {
-        protected ElementHandler pushChild(String name, Context context, BuildableBlockContainer container) {
+        public ElementHandler pushChild(String name, Context context) {
             if (name.equals("para")) {
-                return new ParaHandler(container);
+                return new ParaHandler();
             }
             if (name.equals("itemizedlist")) {
-                return new ItemizedListHandler(container);
+                return new ItemizedListHandler();
             }
             if (name.equals("orderedlist")) {
-                return new OrderedListHandler(container);
+                return new OrderedListHandler();
             }
             return super.pushChild(name, context);
         }
     }
 
     private static class SectionHandler extends ContainerHandler {
-        private BuildableSection section;
-
         @Override
         public void start(String name, Context context) {
-            section = context.getBuilder().appendSection();
+            context.push(context.currentComponent().addSection());
         }
 
         @Override
@@ -206,28 +222,23 @@ public class DocbookParser extends Parser {
             if (name.equals("section")) {
                 return new SectionHandler();
             }
-            return super.pushChild(name, context, section);
+            return super.pushChild(name, context);
         }
 
         @Override
         public void finish(Context context) {
-            context.getBuilder().popSection();
+            context.pop();
         }
     }
 
     private abstract static class ListHandler extends DefaultElementHandler {
-        protected final BuildableBlockContainer container;
         private BuildableList list;
 
-        private ListHandler(BuildableBlockContainer container) {
-            this.container = container;
-        }
-
-        abstract BuildableList create();
+        abstract BuildableList create(Context context);
 
         @Override
         public void start(String name, Context context) {
-            list = create();
+            list = create(context);
         }
 
         @Override
@@ -240,30 +251,21 @@ public class DocbookParser extends Parser {
     }
 
     private static class ItemizedListHandler extends ListHandler {
-        private ItemizedListHandler(BuildableBlockContainer container) {
-            super(container);
-        }
-
         @Override
-        BuildableList create() {
-            return container.addItemisedList();
+        BuildableList create(Context context) {
+            return context.currentContainer().addItemisedList();
         }
     }
 
     private static class OrderedListHandler extends ListHandler {
-        private OrderedListHandler(BuildableBlockContainer container) {
-            super(container);
-        }
-
         @Override
-        BuildableList create() {
-            return container.addOrderedList();
+        BuildableList create(Context context) {
+            return context.currentContainer().addOrderedList();
         }
     }
 
     private static class ListItemHandler extends ContainerHandler {
         private final BuildableList list;
-        private BuildableListItem item;
 
         public ListItemHandler(BuildableList list) {
             this.list = list;
@@ -271,12 +273,12 @@ public class DocbookParser extends Parser {
 
         @Override
         public void start(String name, Context context) {
-            item = list.addItem();
+            context.push(list.addItem());
         }
 
         @Override
-        public ElementHandler pushChild(String name, Context context) {
-            return pushChild(name, context, item);
+        public void finish(Context context) {
+            context.pop();
         }
     }
 
@@ -290,7 +292,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.getBuilder().getCurrentComponent().getTitle().append(content.getText());
+            context.currentComponent().getTitle().append(content.getText());
         }
     }
 }

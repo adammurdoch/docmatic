@@ -3,7 +3,7 @@ package net.rubygrapefruit.docs.model;
 /**
  * Some unexpected content in the source document.
  */
-public interface UnknownBlock extends Block {
+public interface Unknown extends Block, Inline {
     String getName();
 
     Location getLocation();
