@@ -3,7 +3,7 @@ package net.rubygrapefruit.docs.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BuildableContainer implements Container {
+public class BuildableBlockContainer implements BlockContainer {
     private final List<Block> contents = new ArrayList<Block>();
 
     public List<? extends Block> getContents() {

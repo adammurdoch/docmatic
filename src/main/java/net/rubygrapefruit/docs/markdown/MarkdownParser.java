@@ -46,7 +46,7 @@ public class MarkdownParser extends Parser {
         return document;
     }
 
-    private boolean para(LineParser parser, BuildableContainer container) throws IOException {
+    private boolean para(LineParser parser, BuildableBlockContainer container) throws IOException {
         BuildableParagraph paragraph = container.addParagraph();
         paragraph.append(parser.next().getContent());
         while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty) {
@@ -56,7 +56,7 @@ public class MarkdownParser extends Parser {
         return true;
     }
 
-    private boolean itemisedList(LineParser parser, BuildableContainer container) throws IOException {
+    private boolean itemisedList(LineParser parser, BuildableBlockContainer container) throws IOException {
         if (parser.peek().type != LineType.ItemisedListItem) {
             return false;
         }
@@ -68,7 +68,7 @@ public class MarkdownParser extends Parser {
         return true;
     }
 
-    private boolean orderedList(LineParser parser, BuildableContainer container) throws IOException {
+    private boolean orderedList(LineParser parser, BuildableBlockContainer container) throws IOException {
         if (parser.peek().type != LineType.OrderedListItem) {
             return false;
         }
@@ -128,7 +128,7 @@ public class MarkdownParser extends Parser {
         if (line2.type == LineType.H1) {
             parser.next();
             parser.next();
-            builder.appendSection(1).setTitle(line1.getContent());
+            builder.appendSection(1).getTitle().append(line1.getContent());
             return true;
         }
         return false;
@@ -140,7 +140,7 @@ public class MarkdownParser extends Parser {
         if (line2.type == LineType.H2) {
             parser.next();
             parser.next();
-            builder.appendSection(2).setTitle(line1.getContent());
+            builder.appendSection(2).getTitle().append(line1.getContent());
             return true;
         }
         return false;

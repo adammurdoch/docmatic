@@ -1,4 +1,4 @@
 package net.rubygrapefruit.docs.model;
 
-public interface ListItem extends Container {
+public interface ListItem extends BlockContainer {
 }

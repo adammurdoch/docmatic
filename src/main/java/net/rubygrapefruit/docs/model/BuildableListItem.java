@@ -1,4 +1,4 @@
 package net.rubygrapefruit.docs.model;
 
-public class BuildableListItem extends BuildableContainer implements ListItem {
+public class BuildableListItem extends BuildableBlockContainer implements ListItem {
 }

@@ -21,8 +21,8 @@ class DocbookParserSpec extends Specification {
 
         then:
         doc.contents.size() == 2
-        doc.contents[0].title == 'chapter 1'
-        doc.contents[1].title == 'chapter 2'
+        doc.contents[0].title.text == 'chapter 1'
+        doc.contents[1].title.text == 'chapter 2'
     }
 
     def "converts section elements to sections"() {
@@ -42,13 +42,13 @@ class DocbookParserSpec extends Specification {
         then:
         doc.contents.size() == 2
 
-        doc.contents[0].title == 'chapter 1'
+        doc.contents[0].title.text == 'chapter 1'
         doc.contents[0].contents.size() == 1
-        doc.contents[0].contents[0].title == 'section 1'
+        doc.contents[0].contents[0].title.text == 'section 1'
 
-        doc.contents[1].title == 'chapter 2'
+        doc.contents[1].title.text == 'chapter 2'
         doc.contents[1].contents.size() == 1
-        doc.contents[1].contents[0].title == 'section 2'
+        doc.contents[1].contents[0].title.text == 'section 2'
     }
 
     def "normalises text in titles"() {
@@ -64,7 +64,7 @@ chapter
 </book>'''
 
         then:
-        doc.contents[0].title == 'chapter 1'
+        doc.contents[0].title.text == 'chapter 1'
     }
 
     def "converts para elements to paragraphs"() {

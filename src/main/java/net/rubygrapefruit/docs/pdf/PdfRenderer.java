@@ -49,7 +49,7 @@ public class PdfRenderer extends Renderer {
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph(child.getTitle(),
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph(child.getTitle().getText(),
                         depth == 0 ? h1 : h2);
                 // TODO - theme spacing
                 title.setSpacingBefore(15);
@@ -66,9 +66,11 @@ public class PdfRenderer extends Renderer {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph(paragraph.getText(), base);
+            pdfParagraph.setAlignment(Element.ALIGN_JUSTIFIED);
             // TODO - theme spacing
-            pdfParagraph.setSpacingBefore(2);
-            pdfParagraph.setSpacingAfter(2);
+            pdfParagraph.setSpacingBefore(4);
+            pdfParagraph.setSpacingAfter(4);
+            pdfParagraph.setMultipliedLeading(1.4f);
             return pdfParagraph;
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
@@ -108,8 +110,8 @@ public class PdfRenderer extends Renderer {
             pdfList.add(pdfItem);
 
             // TODO - theme spacing
-            pdfItem.setSpacingBefore(2);
-            pdfItem.setSpacingAfter(2);
+            pdfItem.setSpacingBefore(4);
+            pdfItem.setSpacingAfter(4);
             for (Block childBlock : item.getContents()) {
                 pdfItem.add(convertBlock(childBlock));
             }

@@ -1,14 +1,10 @@
 package net.rubygrapefruit.docs.model;
 
-public class BuildableComponent extends BuildableContainer implements Component {
-    private String title;
+public class BuildableComponent extends BuildableBlockContainer implements Component {
+    private final BuildableTitle title = new BuildableTitle();
 
-    public String getTitle() {
+    public BuildableTitle getTitle() {
         return title;
-    }
-
-    public void setTitle(CharSequence title) {
-        this.title = title.toString();
     }
 
     public BuildableSection addSection() {

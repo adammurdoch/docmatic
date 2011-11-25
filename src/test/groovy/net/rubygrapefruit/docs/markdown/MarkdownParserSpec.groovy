@@ -98,12 +98,12 @@ title 2
         then:
         doc.contents.size() == 2
 
-        doc.contents[0].title == 'title'
+        doc.contents[0].title.text == 'title'
         doc.contents[0].contents.size() == 2
         doc.contents[0].contents[0].text == 'para 1. sentence 1.2'
         doc.contents[0].contents[1].text == 'para 2'
 
-        doc.contents[1].title == 'title 2'
+        doc.contents[1].title.text == 'title 2'
         doc.contents[1].contents.empty
     }
 
@@ -126,14 +126,14 @@ title 2
         then:
         doc.contents.size() == 2
 
-        doc.contents[0].title == 'title'
+        doc.contents[0].title.text == 'title'
         doc.contents[0].contents.size() == 1
-        doc.contents[0].contents[0].title == 'section 2'
+        doc.contents[0].contents[0].title.text == 'section 2'
         doc.contents[0].contents[0].contents.size() == 2
         doc.contents[0].contents[0].contents[0].text == 'para 1. sentence 1.2'
         doc.contents[0].contents[0].contents[1].text == 'para 2'
 
-        doc.contents[1].title == 'title 2'
+        doc.contents[1].title.text == 'title 2'
         doc.contents[1].contents.empty
     }
 
@@ -152,9 +152,9 @@ a-b
 
         then:
         doc.contents.size() == 3
-        doc.contents[0].title == '==='
-        doc.contents[1].title == '---'
-        doc.contents[2].title == 'a-b'
+        doc.contents[0].title.text == '==='
+        doc.contents[1].title.text == '---'
+        doc.contents[2].title.text == 'a-b'
     }
 
     def "can have equals and dash characters inside paragraph"() {

@@ -17,7 +17,7 @@ public class DocumentBuilder {
         return components.getLast();
     }
 
-    public BuildableContainer getCurrentContainer() {
+    public BuildableBlockContainer getCurrentContainer() {
         return getCurrentComponent();
     }
 

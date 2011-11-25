@@ -151,11 +151,11 @@ public class DocbookParser extends Parser {
     }
 
     private static class ParaHandler extends DefaultElementHandler {
-        private final BuildableContainer container;
+        private final BuildableBlockContainer container;
         private BuildableParagraph paragraph;
         private final WhitespaceNormaliser text = new WhitespaceNormaliser();
 
-        private ParaHandler(BuildableContainer container) {
+        private ParaHandler(BuildableBlockContainer container) {
             this.container = container;
         }
 
@@ -176,7 +176,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class ContainerHandler extends DefaultElementHandler {
-        protected ElementHandler pushChild(String name, Context context, BuildableContainer container) {
+        protected ElementHandler pushChild(String name, Context context, BuildableBlockContainer container) {
             if (name.equals("para")) {
                 return new ParaHandler(container);
             }
@@ -216,10 +216,10 @@ public class DocbookParser extends Parser {
     }
 
     private abstract static class ListHandler extends DefaultElementHandler {
-        protected final BuildableContainer container;
+        protected final BuildableBlockContainer container;
         private BuildableList list;
 
-        private ListHandler(BuildableContainer container) {
+        private ListHandler(BuildableBlockContainer container) {
             this.container = container;
         }
 
@@ -240,7 +240,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class ItemizedListHandler extends ListHandler {
-        private ItemizedListHandler(BuildableContainer container) {
+        private ItemizedListHandler(BuildableBlockContainer container) {
             super(container);
         }
 
@@ -251,7 +251,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class OrderedListHandler extends ListHandler {
-        private OrderedListHandler(BuildableContainer container) {
+        private OrderedListHandler(BuildableBlockContainer container) {
             super(container);
         }
 
@@ -290,7 +290,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.getBuilder().getCurrentComponent().setTitle(content.getText().toString());
+            context.getBuilder().getCurrentComponent().getTitle().append(content.getText());
         }
     }
 }

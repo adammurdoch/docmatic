@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * A container for {@link Block} elements.
  */
-public interface Container {
+public interface BlockContainer {
     /**
      * Returns the blocks contained in this container.
      */

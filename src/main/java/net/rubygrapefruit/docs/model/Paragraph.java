@@ -3,6 +3,6 @@ package net.rubygrapefruit.docs.model;
 /**
  * A paragraph is a structural element containing inline elements
  */
-public interface Paragraph extends Block {
+public interface Paragraph extends Block, InlineContainer {
     String getText();
 }

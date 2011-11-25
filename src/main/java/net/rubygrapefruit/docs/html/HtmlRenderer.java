@@ -57,12 +57,12 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
-    private void writeSection(Container container, int depth, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeSection(BlockContainer container, int depth, XMLStreamWriter writer) throws XMLStreamException {
         for (Block block : container.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
                 writer.writeStartElement("h" + (depth + 1));
-                writer.writeCharacters(child.getTitle());
+                writer.writeCharacters(child.getTitle().getText());
                 writer.writeEndElement();
                 writer.writeCharacters(EOL);
                 writeSection(child, depth + 1, writer);
