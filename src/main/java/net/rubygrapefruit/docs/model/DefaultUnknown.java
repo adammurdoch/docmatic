@@ -1,19 +1,13 @@
 package net.rubygrapefruit.docs.model;
 
 public class DefaultUnknown implements Unknown {
-    private final Location location;
-    private final String name;
+    private final String message;
 
-    public DefaultUnknown(String name, Location location) {
-        this.location = location;
-        this.name = name;
+    public DefaultUnknown(String message) {
+        this.message = message;
     }
 
-    public Location getLocation() {
-        return location;
-    }
-
-    public String getName() {
-        return name;
+    public String getMessage() {
+        return message;
     }
 }

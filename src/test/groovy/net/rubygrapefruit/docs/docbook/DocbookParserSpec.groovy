@@ -151,20 +151,11 @@ chapter
         then:
         doc.contents.size() == 3
 
-        doc.contents[0].name == '<para>'
-        doc.contents[0].location.file == 'book.xml'
-        doc.contents[0].location.line == 3
-        doc.contents[0].location.column == 11
+        doc.contents[0].message == '<para>book.xml, line 3, column 11</para>'
 
-        doc.contents[1].name == 'text'
-        doc.contents[1].location.file == 'book.xml'
-        doc.contents[1].location.line == 5
-        doc.contents[1].location.column == 5
+        doc.contents[1].message == '(text book.xml, line 5, column 5)'
 
-        doc.contents[2].contents[0].contents[0].name == 'unexpected-inline'
-        doc.contents[2].contents[0].contents[0].location.file == 'book.xml'
-        doc.contents[2].contents[0].contents[0].location.line == 6
-        doc.contents[2].contents[0].contents[0].location.column == 1
+        doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 1</unexpected-inline>'
     }
 
     def parse(String string) {

@@ -37,22 +37,7 @@ public class BuildableBlockContainer implements BlockContainer {
         return add(new BuildableOrderedList());
     }
 
-    public DefaultUnknown addUnknown(String name, final String fileName, final int lineNumber, final int columnNumber) {
-        Location location = new Location() {
-            public String getFile() {
-                return fileName;
-            }
-
-            public int getLine() {
-                return lineNumber;
-            }
-
-            public int getColumn() {
-                return columnNumber;
-            }
-        };
-        DefaultUnknown block = new DefaultUnknown(name, location);
-        contents.add(block);
-        return block;
+    public DefaultUnknown addUnknown(String message) {
+        return add(new DefaultUnknown(message));
     }
 }

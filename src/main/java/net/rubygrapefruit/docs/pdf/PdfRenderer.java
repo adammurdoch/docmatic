@@ -69,13 +69,13 @@ public class PdfRenderer extends Renderer {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph();
-            writeContents(paragraph, pdfParagraph);
             pdfParagraph.setFont(base);
             pdfParagraph.setAlignment(Element.ALIGN_JUSTIFIED);
             // TODO - theme spacing
             pdfParagraph.setSpacingBefore(4);
             pdfParagraph.setSpacingAfter(4);
             pdfParagraph.setMultipliedLeading(1.4f);
+            writeContents(paragraph, pdfParagraph);
             return pdfParagraph;
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
@@ -94,14 +94,7 @@ public class PdfRenderer extends Renderer {
             Unknown unknown = (Unknown) block;
             com.itextpdf.text.Paragraph paragraph = new com.itextpdf.text.Paragraph();
             paragraph.setFont(this.unknown);
-            paragraph.add("Unexpected ");
-            paragraph.add(unknown.getName());
-            paragraph.add(" found at ");
-            paragraph.add(unknown.getLocation().getFile());
-            paragraph.add(", line: ");
-            paragraph.add(String.valueOf(unknown.getLocation().getLine()));
-            paragraph.add(", column: ");
-            paragraph.add(String.valueOf(unknown.getLocation().getColumn()));
+            paragraph.add(unknown.getMessage());
             return paragraph;
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",

@@ -9,6 +9,7 @@ import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
+import java.io.File;
 import java.io.Reader;
 import java.util.LinkedList;
 
@@ -21,6 +22,10 @@ public class DocbookParser extends Parser {
         BuildableDocument document = new BuildableDocument();
         XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(input);
         LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
+        int pos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf(File.separatorChar));
+        if (pos >= 0) {
+            fileName = fileName.substring(pos + 1);
+        }
         DefaultContext context = new DefaultContext(fileName);
         context.push(document);
         stack.add(new RootHandler());
@@ -137,8 +142,8 @@ public class DocbookParser extends Parser {
         }
 
         public ElementHandler pushChild(String name, Context context) {
-            context.currentContainer().addUnknown(String.format("<%s>", name), context.getFileName(),
-                    context.getLineNumber(), context.getColumnNumber());
+            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(), context.getLineNumber(), context.getColumnNumber(), name);
+            context.currentContainer().addUnknown(message);
             return new NoOpElementHandler();
         }
 
@@ -146,8 +151,8 @@ public class DocbookParser extends Parser {
             if (text.matches("\\s+")) {
                 return;
             }
-            context.currentContainer().addUnknown("text", context.getFileName(), context.getLineNumber(),
-                    context.getColumnNumber());
+            String message = String.format("(text %s, line %s, column %s)", context.getFileName(), context.getLineNumber(), context.getColumnNumber());
+            context.currentContainer().addUnknown(message);
         }
 
         public void finish(Context context) {

@@ -97,14 +97,7 @@ public class HtmlRenderer extends Renderer {
             Unknown unknown = (Unknown) block;
             writer.writeStartElement("div");
             writer.writeAttribute("class", "unknown");
-            writer.writeCharacters("Unexpected ");
-            writer.writeCharacters(unknown.getName());
-            writer.writeCharacters(" found at ");
-            writer.writeCharacters(unknown.getLocation().getFile());
-            writer.writeCharacters(", line: ");
-            writer.writeCharacters(String.valueOf(unknown.getLocation().getLine()));
-            writer.writeCharacters(", column: ");
-            writer.writeCharacters(String.valueOf(unknown.getLocation().getColumn()));
+            writer.writeCharacters(unknown.getMessage());
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else {
