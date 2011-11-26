@@ -2,13 +2,16 @@ package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.*;
+import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 
@@ -16,36 +19,52 @@ import java.util.LinkedList;
  * Builds a document for some Docbook input.
  */
 public class DocbookParser extends Parser {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocbookParser.class);
+
     @Override
-    protected Document doParse(Reader input, String fileName) throws XMLStreamException {
+    protected Document doParse(Reader input, String fileName)
+            throws SAXException, ParserConfigurationException, IOException {
         BuildableDocument document = new BuildableDocument();
-        XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(input);
-        LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
+        final LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
         int pos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf(File.separatorChar));
         if (pos >= 0) {
             fileName = fileName.substring(pos + 1);
         }
-        DefaultContext context = new DefaultContext(fileName);
+        final DefaultContext context = new DefaultContext(fileName);
         context.push(document);
         stack.add(new RootHandler());
-        try {
-            while (reader.hasNext()) {
-                XMLEvent event = reader.nextEvent();
-                context.location = event.getLocation();
-                if (event.isStartElement()) {
-                    String elementName = event.asStartElement().getName().getLocalPart();
-                    ElementHandler childHandler = stack.getLast().pushChild(elementName, context);
-                    stack.add(childHandler);
-                    childHandler.start(elementName, context);
-                } else if (event.isEndElement()) {
-                    stack.removeLast().finish(context);
-                } else if (event.isCharacters()) {
-                    stack.getLast().handleText(event.asCharacters().getData(), context);
-                }
+        SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+        saxParserFactory.setNamespaceAware(true);
+        saxParserFactory.setXIncludeAware(true);
+        saxParserFactory.setValidating(false);
+        SAXParser saxParser = saxParserFactory.newSAXParser();
+        saxParser.getXMLReader().setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        saxParser.getXMLReader().setFeature("http://xml.org/sax/features/validation", false);
+        saxParser.getXMLReader().setContentHandler(new DefaultHandler() {
+            @Override
+            public void setDocumentLocator(Locator locator) {
+                context.location = locator;
             }
-        } finally {
-            reader.close();
-        }
+
+            @Override
+            public void startElement(String uri, String elementName, String qName, Attributes attributes)
+                    throws SAXException {
+                ElementHandler childHandler = stack.getLast().pushChild(elementName, context);
+                stack.add(childHandler);
+                childHandler.start(elementName, context);
+            }
+
+            @Override
+            public void characters(char[] chars, int start, int length) throws SAXException {
+                stack.getLast().handleText(new String(chars, start, length), context);
+            }
+
+            @Override
+            public void endElement(String uri, String elementName, String qName) throws SAXException {
+                stack.removeLast().finish(context);
+            }
+        });
+        saxParser.getXMLReader().parse(new InputSource(input));
 
         return document;
     }
@@ -74,7 +93,7 @@ public class DocbookParser extends Parser {
         final String fileName;
         final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
         final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
-        Location location;
+        Locator location;
         BuildableInlineContainer inlineContainer;
 
         private DefaultContext(String fileName) {
