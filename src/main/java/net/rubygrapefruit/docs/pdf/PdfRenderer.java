@@ -13,56 +13,88 @@ import net.rubygrapefruit.docs.renderer.TextTheme;
 import net.rubygrapefruit.docs.renderer.Theme;
 
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 
 public class PdfRenderer extends Renderer {
     private Font base;
-    private Font h1;
-    private Font h2;
+    private java.util.List<Font> headerFonts = new ArrayList<Font>();
     private Font unknown;
+    private BigDecimal lineHeight;
 
     @Override
     protected void doRender(Document document, Theme theme, OutputStream stream) throws Exception {
         TextTheme textTheme = theme.asTextTheme();
         Font.FontFamily fontFamily = Font.FontFamily.TIMES_ROMAN;
         BaseColor textColor = BaseColor.BLACK;
+        lineHeight = BigDecimal.valueOf(14, 1);
         if (textTheme != null) {
-            fontFamily = textTheme.getFontName().equals("sans-serif") ? Font.FontFamily.HELVETICA : Font.FontFamily.TIMES_ROMAN;
+            fontFamily = textTheme.getFontName().equals("sans-serif") ? Font.FontFamily.HELVETICA
+                    : Font.FontFamily.TIMES_ROMAN;
             textColor = new BaseColor(textTheme.getColour());
+            lineHeight = textTheme.getLineSpacing();
         }
 
         // TODO - theme font sizes
         base = new Font(fontFamily, 12, Font.NORMAL, textColor);
-        h1 = new Font(fontFamily, 22, Font.BOLD, textColor);
-        h2 = new Font(fontFamily, 16, Font.BOLD, textColor);
+        headerFonts.clear();
+        headerFonts.add(new Font(fontFamily, 22, Font.BOLD, textColor));
+        headerFonts.add(new Font(fontFamily, 16, Font.BOLD, textColor));
+        headerFonts.add(new Font(fontFamily, 14, Font.BOLD, textColor));
+        headerFonts.add(new Font(fontFamily, 12, Font.BOLD, textColor));
         unknown = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
 
         // TODO - theme margins
         com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4, 40, 20, 40, 20);
         PdfWriter.getInstance(pdfDocument, stream);
         pdfDocument.open();
-        writeContents(document, 0, pdfDocument);
+        writeComponent(document, 0, pdfDocument);
         pdfDocument.close();
     }
 
-    private void writeContents(Component component, int depth, com.itextpdf.text.Document target)
+    private void writeComponent(Component component, int depth, com.itextpdf.text.Document target)
             throws DocumentException {
+        writeTitle(component, 0, target);
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph();
-                title.setFont(depth == 0 ? h1 : h2);
-                writeContents(child.getTitle(), title);
-
-                // TODO - theme spacing
-                title.setSpacingBefore(15);
-                title.setSpacingAfter(8);
-                target.add(title);
-                writeContents(child, depth + 1, target);
+                writeSection(child, depth == 0 ? 0 : 1, target);
+            } else if (block instanceof Component) {
+                Component child = (Component) block;
+                writeComponent(child, depth + 1, target);
             } else {
-
                 target.add(convertBlock(block));
             }
         }
+    }
+
+    private void writeSection(Section section, int depth, com.itextpdf.text.Document target)
+            throws DocumentException {
+        writeTitle(section, depth, target);
+        for (Block block : section.getContents()) {
+            if (block instanceof Section) {
+                Section child = (Section) block;
+                writeSection(child, depth + 1, target);
+            } else {
+                target.add(convertBlock(block));
+            }
+        }
+    }
+
+    private void writeTitle(Component component, int depth, com.itextpdf.text.Document target)
+            throws DocumentException {
+        if (component.getTitle().isEmpty()) {
+            return;
+        }
+
+        com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph();
+        title.setFont(depth < headerFonts.size() ? headerFonts.get(depth) : headerFonts.get(headerFonts.size() - 1));
+        writeContents(component.getTitle(), title);
+
+        // TODO - theme spacing
+        title.setSpacingBefore(15);
+        title.setSpacingAfter(8);
+        target.add(title);
     }
 
     private Element convertBlock(Block block) throws DocumentException {
@@ -74,7 +106,7 @@ public class PdfRenderer extends Renderer {
             // TODO - theme spacing
             pdfParagraph.setSpacingBefore(4);
             pdfParagraph.setSpacingAfter(4);
-            pdfParagraph.setMultipliedLeading(1.4f);
+            pdfParagraph.setMultipliedLeading(lineHeight.floatValue());
             writeContents(paragraph, pdfParagraph);
             return pdfParagraph;
         } else if (block instanceof ItemisedList) {

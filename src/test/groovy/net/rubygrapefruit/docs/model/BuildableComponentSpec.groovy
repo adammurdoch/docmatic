@@ -10,7 +10,8 @@ class BuildableComponentSpec extends Specification {
         def section = document.addSection(1)
 
         then:
-        document.contents[0] == section
+        document.contents == [section]
+        document.components == [section]
 
         document.current == section
         section.current == section
@@ -22,7 +23,7 @@ class BuildableComponentSpec extends Specification {
 
         then:
         BuildableSection implicit = document.contents[0]
-        implicit.contents[0] == section
+        implicit.contents == [section]
 
         document.current == section
         implicit.current == section
@@ -35,8 +36,10 @@ class BuildableComponentSpec extends Specification {
         def section2 = document.addSection(2)
 
         then:
-        document.contents[0] == section1
-        section1.contents[0] == section2
+        document.contents == [section1]
+        document.components == [section1]
+        section1.contents == [section2]
+        section1.components == [section2]
 
         document.current == section2
         section1.current == section2
@@ -50,9 +53,10 @@ class BuildableComponentSpec extends Specification {
         def section3 = document.addSection(1)
 
         then:
-        document.contents[0] == section1
-        section1.contents[0] == section2
-        document.contents[1] == section3
+        document.contents == [section1, section3]
+        document.components == [section1, section3]
+        section1.contents == [section2]
+        section1.components == [section2]
 
         document.current == section3
         section1.current == section2
@@ -65,7 +69,8 @@ class BuildableComponentSpec extends Specification {
         def section1 = document.addSection()
 
         then:
-        document.contents[0] == section1
+        document.contents == [section1]
+        document.components == [section1]
 
         document.current == section1
         section1.current == section1
@@ -78,6 +83,7 @@ class BuildableComponentSpec extends Specification {
 
         then:
         document.contents[1] == section2
+        document.components[1] == section2
 
         document.current == section2
         section1.current == section1
@@ -89,8 +95,8 @@ class BuildableComponentSpec extends Specification {
         def section2 = document.addSection()
 
         then:
-        document.contents[0] == section1
-        document.contents[1] == section2
+        document.contents == [section1, section2]
+        document.components == [section1, section2]
 
         document.current == section2
         section1.current == section1
@@ -104,13 +110,25 @@ class BuildableComponentSpec extends Specification {
         def section3 = section2.addSection()
 
         then:
-        document.contents[0] == section1
-        section1.contents[0] == section2
-        section2.contents[0] == section3
+        document.contents == [section1]
+        section1.contents == [section2]
+        section2.contents == [section3]
 
         document.current == section3
         section1.current == section3
         section2.current == section3
         section3.current == section3
+    }
+
+    def "can add structural components"() {
+        when:
+        def part = document.addPart()
+        def chapter = document.addChapter()
+        def appendix = document.addAppendix()
+
+        then:
+        document.contents == [part, chapter, appendix]
+        document.components == [part, chapter, appendix]
+        document.current == appendix
     }
 }

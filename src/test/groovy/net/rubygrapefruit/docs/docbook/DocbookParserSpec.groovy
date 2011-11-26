@@ -1,13 +1,45 @@
 package net.rubygrapefruit.docs.docbook
 
-import net.rubygrapefruit.docs.model.ItemisedList
-import net.rubygrapefruit.docs.model.OrderedList
 import spock.lang.Specification
+import net.rubygrapefruit.docs.model.*
 
 class DocbookParserSpec extends Specification {
     final DocbookParser parser = new DocbookParser()
 
-    def "converts chapter elements to sections"() {
+    def "sets book title"() {
+        when:
+        def doc = parse '''
+<book>
+    <title>some book</title>
+</book>'''
+
+        then:
+        doc.title.text == 'some book'
+    }
+
+    def "converts part elements to part"() {
+        when:
+        def doc = parse '''
+<book>
+    <part>
+        <title>part 1</title>
+    </part>
+    <part>
+        <title>part 2</title>
+    </part>
+</book>'''
+
+        then:
+        doc.contents.size() == 2
+
+        doc.contents[0] instanceof Part
+        doc.contents[0].title.text == 'part 1'
+
+        doc.contents[1] instanceof Part
+        doc.contents[1].title.text == 'part 2'
+    }
+
+    def "converts chapter elements to chapters"() {
         when:
         def doc = parse '''
 <book>
@@ -21,8 +53,34 @@ class DocbookParserSpec extends Specification {
 
         then:
         doc.contents.size() == 2
+
+        doc.contents[0] instanceof Chapter
         doc.contents[0].title.text == 'chapter 1'
+
+        doc.contents[1] instanceof Chapter
         doc.contents[1].title.text == 'chapter 2'
+    }
+
+    def "converts appendix elements to appendix"() {
+        when:
+        def doc = parse '''
+<book>
+    <appendix>
+        <title>appendix 1</title>
+    </appendix>
+    <appendix>
+        <title>appendix 2</title>
+    </appendix>
+</book>'''
+
+        then:
+        doc.contents.size() == 2
+
+        doc.contents[0] instanceof Appendix
+        doc.contents[0].title.text == 'appendix 1'
+
+        doc.contents[1] instanceof Appendix
+        doc.contents[1].title.text == 'appendix 2'
     }
 
     def "converts section elements to sections"() {
@@ -44,11 +102,44 @@ class DocbookParserSpec extends Specification {
 
         doc.contents[0].title.text == 'chapter 1'
         doc.contents[0].contents.size() == 1
+        doc.contents[0].contents[0] instanceof Section
         doc.contents[0].contents[0].title.text == 'section 1'
 
         doc.contents[1].title.text == 'chapter 2'
         doc.contents[1].contents.size() == 1
+        doc.contents[1].contents[0] instanceof Section
         doc.contents[1].contents[0].title.text == 'section 2'
+    }
+
+    def "builds tree structure"() {
+        when:
+        def doc = parse '''
+<book>
+    <part>
+        <title>part 1</title>
+        <chapter>
+            <title>chapter 1</title>
+            <section>
+                <title>section 1</title>
+                <section><title>section 1.1</title></section>
+            </section>
+        </chapter>
+    </part>
+</book>'''
+
+        then:
+
+        doc.contents[0] instanceof Part
+        doc.contents[0].title.text == 'part 1'
+
+        doc.contents[0].contents[0] instanceof Chapter
+        doc.contents[0].contents[0].title.text == 'chapter 1'
+
+        doc.contents[0].contents[0].contents[0] instanceof Section
+        doc.contents[0].contents[0].contents[0].title.text == 'section 1'
+
+        doc.contents[0].contents[0].contents[0].contents[0] instanceof Section
+        doc.contents[0].contents[0].contents[0].contents[0].title.text == 'section 1.1'
     }
 
     def "normalises text in titles"() {

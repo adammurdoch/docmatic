@@ -54,9 +54,9 @@ public class DocbookParser extends Parser {
         String getFileName();
 
         int getLineNumber();
-        
+
         int getColumnNumber();
-        
+
         BuildableComponent currentComponent();
 
         BuildableBlockContainer currentContainer();
@@ -69,14 +69,14 @@ public class DocbookParser extends Parser {
 
         void pop();
     }
-    
+
     private static class DefaultContext implements Context {
         final String fileName;
         final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
         final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
         Location location;
         BuildableInlineContainer inlineContainer;
-        
+
         private DefaultContext(String fileName) {
             this.fileName = fileName;
         }
@@ -123,7 +123,7 @@ public class DocbookParser extends Parser {
             }
         }
     }
-    
+
     private interface ElementHandler {
         void start(String name, Context context);
 
@@ -154,7 +154,8 @@ public class DocbookParser extends Parser {
         }
 
         public ElementHandler pushChild(String name, Context context) {
-            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(), context.getLineNumber(), context.getColumnNumber(), name);
+            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
+                    context.getLineNumber(), context.getColumnNumber(), name);
             context.currentContainer().addUnknown(message);
             return new NoOpElementHandler();
         }
@@ -163,7 +164,8 @@ public class DocbookParser extends Parser {
             if (text.matches("\\s+")) {
                 return;
             }
-            String message = String.format("(text %s, line %s, column %s)", context.getFileName(), context.getLineNumber(), context.getColumnNumber());
+            String message = String.format("(text %s, line %s, column %s)", context.getFileName(),
+                    context.getLineNumber(), context.getColumnNumber());
             context.currentContainer().addUnknown(message);
         }
 
@@ -181,11 +183,62 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class BookHandler extends DefaultElementHandler {
+    private abstract static class ComponentHandler extends DefaultElementHandler {
+        protected abstract BuildableComponent create(Context context);
+
+        @Override
+        public void start(String name, Context context) {
+            context.push(create(context));
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            if (name.equals("title")) {
+                return new TitleHandler();
+            }
+            return super.pushChild(name, context);
+        }
+
+        @Override
+        public void finish(Context context) {
+            context.pop();
+        }
+    }
+
+    private static class BookHandler extends ComponentHandler {
+        @Override
+        protected BuildableComponent create(Context context) {
+            return context.currentComponent();
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            if (name.equals("part")) {
+                return new PartHandler();
+            }
+            if (name.equals("chapter")) {
+                return new ChapterHandler();
+            }
+            if (name.equals("appendix")) {
+                return new AppendixHandler();
+            }
+            return super.pushChild(name, context);
+        }
+    }
+
+    private static class PartHandler extends ComponentHandler {
+        @Override
+        protected BuildableComponent create(Context context) {
+            return context.currentComponent().addPart();
+        }
+
         @Override
         public ElementHandler pushChild(String name, Context context) {
             if (name.equals("chapter")) {
-                return new SectionHandler();
+                return new ChapterHandler();
+            }
+            if (name.equals("appendix")) {
+                return new AppendixHandler();
             }
             return super.pushChild(name, context);
         }
@@ -207,9 +260,13 @@ public class DocbookParser extends Parser {
     }
 
     private static class SectionHandler extends ContainerHandler {
+        protected BuildableComponent create(Context context) {
+            return context.currentComponent().addSection();
+        }
+
         @Override
         public void start(String name, Context context) {
-            context.push(context.currentComponent().addSection());
+            context.push(create(context));
         }
 
         @Override
@@ -226,6 +283,20 @@ public class DocbookParser extends Parser {
         @Override
         public void finish(Context context) {
             context.pop();
+        }
+    }
+
+    private static class ChapterHandler extends SectionHandler {
+        @Override
+        protected BuildableComponent create(Context context) {
+            return context.currentComponent().addChapter();
+        }
+    }
+
+    private static class AppendixHandler extends SectionHandler {
+        @Override
+        protected BuildableComponent create(Context context) {
+            return context.currentComponent().addAppendix();
         }
     }
 
@@ -285,7 +356,8 @@ public class DocbookParser extends Parser {
         }
 
         public ElementHandler pushChild(String name, Context context) {
-            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(), context.getLineNumber(), context.getColumnNumber(), name);
+            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
+                    context.getLineNumber(), context.getColumnNumber(), name);
             context.currentInline().addUnknown(message);
             return new NoOpElementHandler();
         }

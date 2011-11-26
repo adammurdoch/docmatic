@@ -1,63 +1,89 @@
 <book>
-    <chapter>
+    <title>A DocBook sample</title>
+    <part>
+        <title>This is the first part</title>
+        <chapter>
+            <title>
+                This is the first chapter
+            </title>
+            <para>This is a para.</para>
+            <para>
+                This is another para. It spans multiple lines.
+            </para>
+            <section>
+                <title>Lists</title>
+                <itemizedlist>
+                    <listitem>
+                        <para>item 1.</para>
+                    </listitem>
+                    <listitem>
+                        <para>item 2.</para>
+                        <para>This is a second para.</para>
+                    </listitem>
+                    <listitem>
+                        <para>item 3.</para>
+                        <itemizedlist>
+                            <listitem>
+                                <para>nested item 1.</para>
+                            </listitem>
+                            <listitem>
+                                <para>nested item 2.</para>
+                            </listitem>
+                        </itemizedlist>
+                    </listitem>
+                </itemizedlist>
+                <orderedlist>
+                    <listitem>
+                        <para>item 1.</para>
+                    </listitem>
+                    <listitem>
+                        <para>item 2.</para>
+                        <para>This is a second para.</para>
+                    </listitem>
+                    <listitem>
+                        <para>item 3:</para>
+                        <orderedlist>
+                            <listitem>
+                                <para>nested item 1.</para>
+                            </listitem>
+                            <listitem>
+                                <para>nested item 2.</para>
+                            </listitem>
+                        </orderedlist>
+                    </listitem>
+                </orderedlist>
+            </section>
+        </chapter>
+        <chapter>
+            <title>
+                This is the second chapter
+            </title>
+            <section>
+                <title>A section</title>
+                <para>This is a para in chapter 2.</para>
+                <section>
+                    <title>A nested section</title>
+                    <section>
+                        <title>A nested-nested section</title>
+                        <section>
+                            <title>A nested-nested-nested section</title>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <para>This is another para at the end of chapter 2.</para>
+        </chapter>
+    </part>
+    <part>
+        <title>This is the second part</title>
+        <chapter>
+            <title>A chapter in the secont part</title>
+        </chapter>
+    </part>
+    <appendix>
         <title>
-            This is the first chapter
+            This is an appendix
         </title>
-        <para>This is a para.</para>
-        <para>
-            This is another para.
-            It spans multiple lines.
-        </para>
-        <section>
-            <title>Lists</title>
-            <itemizedlist>
-                <listitem>
-                    <para>item 1.</para>
-                </listitem>
-                <listitem>
-                    <para>item 2.</para>
-                    <para>This is a second para.</para>
-                </listitem>
-                <listitem>
-                    <itemizedlist>
-                        <listitem>
-                            <para>nested item 1.</para>
-                        </listitem>
-                        <listitem>
-                            <para>nested item 2.</para>
-                        </listitem>
-                    </itemizedlist>
-                </listitem>
-            </itemizedlist>
-            <orderedlist>
-                <listitem>
-                    <para>item 1.</para>
-                </listitem>
-                <listitem>
-                    <para>item 2.</para>
-                    <para>This is a second para.</para>
-                </listitem>
-                <listitem>
-                    <orderedlist>
-                        <listitem>
-                            <para>nested item 1.</para>
-                        </listitem>
-                        <listitem>
-                            <para>nested item 2.</para>
-                        </listitem>
-                    </orderedlist>
-                </listitem>
-            </orderedlist>
-        </section>
-    </chapter>
-    <chapter>
-        <title>
-            This is the second chapter
-        </title>
-        <section>
-            <title>A section</title>
-            <para>This is a para in chapter 2.</para>
-        </section>
-        <para>This is another para at the end of chapter 2.</para>
-    </chapter>
+        <para>Some interesting stuff goes here.</para>
+    </appendix>
 </book>

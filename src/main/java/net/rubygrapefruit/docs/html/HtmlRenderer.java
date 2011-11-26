@@ -37,17 +37,21 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(textTheme.getFontName());
                 writer.writeCharacters("; font-size: 12pt; color: #");
                 writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(), textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
-                writer.writeCharacters("; }");
-                writer.writeCharacters("body { margin: 5em; }");
+                writer.writeCharacters("; line-height: normal;");
+                writer.writeCharacters("}\n");
+                writer.writeCharacters("p { line-height: ");
+                writer.writeCharacters(textTheme.getLineSpacing().toString());
+                writer.writeCharacters("; }\n");
+                writer.writeCharacters("body { margin: 5em; }\n");
             }
-            writer.writeCharacters(".unknown { color: red; }");
+            writer.writeCharacters(".unknown { color: red; }\n");
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeStartElement("body");
             writer.writeCharacters(EOL);
-            writeSection(document, 0, writer);
+            writeComponent(document, 1, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeEndElement();
@@ -57,19 +61,41 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
-    private void writeSection(BlockContainer container, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        for (Block block : container.getContents()) {
+    private void writeComponent(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        writeTitle(component, 1, writer);
+        for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                writer.writeStartElement("h" + (depth + 1));
-                writeInline(child.getTitle(), writer);
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
+                writeSection(child, depth == 1 ? 1: 2, writer);
+            } else if (block instanceof Component) {
+                Component child = (Component) block;
+                writeComponent(child, depth + 1, writer);
+            } else {
+                writeBlock(block, writer);
+            }
+        }
+    }
+
+    private void writeSection(Section section, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        writeTitle(section, depth, writer);
+        for (Block block : section.getContents()) {
+            if (block instanceof Section) {
+                Section child = (Section) block;
                 writeSection(child, depth + 1, writer);
             } else {
                 writeBlock(block, writer);
             }
         }
+    }
+
+    private void writeTitle(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        if (component.getTitle().isEmpty()) {
+            return;
+        }
+        writer.writeStartElement("h" + Math.min(depth, 6));
+        writeInline(component.getTitle(), writer);
+        writer.writeEndElement();
+        writer.writeCharacters(EOL);
     }
 
     private void writeBlock(Block block, XMLStreamWriter writer) throws XMLStreamException {

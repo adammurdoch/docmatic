@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.renderer;
 
 import java.awt.*;
+import java.math.BigDecimal;
 
 public class DefaultTheme implements Theme, TextTheme {
     public TextTheme asTextTheme() {
@@ -13,6 +14,10 @@ public class DefaultTheme implements Theme, TextTheme {
 
     public Color getColour() {
 //        return Color.BLUE;
-        return new Color(80, 80, 80);
+        return new Color(60, 60, 60);
+    }
+
+    public BigDecimal getLineSpacing() {
+        return BigDecimal.valueOf(14, 1);
     }
 }

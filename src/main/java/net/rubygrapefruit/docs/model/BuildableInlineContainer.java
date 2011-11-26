@@ -16,6 +16,10 @@ public class BuildableInlineContainer implements InlineContainer {
         return builder.toString();
     }
 
+    public boolean isEmpty() {
+        return contents.isEmpty();
+    }
+
     public void append(CharSequence src) {
         boolean isFirstElement = contents.isEmpty();
         if (text == null) {

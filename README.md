@@ -1,7 +1,7 @@
 
 What is it?
 ===========
-A JVM based toolkit for generating documentation.
+Docmatic is a JVM based toolkit for generating documentation.
 
 Why?
 ----
@@ -17,15 +17,15 @@ Supported syntax:
 
 * Paragraphs - text only
 * Setext style headers - text only
-* Unordered lists - paragraphs only (no nested lists, headers, etc).
+* Unordered and ordered lists - paragraphs only (no nested lists, headers, etc).
 
 DocBook 5
 ---------
 Supported elements:
 
-* book > chapter
-* chapter > title, para
-* section > title, para, itemizedlist, orderedlist
+* book > title, part, chapter, appendix
+* part > title, chapter, appendix
+* chapter, appendix, section > title, section, para, itemizedlist, orderedlist
 * title > text only
 * para > text only
 * itemizedlist > listitem
@@ -39,7 +39,6 @@ You can also customise via the API, by implementing your own output format or th
 
 Usage
 =====
-
 docmatic [--pdf] [--html] [--minimal] [--default] --out <output-dir> <input-files>*
 
 Output formats:

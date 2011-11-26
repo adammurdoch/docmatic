@@ -2,9 +2,9 @@ package net.rubygrapefruit.docs.html
 
 import net.rubygrapefruit.docs.markdown.MarkdownParser
 import net.rubygrapefruit.docs.model.Document
-import spock.lang.Specification
-import net.rubygrapefruit.docs.html.HtmlRenderer
 import net.rubygrapefruit.docs.renderer.DefaultTheme
+import spock.lang.Specification
+import net.rubygrapefruit.docs.docbook.DocbookParser
 
 class HtmlRendererSpec extends Specification {
     final HtmlRenderer renderer = new HtmlRenderer()
@@ -19,7 +19,22 @@ class HtmlRendererSpec extends Specification {
 </body>
 '''
     }
-    
+
+    def "renders document title"() {
+        given:
+        def doc = docbook '''
+<book>
+    <title>title</title>
+</book>
+'''
+
+        expect:
+        render doc contains '''<body>
+<h1>title</h1>
+</body>
+'''
+    }
+
     def "renders the paragraphs of a document"() {
         given:
         def doc = document '''para 1.
@@ -35,7 +50,7 @@ para 2.
 '''
     }
 
-    def "renders the sections of a document"() {
+    def "renders the top-level sections of a document"() {
         given:
         def doc = document '''
 section 1
@@ -49,6 +64,35 @@ section 2
         render doc contains '''<body>
 <h1>section 1</h1>
 <h2>section 2</h2>
+</body>
+'''
+    }
+
+    def "renders the nested sections of a document"() {
+        given:
+        def doc = docbook '''
+<book>
+<chapter>
+    <title>chapter 1</title>
+    <section>
+        <title>section 2</title>
+        <section>
+            <title>section 3</title>
+            <section>
+                <title>section 4</title>
+            </section>
+        </section>
+    </section>
+</chapter>
+</book>
+'''
+
+        expect:
+        render doc contains '''<body>
+<h1>chapter 1</h1>
+<h2>section 2</h2>
+<h3>section 3</h3>
+<h4>section 4</h4>
 </body>
 '''
     }
@@ -131,7 +175,11 @@ para 3
     def document(String text) {
         return new MarkdownParser().parse(text, "document.md")
     }
-    
+
+    def docbook(String text) {
+        return new DocbookParser().parse(text, "document.xml")
+    }
+
     def render(Document document) {
         def outstr = new ByteArrayOutputStream()
         renderer.render(document, new DefaultTheme(), outstr)
