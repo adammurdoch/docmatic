@@ -111,8 +111,15 @@ public class HtmlRenderer extends Renderer {
             if (element instanceof Text) {
                 Text text = (Text) element;
                 writer.writeCharacters(text.getText());
+            } else if (element instanceof Unknown) {
+                Unknown unknown = (Unknown) element;
+                writer.writeStartElement("span");
+                writer.writeAttribute("class", "unknown");
+                writer.writeCharacters(unknown.getMessage());
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
             } else {
-                throw new IllegalStateException(String.format("Don't know how to render inlne of type '%s'.",
+                throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         element.getClass().getSimpleName()));
             }
         }

@@ -145,7 +145,9 @@ chapter
 <book>
     <para>para is not allowed here</para>
     unexpected
-    <section><para><unexpected-inline/></para></section>
+    <chapter>
+        <para><unexpected-inline/></para>
+    </chapter>
 </book>'''
 
         then:
@@ -155,7 +157,7 @@ chapter
 
         doc.contents[1].message == '(text book.xml, line 5, column 5)'
 
-        doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 1</unexpected-inline>'
+        doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 35</unexpected-inline>'
     }
 
     def parse(String string) {

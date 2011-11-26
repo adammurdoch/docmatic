@@ -107,6 +107,10 @@ public class PdfRenderer extends Renderer {
             if (inline instanceof Text) {
                 Text text = (Text) inline;
                 paragraph.add(text.getText());
+            } else if (inline instanceof Unknown) {
+                Unknown unknown = (Unknown) inline;
+                Chunk chunk = new Chunk(unknown.getMessage(), this.unknown);
+                paragraph.add(chunk);
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         inline.getClass().getSimpleName()));

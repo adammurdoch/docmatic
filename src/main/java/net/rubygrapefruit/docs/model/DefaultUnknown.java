@@ -7,6 +7,10 @@ public class DefaultUnknown implements Unknown {
         this.message = message;
     }
 
+    public String getText() {
+        return "";
+    }
+
     public String getMessage() {
         return message;
     }

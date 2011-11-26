@@ -10,4 +10,8 @@ public class BuildableText implements Text {
     public void append(CharSequence text) {
         this.text.append(text);
     }
+
+    public void append(char ch) {
+        this.text.append(ch);
+    }
 }

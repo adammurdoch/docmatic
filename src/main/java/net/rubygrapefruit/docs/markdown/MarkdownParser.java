@@ -47,10 +47,10 @@ public class MarkdownParser extends Parser {
 
     private boolean para(LineParser parser, BuildableBlockContainer container) throws IOException {
         BuildableParagraph paragraph = container.addParagraph();
-        paragraph.append(parser.next().getContent());
+        parser.next().appendContent(paragraph);
         while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty) {
             paragraph.append(" ");
-            paragraph.append(parser.next().getContent());
+            parser.next().appendContent(paragraph);
         }
         return true;
     }
@@ -87,14 +87,14 @@ public class MarkdownParser extends Parser {
         Line line = parser.next();
         BuildableListItem item = list.addItem();
         BuildableParagraph paragraph = item.addParagraph();
-        paragraph.append(line.getContent(2));
+        line.appendContent(2, paragraph);
 
         while (parser.peek().type != LineType.Finish && parser.peek().type != itemType) {
             while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
                     && parser.peek().type != itemType) {
                 line = parser.next();
                 paragraph.append(" ");
-                paragraph.append(line.getContent());
+                line.appendContent(paragraph);
             }
 
             while (parser.peek().type == LineType.Empty) {
@@ -106,7 +106,7 @@ public class MarkdownParser extends Parser {
             }
 
             paragraph = item.addParagraph();
-            paragraph.append(parser.next().getContent(1));
+            parser.next().appendContent(1, paragraph);
         }
 
         return true;
@@ -127,7 +127,7 @@ public class MarkdownParser extends Parser {
         if (line2.type == LineType.H1) {
             parser.next();
             parser.next();
-            component.addSection(1).getTitle().append(line1.getContent());
+            line1.appendContent(component.addSection(1).getTitle());
             return true;
         }
         return false;
@@ -139,7 +139,7 @@ public class MarkdownParser extends Parser {
         if (line2.type == LineType.H2) {
             parser.next();
             parser.next();
-            component.addSection(2).getTitle().append(line1.getContent());
+            line1.appendContent(component.addSection(2).getTitle());
             return true;
         }
         return false;
@@ -160,28 +160,24 @@ public class MarkdownParser extends Parser {
 
         @Override
         public String toString() {
-            return String.format("{%s '%s'}", type, getContent());
+            BuildableInlineContainer container = new BuildableInlineContainer();
+            appendContent(container);
+            return String.format("{%s '%s'}", type, container.getText());
         }
 
-        CharSequence getContent() {
-            return getContent(0);
+        void appendContent(BuildableInlineContainer dest) {
+            appendContent(0, dest);
         }
 
-        CharSequence getContent(int startToken) {
-            StringBuilder builder = new StringBuilder();
+        void appendContent(int startToken, BuildableInlineContainer dest) {
             int pos = startToken;
             if (tokens.get(pos).type == Lexer.whiteSpace) {
                 pos++;
             }
             for (int i = pos; i < tokens.size(); i++) {
                 Token token = tokens.get(i);
-                if (token.type == Lexer.whiteSpace) {
-                    builder.append(' ');
-                } else {
-                    builder.append(token.value);
-                }
+                dest.append(token.value);
             }
-            return builder.toString();
         }
     }
 

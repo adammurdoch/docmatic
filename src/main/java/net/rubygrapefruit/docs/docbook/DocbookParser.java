@@ -2,7 +2,6 @@ package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
-import net.rubygrapefruit.docs.parser.WhitespaceNormaliser;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLEventReader;
@@ -62,6 +61,10 @@ public class DocbookParser extends Parser {
 
         BuildableBlockContainer currentContainer();
 
+        BuildableInlineContainer currentInline();
+
+        void setCurrentInline(BuildableInlineContainer container);
+
         void push(BuildableBlockContainer container);
 
         void pop();
@@ -72,6 +75,7 @@ public class DocbookParser extends Parser {
         final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
         final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
         Location location;
+        BuildableInlineContainer inlineContainer;
         
         private DefaultContext(String fileName) {
             this.fileName = fileName;
@@ -95,6 +99,14 @@ public class DocbookParser extends Parser {
 
         public BuildableBlockContainer currentContainer() {
             return containerStack.getLast();
+        }
+
+        public BuildableInlineContainer currentInline() {
+            return inlineContainer;
+        }
+
+        public void setCurrentInline(BuildableInlineContainer container) {
+            inlineContainer = container;
         }
 
         public void push(BuildableBlockContainer container) {
@@ -176,25 +188,6 @@ public class DocbookParser extends Parser {
                 return new SectionHandler();
             }
             return super.pushChild(name, context);
-        }
-    }
-
-    private static class ParaHandler extends DefaultElementHandler {
-        private final WhitespaceNormaliser text = new WhitespaceNormaliser();
-
-        @Override
-        public void start(String name, Context context) {
-        }
-
-        @Override
-        public void handleText(String text, Context context) {
-            this.text.append(text);
-        }
-
-        @Override
-        public void finish(Context context) {
-            BuildableParagraph paragraph = context.currentContainer().addParagraph();
-            paragraph.append(text.getText());
         }
     }
 
@@ -287,17 +280,45 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class TitleHandler extends DefaultElementHandler {
-        private final WhitespaceNormaliser content = new WhitespaceNormaliser();
+    private static class InlineHandler implements ElementHandler {
+        public void start(String name, Context context) {
+        }
 
-        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(), context.getLineNumber(), context.getColumnNumber(), name);
+            context.currentInline().addUnknown(message);
+            return new NoOpElementHandler();
+        }
+
         public void handleText(String text, Context context) {
-            content.append(text);
+            context.currentInline().append(text);
+        }
+
+        public void finish(Context context) {
+        }
+    }
+
+    private static class ParaHandler extends InlineHandler {
+        @Override
+        public void start(String name, Context context) {
+            context.setCurrentInline(context.currentContainer().addParagraph());
         }
 
         @Override
         public void finish(Context context) {
-            context.currentComponent().getTitle().append(content.getText());
+            context.setCurrentInline(null);
+        }
+    }
+
+    private static class TitleHandler extends InlineHandler {
+        @Override
+        public void start(String name, Context context) {
+            context.setCurrentInline(context.currentComponent().getTitle());
+        }
+
+        @Override
+        public void finish(Context context) {
+            context.setCurrentInline(null);
         }
     }
 }
