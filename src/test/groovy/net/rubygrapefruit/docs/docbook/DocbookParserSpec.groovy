@@ -6,11 +6,24 @@ import net.rubygrapefruit.docs.model.*
 class DocbookParserSpec extends Specification {
     final DocbookParser parser = new DocbookParser()
 
-    def "sets book title"() {
+    def "converts book title"() {
         when:
         def doc = parse '''
 <book>
     <title>some book</title>
+</book>'''
+
+        then:
+        doc.title.text == 'some book'
+    }
+
+    def "converts bookinfo to book title (4.5)"() {
+        when:
+        def doc = parse '''
+<book>
+    <bookinfo>
+        <title>some book</title>
+    </bookinfo>
 </book>'''
 
         then:

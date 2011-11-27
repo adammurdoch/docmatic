@@ -2,9 +2,10 @@ package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Parser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,8 +20,6 @@ import java.util.LinkedList;
  * Builds a document for some Docbook input.
  */
 public class DocbookParser extends Parser {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocbookParser.class);
-
     @Override
     protected Document doParse(Reader input, String fileName)
             throws SAXException, ParserConfigurationException, IOException {
@@ -232,6 +231,9 @@ public class DocbookParser extends Parser {
 
         @Override
         public ElementHandler pushChild(String name, Context context) {
+            if (name.equals("bookinfo")) {
+                return new BookInfoHandler();
+            }
             if (name.equals("part")) {
                 return new PartHandler();
             }
@@ -240,6 +242,16 @@ public class DocbookParser extends Parser {
             }
             if (name.equals("appendix")) {
                 return new AppendixHandler();
+            }
+            return super.pushChild(name, context);
+        }
+    }
+
+    private static class BookInfoHandler extends DefaultElementHandler {
+        @Override
+        public ElementHandler pushChild(String name, Context context) {
+            if (name.equals("title")) {
+                return new TitleHandler();
             }
             return super.pushChild(name, context);
         }
