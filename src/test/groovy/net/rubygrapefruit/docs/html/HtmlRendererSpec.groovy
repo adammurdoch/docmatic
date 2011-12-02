@@ -174,15 +174,31 @@ para 3
 
     def "renders code inlines"() {
         given:
-        def doc = document '''para 1 `code`
-
-`code` para 2
-'''
+        def doc = docbook '''<book><chapter>
+<para>
+    <code>code</code>
+    <literal>literal</literal>
+</para>
+</chapter></book>'''
 
         expect:
         render doc contains '''<body>
-<p>para 1 <code>code</code></p>
-<p><code>code</code> para 2</p>
+<p><code class="code">code</code> <code class="literal">literal</code></p>
+</body>
+'''
+    }
+
+    def "renders emphasis inlines"() {
+        given:
+        def doc = docbook '''<book><chapter>
+<para>
+    <emphasis>emphasis</emphasis>
+</para>
+</chapter></book>'''
+
+        expect:
+        render doc contains '''<body>
+<p><em>emphasis</em></p>
 </body>
 '''
     }

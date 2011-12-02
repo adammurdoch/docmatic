@@ -203,23 +203,54 @@ chapter
         doc.contents[0].contents[0].text == 'para 1'
     }
 
-    def "converts code elements to code"() {
+    def "converts inline elements"() {
         when:
         def doc = parse '''
 <book>
     <chapter>
-        <para>para <code>code</code> para</para>
+        <para><code>code</code><literal>literal</literal><emphasis>emphasis</emphasis></para>
     </chapter>
 </book>'''
 
         then:
         doc.contents[0].contents[0].contents.size() == 3
+        doc.contents[0].contents[0].contents[0] instanceof Code
+        doc.contents[0].contents[0].contents[0].text == 'code'
+        doc.contents[0].contents[0].contents[1] instanceof Literal
+        doc.contents[0].contents[0].contents[1].text == 'literal'
+        doc.contents[0].contents[0].contents[2] instanceof Emphasis
+        doc.contents[0].contents[0].contents[2].text == 'emphasis'
+    }
+
+    def "converts a mix of text and inline elements"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para>
+            para
+            <code>code</code>
+            <literal>literal</literal>
+            para</para>
+    </chapter>
+</book>'''
+
+        then:
+        doc.contents[0].contents[0].contents.size() == 5
         doc.contents[0].contents[0].contents[0] instanceof Text
         doc.contents[0].contents[0].contents[0].text == 'para '
         doc.contents[0].contents[0].contents[1] instanceof Code
         doc.contents[0].contents[0].contents[1].text == 'code'
         doc.contents[0].contents[0].contents[2] instanceof Text
-        doc.contents[0].contents[0].contents[2].text == ' para'
+        doc.contents[0].contents[0].contents[2].text == ' '
+        doc.contents[0].contents[0].contents[3] instanceof Literal
+        doc.contents[0].contents[0].contents[3].text == 'literal'
+        doc.contents[0].contents[0].contents[4] instanceof Text
+        doc.contents[0].contents[0].contents[4].text == ' para'
+    }
+
+    def "normalises whitespace in para with inline elements"() {
+        expect: false
     }
 
     def "converts itemizedlist elements to itemized list"() {

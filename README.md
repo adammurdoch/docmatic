@@ -21,6 +21,7 @@ Supported syntax:
 * Paragraphs - text only
 * Setext style headers - text only
 * Unordered and ordered lists - paragraphs only (no nested lists, headers, etc).
+* Code inline `some code` - only in paragraphs
 
 DocBook 4.5 and 5
 -----------------
@@ -29,8 +30,8 @@ Supported elements:
 * book > title, part, chapter, appendix
 * part > title, chapter, appendix
 * chapter, appendix, section > title, section, para, itemizedlist, orderedlist
-* title > text only
-* para > text only
+* title > text, code, literal, emphasis
+* para > text, code, literal, emphasis
 * itemizedlist > listitem
 * orderedlist > listitem
 * listitem > para, itemizedlist, orderedlist

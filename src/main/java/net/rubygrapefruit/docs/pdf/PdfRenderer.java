@@ -21,6 +21,7 @@ public class PdfRenderer extends Renderer {
     private java.util.List<Font> headerFonts = new ArrayList<Font>();
     private Font unknown;
     private Font code;
+    private Font emphasis;
     private BigDecimal lineHeight;
 
     @Override
@@ -44,6 +45,7 @@ public class PdfRenderer extends Renderer {
         headerFonts.add(new Font(fontFamily, 14, Font.BOLD, textColor));
         headerFonts.add(new Font(fontFamily, 12, Font.BOLD, textColor));
         code = new Font(Font.FontFamily.COURIER, 12, Font.NORMAL, textColor);
+        emphasis = new Font(fontFamily, 12, Font.ITALIC, textColor);
         unknown = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
 
         // TODO - theme margins
@@ -141,9 +143,10 @@ public class PdfRenderer extends Renderer {
             if (inline instanceof Text) {
                 Text text = (Text) inline;
                 paragraph.add(text.getText());
-            } else if (inline instanceof Code) {
-                Code code = (Code) inline;
-                paragraph.add(new Chunk(code.getText(), this.code));
+            } else if (inline instanceof Code || inline instanceof Literal) {
+                paragraph.add(new Chunk(inline.getText(), this.code));
+            } else if (inline instanceof Emphasis) {
+                paragraph.add(new Chunk(inline.getText(), this.emphasis));
             } else if (inline instanceof Unknown) {
                 Unknown unknown = (Unknown) inline;
                 paragraph.add(new Chunk(unknown.getMessage(), this.unknown));

@@ -413,19 +413,48 @@ public class DocbookParser extends Parser {
             if (name.equals("code")) {
                 return new CodeHandler();
             }
+            if (name.equals("literal")) {
+                return new LiteralHandler();
+            }
+            if (name.equals("emphasis")) {
+                return new EmphasisHandler();
+            }
             return super.pushChild(name, context);
         }
     }
 
-    private static class CodeHandler extends DefaultInlineHandler {
+    private static abstract class TextOnlyInlineHandler extends DefaultInlineHandler {
+        abstract BuildableInlineContainer create(Context context);
+
         @Override
         public void start(String name, Context context) {
-            context.pushInline(context.currentInline().addCode());
+            context.pushInline(create(context));
         }
 
         @Override
         public void finish(Context context) {
             context.popInline();
+        }
+    }
+
+    private static class CodeHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context) {
+            return context.currentInline().addCode();
+        }
+    }
+
+    private static class LiteralHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context) {
+            return context.currentInline().addLiteral();
+        }
+    }
+
+    private static class EmphasisHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context) {
+            return context.currentInline().addEmphasis();
         }
     }
 

@@ -54,10 +54,14 @@
                 </orderedlist>
             </section>
             <section>
-                <title>Inlines <code>code</code></title>
-                <para>paragraphs can contain <code>code</code>.</para>
+                <title>Inlines</title>
+                <para>paragraphs can contain <code>some code</code> and <literal>literal text</literal>
+                    and <emphasis>emphasised text</emphasis>
+                    .</para>
 
-                <section><title>title with <code>code</code></title></section>
+                <section>
+                    <title>Title with <code>code</code> and <literal>literal text</literal> and <emphasis>emphasis</emphasis></title>
+                </section>
             </section>
         </chapter>
         <chapter>

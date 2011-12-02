@@ -138,10 +138,11 @@ public class HtmlRenderer extends Renderer {
                 Text text = (Text) element;
                 writer.writeCharacters(text.getText());
             } else if (element instanceof Code) {
-                Code code = (Code) element;
-                writer.writeStartElement("code");
-                writer.writeCharacters(code.getText());
-                writer.writeEndElement();
+                writeCodeInline(element, "code", writer);
+            } else if (element instanceof Literal) {
+                writeCodeInline(element, "literal", writer);
+            } else if (element instanceof Emphasis) {
+                writeEmphasisInline(element, writer);
             } else if (element instanceof Unknown) {
                 Unknown unknown = (Unknown) element;
                 writer.writeStartElement("span");
@@ -154,6 +155,19 @@ public class HtmlRenderer extends Renderer {
                         element.getClass().getSimpleName()));
             }
         }
+    }
+
+    private void writeCodeInline(Inline code, String htmlClass, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("code");
+        writer.writeAttribute("class", htmlClass);
+        writer.writeCharacters(code.getText());
+        writer.writeEndElement();
+    }
+
+    private void writeEmphasisInline(Inline code, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("em");
+        writer.writeCharacters(code.getText());
+        writer.writeEndElement();
     }
 
     private void writeItems(List list, XMLStreamWriter writer) throws XMLStreamException {

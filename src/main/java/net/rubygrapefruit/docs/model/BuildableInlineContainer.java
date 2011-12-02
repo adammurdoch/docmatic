@@ -69,4 +69,12 @@ public class BuildableInlineContainer implements InlineContainer {
     public BuildableCode addCode() {
         return add(new BuildableCode());
     }
+
+    public BuildableLiteral addLiteral() {
+        return add(new BuildableLiteral());
+    }
+
+    public BuildableEmphasis addEmphasis() {
+        return add(new BuildableEmphasis());
+    }
 }
