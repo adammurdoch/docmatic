@@ -6,6 +6,9 @@ import java.util.List;
  * A container of {@link Inline} elements.
  */
 public interface InlineContainer {
+    /**
+     * Returns true if this container has no contents.
+     */
     boolean isEmpty();
 
     List<? extends Inline> getContents();

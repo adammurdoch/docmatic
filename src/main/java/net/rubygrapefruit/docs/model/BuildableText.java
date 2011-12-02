@@ -1,17 +1,5 @@
 package net.rubygrapefruit.docs.model;
 
-public class BuildableText implements Text {
-    private StringBuilder text = new StringBuilder();
+public class BuildableText extends BuildableTextInline implements Text {
 
-    public String getText() {
-        return text.toString();
-    }
-
-    public void append(CharSequence text) {
-        this.text.append(text);
-    }
-
-    public void append(char ch) {
-        this.text.append(ch);
-    }
 }

@@ -58,6 +58,14 @@ class BuildableInlineContainerSpec extends Specification {
         container.contents[1].text == 'text'
     }
 
+    def "can append text before code element"() {
+        expect: false
+    }
+
+    def "can append text after code element"() {
+        expect: false
+    }
+
     def "preserves whitespace around inline elements"() {
         when:
         container.append(" 1 \t")

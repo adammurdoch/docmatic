@@ -1,10 +1,10 @@
 package net.rubygrapefruit.docs.html
 
+import net.rubygrapefruit.docs.docbook.DocbookParser
 import net.rubygrapefruit.docs.markdown.MarkdownParser
 import net.rubygrapefruit.docs.model.Document
 import net.rubygrapefruit.docs.renderer.DefaultTheme
 import spock.lang.Specification
-import net.rubygrapefruit.docs.docbook.DocbookParser
 
 class HtmlRendererSpec extends Specification {
     final HtmlRenderer renderer = new HtmlRenderer()
@@ -168,6 +168,21 @@ para 3
 <p>para 3</p>
 </li>
 </ol>
+</body>
+'''
+    }
+
+    def "renders code inlines"() {
+        given:
+        def doc = document '''para 1 `code`
+
+`code` para 2
+'''
+
+        expect:
+        render doc contains '''<body>
+<p>para 1 <code>code</code></p>
+<p><code>code</code> para 2</p>
 </body>
 '''
     }

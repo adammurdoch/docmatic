@@ -20,6 +20,7 @@ public class PdfRenderer extends Renderer {
     private Font base;
     private java.util.List<Font> headerFonts = new ArrayList<Font>();
     private Font unknown;
+    private Font code;
     private BigDecimal lineHeight;
 
     @Override
@@ -42,6 +43,7 @@ public class PdfRenderer extends Renderer {
         headerFonts.add(new Font(fontFamily, 16, Font.BOLD, textColor));
         headerFonts.add(new Font(fontFamily, 14, Font.BOLD, textColor));
         headerFonts.add(new Font(fontFamily, 12, Font.BOLD, textColor));
+        code = new Font(Font.FontFamily.COURIER, 12, Font.NORMAL, textColor);
         unknown = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
 
         // TODO - theme margins
@@ -139,10 +141,12 @@ public class PdfRenderer extends Renderer {
             if (inline instanceof Text) {
                 Text text = (Text) inline;
                 paragraph.add(text.getText());
+            } else if (inline instanceof Code) {
+                Code code = (Code) inline;
+                paragraph.add(new Chunk(code.getText(), this.code));
             } else if (inline instanceof Unknown) {
                 Unknown unknown = (Unknown) inline;
-                Chunk chunk = new Chunk(unknown.getMessage(), this.unknown);
-                paragraph.add(chunk);
+                paragraph.add(new Chunk(unknown.getMessage(), this.unknown));
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         inline.getClass().getSimpleName()));

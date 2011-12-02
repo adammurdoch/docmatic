@@ -53,6 +53,12 @@
                     </listitem>
                 </orderedlist>
             </section>
+            <section>
+                <title>Inlines <code>code</code></title>
+                <para>paragraphs can contain <code>code</code>.</para>
+
+                <section><title>title with <code>code</code></title></section>
+            </section>
         </chapter>
         <chapter>
             <title>

@@ -1,7 +1,8 @@
 
 What is it?
 ===========
-Docmatic is a JVM based toolkit for generating documentation.
+Docmatic is a JVM based toolkit for generating documentation. It accepts as input any combination of Markdown or
+DocBook, and generates HTML 4 or PDF output.
 
 Why?
 ----
@@ -46,14 +47,14 @@ You can also customise via the API, by implementing your own output format or th
 
 Usage
 =====
-docmatic [--pdf] [--html] [--minimal] [--default] --out <output-dir> <input-files>*
+`docmatic [--pdf] [--html] [--minimal] [--default] --out <output-dir> <input-files>*`
 
 Output formats:
 
-* --pdf
-* --html
+* `--pdf`
+* `--html`
 
 Themes:
 
-* --minimal
-* --default
+* `--minimal`
+* `--default`

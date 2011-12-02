@@ -1,9 +1,7 @@
 package net.rubygrapefruit.docs.markdown
 
-import net.rubygrapefruit.docs.model.Paragraph
 import spock.lang.Specification
-import net.rubygrapefruit.docs.model.ItemisedList
-import net.rubygrapefruit.docs.model.OrderedList
+import net.rubygrapefruit.docs.model.*
 
 class MarkdownParserSpec extends Specification {
     final MarkdownParser parser = new MarkdownParser()
@@ -398,6 +396,71 @@ para
     }
 
     def "paragraphs can contain ordered list item marker"() {
+        expect: false
+    }
+
+    def "backtick delimits code inline"() {
+        when:
+        def doc = parse '''
+`some code`
+
+this is `some code` and some text
+
+`some code``some code`
+
+`some code`some code`
+
+a`b
+'''
+
+        then:
+        doc.contents[0].contents[0] instanceof Code
+        doc.contents[0].contents[0].text == 'some code'
+
+        doc.contents[1].contents[0] instanceof Text
+        doc.contents[1].contents[0].text == 'this is '
+        doc.contents[1].contents[1] instanceof Code
+        doc.contents[1].contents[1].text == 'some code'
+        doc.contents[1].contents[2] instanceof Text
+        doc.contents[1].contents[2].text == ' and some text'
+
+        doc.contents[2].contents[0] instanceof Code
+        doc.contents[2].contents[0].text == 'some code``some code'
+
+        doc.contents[3].contents[0] instanceof Code
+        doc.contents[3].contents[0].text == 'some code'
+        doc.contents[3].contents[1] instanceof Text
+        doc.contents[3].contents[1].text == 'some code`'
+
+        doc.contents[4].contents[0] instanceof Text
+        doc.contents[4].contents[0].text == 'a`b'
+    }
+
+    def "code inline can span multiple lines"() {
+        expect: false
+    }
+
+    def "normalises whitespace in code inline"() {
+        expect: false
+    }
+
+    def "code inline does not contain other inlines"() {
+        expect: false
+    }
+
+    def "underscore delimits emphasis inline"() {
+        expect: false
+    }
+
+    def "asterix delimits strong inline"() {
+        expect: false
+    }
+
+    def "emphasis inline can contain code inline"() {
+        expect: false
+    }
+
+    def "strong inline can contain code inline"() {
         expect: false
     }
 

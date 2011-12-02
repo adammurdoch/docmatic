@@ -137,6 +137,11 @@ public class HtmlRenderer extends Renderer {
             if (element instanceof Text) {
                 Text text = (Text) element;
                 writer.writeCharacters(text.getText());
+            } else if (element instanceof Code) {
+                Code code = (Code) element;
+                writer.writeStartElement("code");
+                writer.writeCharacters(code.getText());
+                writer.writeEndElement();
             } else if (element instanceof Unknown) {
                 Unknown unknown = (Unknown) element;
                 writer.writeStartElement("span");

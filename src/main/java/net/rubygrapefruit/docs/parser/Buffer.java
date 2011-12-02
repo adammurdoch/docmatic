@@ -35,7 +35,7 @@ public class Buffer {
         reader = EMPTY_READER;
     }
 
-    public boolean scanFor(TokenSpec spec) throws IOException {
+    public boolean scanFor(TokenSpec spec) {
         startToken = endToken;
         matched = false;
         spec.match(this);
@@ -51,7 +51,7 @@ public class Buffer {
         matched = false;
     }
 
-    public boolean lookingAt(char... candidates) throws IOException {
+    public boolean lookingAt(char... candidates) {
         int ch = peek();
         if (ch < 0) {
             return false;
@@ -65,7 +65,7 @@ public class Buffer {
         return false;
     }
 
-    public boolean consumeRange(char from, char to) throws IOException {
+    public boolean consumeRange(char from, char to) {
         int ch = peek();
         if (ch >= from && ch <= to) {
             next();
@@ -74,7 +74,7 @@ public class Buffer {
         return false;
     }
 
-    public boolean consume(char... candidates) throws IOException {
+    public boolean consume(char... candidates) {
         if (lookingAt(candidates)) {
             next();
             return true;
@@ -82,7 +82,7 @@ public class Buffer {
         return false;
     }
 
-    public boolean consumeAnyExcept(char... candidates) throws IOException {
+    public boolean consumeAnyExcept(char... candidates) {
         int ch = peek();
         if (ch < 0) {
             return false;
@@ -97,7 +97,7 @@ public class Buffer {
         return true;
     }
 
-    private int peek() throws IOException {
+    private int peek() {
         if (endToken == endBuffer) {
             if (startToken == 0 && endBuffer == buffer.length) {
                 throw new UnsupportedOperationException("Buffer overflow not implemented yet.");
@@ -106,7 +106,12 @@ public class Buffer {
             endToken -= startToken;
             endBuffer -= startToken;
             startToken = 0;
-            int nread = reader.read(buffer, endBuffer, buffer.length - endBuffer);
+            int nread = 0;
+            try {
+                nread = reader.read(buffer, endBuffer, buffer.length - endBuffer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             if (nread < 0) {
                 return -1;
             }

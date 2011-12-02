@@ -203,6 +203,25 @@ chapter
         doc.contents[0].contents[0].text == 'para 1'
     }
 
+    def "converts code elements to code"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para>para <code>code</code> para</para>
+    </chapter>
+</book>'''
+
+        then:
+        doc.contents[0].contents[0].contents.size() == 3
+        doc.contents[0].contents[0].contents[0] instanceof Text
+        doc.contents[0].contents[0].contents[0].text == 'para '
+        doc.contents[0].contents[0].contents[1] instanceof Code
+        doc.contents[0].contents[0].contents[1].text == 'code'
+        doc.contents[0].contents[0].contents[2] instanceof Text
+        doc.contents[0].contents[0].contents[2].text == ' para'
+    }
+
     def "converts itemizedlist elements to itemized list"() {
         when:
         def doc = parse '''

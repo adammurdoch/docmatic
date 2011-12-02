@@ -65,4 +65,8 @@ public class BuildableInlineContainer implements InlineContainer {
     public List<? extends Inline> getContents() {
         return contents;
     }
+
+    public BuildableCode addCode() {
+        return add(new BuildableCode());
+    }
 }

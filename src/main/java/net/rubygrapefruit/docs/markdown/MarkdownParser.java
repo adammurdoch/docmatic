@@ -2,12 +2,15 @@ package net.rubygrapefruit.docs.markdown;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.parser.Buffer;
+import net.rubygrapefruit.docs.parser.LookaheadStream;
 import net.rubygrapefruit.docs.parser.Parser;
 import net.rubygrapefruit.docs.parser.TokenSpec;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,12 +49,16 @@ public class MarkdownParser extends Parser {
     }
 
     private boolean para(LineParser parser, BuildableBlockContainer container) throws IOException {
-        BuildableParagraph paragraph = container.addParagraph();
-        parser.next().appendContent(paragraph);
+        List<Token> tokens = new ArrayList<Token>();
+        parser.next().appendContent(tokens);
+
         while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty) {
-            paragraph.append(" ");
-            parser.next().appendContent(paragraph);
+            tokens.add(new Token(Lexer.whiteSpace, " "));
+            parser.next().appendContent(tokens);
         }
+        BuildableParagraph paragraph = container.addParagraph();
+        ParagraphParser paragraphParser = new ParagraphParser(tokens);
+        inline(paragraphParser, paragraph);
         return true;
     }
 
@@ -169,49 +176,68 @@ public class MarkdownParser extends Parser {
             appendContent(0, dest);
         }
 
+        void appendContent(Collection<Token> dest) {
+            dest.addAll(tokens);
+        }
+
         void appendContent(int startToken, BuildableInlineContainer dest) {
-            int pos = startToken;
-            if (tokens.get(pos).type == Lexer.whiteSpace) {
-                pos++;
-            }
-            for (int i = pos; i < tokens.size(); i++) {
+            for (int i = startToken; i < tokens.size(); i++) {
                 Token token = tokens.get(i);
                 dest.append(token.value);
             }
         }
     }
 
-    private static class LineParser {
-        final List<Line> queue = new ArrayList<Line>();
+    private void inline(ParagraphParser parser, BuildableInlineContainer container) {
+        while (parser.peek() != null) {
+            if (code(parser, container)) {
+                continue;
+            }
+            container.append(parser.next().value);
+        }
+    }
+
+    private boolean code(ParagraphParser parser, BuildableInlineContainer container) {
+        if (parser.peek().type != Lexer.backtick) {
+            return false;
+        }
+
+        parser.next();
+        BuildableCode code = container.addCode();
+
+        while (parser.peek() != null && parser.peek().type != Lexer.backtick) {
+            code.append(parser.next().value);
+        }
+
+        parser.next();
+
+        return true;
+    }
+
+    private static class ParagraphParser extends LookaheadStream<Token> {
+        private final Iterator<Token> tokens;
+
+        public ParagraphParser(Iterable<Token> tokens) {
+            this.tokens = tokens.iterator();
+        }
+
+        @Override
+        protected Token readNext() {
+            if (tokens.hasNext()) {
+                return tokens.next();
+            }
+            return null;
+        }
+    }
+
+    private static class LineParser extends LookaheadStream<Line> {
         final Lexer lexer;
 
         private LineParser(Lexer lexer) {
             this.lexer = lexer;
         }
 
-        public Line peek() throws IOException {
-            return peek(0);
-        }
-
-        public Line peek(int depth) throws IOException {
-            while (queue.size() <= depth) {
-                Line line = scanLine();
-                if (line == null) {
-                    return null;
-                }
-                queue.add(line);
-            }
-            return queue.get(depth);
-        }
-
-        public Line next() throws IOException {
-            if (!queue.isEmpty()) {
-                return queue.remove(0);
-            }
-            return scanLine();
-        }
-
-        private Line scanLine() throws IOException {
+        protected Line readNext() {
             List<Token> tokens = new ArrayList<Token>();
             boolean hasContent = false;
             while (lexer.next()) {
@@ -275,6 +301,8 @@ public class MarkdownParser extends Parser {
         static final TokenSpec equalsSpec = new SequenceSpec('=');
         static final TokenSpec dashes = new SequenceSpec('-');
         static final TokenSpec itemisedListItem = new ChoiceSpec('*', '+', '-');
+        static final TokenSpec backtick = new ChoiceSpec('`');
+        static final TokenSpec underscore = new ChoiceSpec('_');
         static final TokenSpec numberedListItem = new NumberedItemSpec();
 
         private final Buffer buffer;
@@ -293,13 +321,13 @@ public class MarkdownParser extends Parser {
             return type;
         }
 
-        boolean next() throws IOException {
+        boolean next() {
             type = scanNext();
             atStartOfLine = (type == endOfLineSpec);
             return type != null;
         }
 
-        TokenSpec scanNext() throws IOException {
+        TokenSpec scanNext() {
             if (buffer.scanFor(endOfLineSpec)) {
                 return endOfLineSpec;
             }
@@ -315,6 +343,12 @@ public class MarkdownParser extends Parser {
             if (atStartOfLine && buffer.scanFor(dashes)) {
                 return dashes;
             }
+            if (buffer.scanFor(backtick)) {
+                return backtick;
+            }
+            if (buffer.scanFor(underscore)) {
+                return underscore;
+            }
             if (buffer.scanFor(whiteSpace)) {
                 return whiteSpace;
             }
@@ -326,7 +360,7 @@ public class MarkdownParser extends Parser {
     }
 
     private static class EndOfLineSpec implements TokenSpec {
-        public void match(Buffer buffer) throws IOException {
+        public void match(Buffer buffer) {
             buffer.consume('\r');
             buffer.consume('\n');
         }
@@ -339,7 +373,7 @@ public class MarkdownParser extends Parser {
             this.candidates = candidates;
         }
 
-        public void match(Buffer buffer) throws IOException {
+        public void match(Buffer buffer) {
             while (buffer.consume(candidates)) {
             }
         }
@@ -352,7 +386,7 @@ public class MarkdownParser extends Parser {
             this.candidates = candidates;
         }
 
-        public void match(Buffer buffer) throws IOException {
+        public void match(Buffer buffer) {
             for (char candidate : candidates) {
                 if (buffer.consume(candidate)) {
                     if (!buffer.lookingAt(candidate)) {
@@ -365,7 +399,7 @@ public class MarkdownParser extends Parser {
     }
 
     private static class NumberedItemSpec implements TokenSpec {
-        public void match(Buffer buffer) throws IOException {
+        public void match(Buffer buffer) {
             if (!buffer.consumeRange('0', '9')) {
                 return;
             }
@@ -379,8 +413,8 @@ public class MarkdownParser extends Parser {
     }
 
     private static class WordSpec implements TokenSpec {
-        public void match(Buffer buffer) throws IOException {
-            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n')) {
+        public void match(Buffer buffer) {
+            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n', '`')) {
             }
         }
     }
