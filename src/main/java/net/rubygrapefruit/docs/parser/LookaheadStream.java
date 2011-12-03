@@ -1,10 +1,20 @@
 package net.rubygrapefruit.docs.parser;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class LookaheadStream<T> {
     private final List<T> queue = new ArrayList<T>();
+
+    protected LookaheadStream() {
+    }
+
+    protected LookaheadStream(Iterable<? extends T> initialValues) {
+        for (T initialValue : initialValues) {
+            queue.add(initialValue);
+        }
+    }
 
     public T peek() {
         return peek(0);
@@ -12,24 +22,32 @@ public abstract class LookaheadStream<T> {
 
     public T peek(int depth) {
         while (queue.size() <= depth) {
-            T next = readNext();
-            if (next == null) {
-                return null;
+            int size = queue.size();
+            readNext(queue);
+            if (queue.size() == size) {
+                return endOfStream();
             }
-            queue.add(next);
         }
         return queue.get(depth);
     }
 
     public T next() {
+        peek(0);
         if (!queue.isEmpty()) {
             return queue.remove(0);
         }
-        return readNext();
+        return null;
     }
 
     /**
-     * Returns the next element, or null at the end of the stream.
+     * Returns the element that marks end of stream.
      */
-    protected abstract T readNext();
+    protected T endOfStream() {
+        return null;
+    }
+
+    /**
+     * Returns the next available elements.
+     */
+    protected abstract void readNext(Collection<T> elements);
 }

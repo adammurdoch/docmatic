@@ -392,25 +392,45 @@ para
     }
 
     def "can interleave list types"() {
-        expect: false
+        when:
+        def doc = parse '''
+- item 1
++ item 2
+* item 3
+1. item 1
+2. item 2
+- item 1
+'''
+
+        then:
+        doc.contents.size() == 3
+        doc.contents[0].items.size() == 3
+        doc.contents[0].items[0].text == 'item 1'
+        doc.contents[0].items[1].text == 'item 2'
+        doc.contents[0].items[2].text == 'item 3'
+        doc.contents[1].items.size() == 2
+        doc.contents[1].items[0].text == 'item 1'
+        doc.contents[1].items[1].text == 'item 2'
+        doc.contents[2].items.size() == 1
+        doc.contents[2].items[0].text == 'item 1'
     }
 
     def "paragraphs can contain ordered list item marker"() {
         expect: false
     }
 
-    def "backtick delimits code inline"() {
+    def "a series of backtick delimits code inline"() {
         when:
         def doc = parse '''
 `some code`
 
 this is `some code` and some text
 
-`some code``some code`
-
-`some code`some code`
-
 a`b
+
+a``b
+
+`  `
 '''
 
         then:
@@ -424,24 +444,80 @@ a`b
         doc.contents[1].contents[2] instanceof Text
         doc.contents[1].contents[2].text == ' and some text'
 
+        doc.contents[2].contents[0] instanceof Text
+        doc.contents[2].contents[0].text == 'a`b'
+
+        doc.contents[3].contents[0] instanceof Text
+        doc.contents[3].contents[0].text == 'a``b'
+
+        doc.contents[4].contents[0] instanceof Code
+        doc.contents[4].contents[0].text == ''
+    }
+
+    def "code is terminated by equal number of backtick characters"() {
+        when:
+        def doc = parse '''
+`some code`` some code`
+
+``some code`some code``
+
+```some code`some code
+
+`some code```some code
+
+```some code```some code```
+        '''
+
+        then:
+        doc.contents[0].contents[0] instanceof Code
+        doc.contents[0].contents[0].text == 'some code``some code'
+
+        doc.contents[1].contents[0] instanceof Code
+        doc.contents[1].contents[0].text == 'some code`some code'
+
         doc.contents[2].contents[0] instanceof Code
-        doc.contents[2].contents[0].text == 'some code``some code'
+        doc.contents[2].contents[0].text == '``some code'
+        doc.contents[2].contents[1] instanceof Text
+        doc.contents[2].contents[1].text == 'some code'
 
-        doc.contents[3].contents[0] instanceof Code
-        doc.contents[3].contents[0].text == 'some code'
-        doc.contents[3].contents[1] instanceof Text
-        doc.contents[3].contents[1].text == 'some code`'
+        doc.contents[3].contents[0] instanceof Text
+        doc.contents[3].contents[0].text == '`some code```some code'
 
-        doc.contents[4].contents[0] instanceof Text
-        doc.contents[4].contents[0].text == 'a`b'
+        doc.contents[4].contents[0] instanceof Code
+        doc.contents[4].contents[0].text == 'some code'
+        doc.contents[4].contents[1] instanceof Text
+        doc.contents[4].contents[1].text == 'some code```'
     }
 
     def "code inline can span multiple lines"() {
-        expect: false
+        when:
+        def doc = parse '''
+` some code
+line 2
+line 3 `
+        '''
+
+        then:
+        doc.contents[0].contents[0] instanceof Code
+        doc.contents[0].contents[0].text == 'some code line 2 line 3'
     }
 
     def "normalises whitespace in code inline"() {
-        expect: false
+        when:
+        def doc = parse '''
+`  some code
+   line   2 \t \t
+line   3  `
+
+` a b `` c d `
+        '''
+
+        then:
+        doc.contents[0].contents[0] instanceof Code
+        doc.contents[0].contents[0].text == 'some code line 2 line 3'
+
+        doc.contents[1].contents[0] instanceof Code
+        doc.contents[1].contents[0].text == 'a b `` c d'
     }
 
     def "code inline does not contain other inlines"() {
@@ -462,6 +538,42 @@ a`b
 
     def "strong inline can contain code inline"() {
         expect: false
+    }
+
+    def "headers can contain inlines"() {
+        when:
+        def doc = parse '''
+text `code`
+===========
+
+`code`
+------
+        '''
+
+        then:
+        doc.contents[0].title.contents.size() == 2
+        doc.contents[0].title.contents[0] instanceof Text
+        doc.contents[0].title.contents[0].text == 'text '
+        doc.contents[0].title.contents[1] instanceof Code
+        doc.contents[0].title.contents[1].text == 'code'
+        doc.contents[0].contents[0].title.contents.size() == 1
+        doc.contents[0].contents[0].title.contents[0] instanceof Code
+        doc.contents[0].contents[0].title.contents[0].text == 'code'
+    }
+
+    def "list items can contain inlines"() {
+        when:
+        def doc = parse '''
+* `code`
+* `code`
+        '''
+
+        then:
+        doc.contents[0].items.size() == 2
+        doc.contents[0].items[0].contents[0].contents[0] instanceof Code
+        doc.contents[0].items[0].contents[0].contents[0].text == 'code'
+        doc.contents[0].items[1].contents[0].contents[0] instanceof Code
+        doc.contents[0].items[1].contents[0].contents[0].text == 'code'
     }
 
     def "can parse from Reader"() {

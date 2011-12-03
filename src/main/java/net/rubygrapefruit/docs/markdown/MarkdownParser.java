@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,21 +48,14 @@ public class MarkdownParser extends Parser {
         return document;
     }
 
-    private boolean para(LineParser parser, BuildableBlockContainer container) throws IOException {
-        List<Token> tokens = new ArrayList<Token>();
-        parser.next().appendContent(tokens);
-
-        while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty) {
-            tokens.add(new Token(Lexer.whiteSpace, " "));
-            parser.next().appendContent(tokens);
-        }
+    private boolean para(LookaheadStream<Line> parser, BuildableBlockContainer container) throws IOException {
         BuildableParagraph paragraph = container.addParagraph();
-        ParagraphParser paragraphParser = new ParagraphParser(tokens);
+        ParagraphParser paragraphParser = new ParagraphParser(parser);
         inline(paragraphParser, paragraph);
         return true;
     }
 
-    private boolean itemisedList(LineParser parser, BuildableBlockContainer container) throws IOException {
+    private boolean itemisedList(LookaheadStream<Line> parser, BuildableBlockContainer container) throws IOException {
         if (parser.peek().type != LineType.ItemisedListItem) {
             return false;
         }
@@ -74,7 +67,7 @@ public class MarkdownParser extends Parser {
         return true;
     }
 
-    private boolean orderedList(LineParser parser, BuildableBlockContainer container) throws IOException {
+    private boolean orderedList(LookaheadStream<Line> parser, BuildableBlockContainer container) throws IOException {
         if (parser.peek().type != LineType.OrderedListItem) {
             return false;
         }
@@ -86,40 +79,29 @@ public class MarkdownParser extends Parser {
         return true;
     }
 
-    private boolean listItem(LineParser parser, BuildableList list, LineType itemType) throws IOException {
+    private boolean listItem(LookaheadStream<Line> parser, BuildableList list, LineType itemType) throws IOException {
         if (parser.peek().type != itemType) {
             return false;
         }
 
-        Line line = parser.next();
         BuildableListItem item = list.addItem();
-        BuildableParagraph paragraph = item.addParagraph();
-        line.appendContent(2, paragraph);
-
-        while (parser.peek().type != LineType.Finish && parser.peek().type != itemType) {
-            while (parser.peek().type != LineType.Finish && parser.peek().type != LineType.Empty
-                    && parser.peek().type != itemType) {
-                line = parser.next();
-                paragraph.append(" ");
-                line.appendContent(paragraph);
+        para(new ListItemContentParser(parser), item);
+        while (true) {
+            if (parser.peek().type != LineType.Empty) {
+                break;
             }
-
             while (parser.peek().type == LineType.Empty) {
                 parser.next();
             }
-
-            if (parser.peek().type != LineType.Continue) {
-                break;
+            if (parser.peek().type == LineType.Continue) {
+                para(new ListItemContentParser(parser), item);
             }
-
-            paragraph = item.addParagraph();
-            parser.next().appendContent(1, paragraph);
         }
 
         return true;
     }
 
-    private boolean empty(LineParser parser) throws IOException {
+    private boolean empty(LookaheadStream<Line> parser) throws IOException {
         Line line = parser.peek();
         if (line.type == LineType.Empty) {
             parser.next();
@@ -128,25 +110,25 @@ public class MarkdownParser extends Parser {
         return false;
     }
 
-    private boolean header1(LineParser parser, BuildableComponent component) throws IOException {
+    private boolean header1(LookaheadStream<Line> parser, BuildableComponent component) throws IOException {
         Line line1 = parser.peek();
         Line line2 = parser.peek(1);
         if (line2.type == LineType.H1) {
             parser.next();
             parser.next();
-            line1.appendContent(component.addSection(1).getTitle());
+            inline(new FixedTokens(line1.tokens), component.addSection(1).getTitle());
             return true;
         }
         return false;
     }
 
-    private boolean header2(LineParser parser, BuildableComponent component) throws IOException {
+    private boolean header2(LookaheadStream<Line> parser, BuildableComponent component) throws IOException {
         Line line1 = parser.peek();
         Line line2 = parser.peek(1);
         if (line2.type == LineType.H2) {
             parser.next();
             parser.next();
-            line1.appendContent(component.addSection(2).getTitle());
+            inline(new FixedTokens(line1.tokens), component.addSection(2).getTitle());
             return true;
         }
         return false;
@@ -188,7 +170,7 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private void inline(ParagraphParser parser, BuildableInlineContainer container) {
+    private void inline(LookaheadStream<Token> parser, BuildableInlineContainer container) {
         while (parser.peek() != null) {
             if (code(parser, container)) {
                 continue;
@@ -197,36 +179,101 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private boolean code(ParagraphParser parser, BuildableInlineContainer container) {
+    private boolean code(LookaheadStream<Token> parser, BuildableInlineContainer container) {
         if (parser.peek().type != Lexer.backtick) {
             return false;
         }
 
-        parser.next();
-        BuildableCode code = container.addCode();
+        int depth = parser.peek().value.length();
+        int pos = 1;
+        while (parser.peek(pos) != null) {
+            Token token = parser.peek(pos);
+            if (token.type == Lexer.backtick && token.value.length() == depth) {
+                parser.next();
+                BuildableCode code = container.addCode();
 
-        while (parser.peek() != null && parser.peek().type != Lexer.backtick) {
-            code.append(parser.next().value);
+                while (pos > 1) {
+                    code.append(parser.next().value);
+                    pos--;
+                }
+
+                parser.next();
+                return true;
+            }
+            pos++;
         }
 
-        parser.next();
-
-        return true;
+        return false;
     }
 
-    private static class ParagraphParser extends LookaheadStream<Token> {
-        private final Iterator<Token> tokens;
-
-        public ParagraphParser(Iterable<Token> tokens) {
-            this.tokens = tokens.iterator();
+    private static class FixedTokens extends LookaheadStream<Token> {
+        private FixedTokens(Iterable<? extends Token> initialValues) {
+            super(initialValues);
         }
 
         @Override
-        protected Token readNext() {
-            if (tokens.hasNext()) {
-                return tokens.next();
+        protected void readNext(Collection<Token> elements) {
+        }
+    }
+
+    private static class ParagraphParser extends LookaheadStream<Token> {
+        private final LookaheadStream<Line> parser;
+        private boolean empty = true;
+
+        public ParagraphParser(LookaheadStream<Line> parser) {
+            this.parser = parser;
+        }
+
+        @Override
+        protected void readNext(Collection<Token> tokens) {
+            if (parser.peek().type == LineType.Finish || parser.peek().type == LineType.Empty) {
+                return;
             }
-            return null;
+            if (!empty) {
+                tokens.add(new Token(Lexer.whiteSpace, " "));
+            } else {
+                empty = false;
+            }
+            parser.next().appendContent(tokens);
+        }
+    }
+
+    private static class ListItemContentParser extends LookaheadStream<Line> {
+        final LookaheadStream<Line> parser;
+        boolean empty = true;
+
+        private ListItemContentParser(LookaheadStream<Line> parser) {
+            this.parser = parser;
+        }
+
+        @Override
+        protected Line endOfStream() {
+            return new Line(LineType.Finish, Collections.<Token>emptyList());
+        }
+
+        @Override
+        protected void readNext(Collection<Line> elements) {
+            Line line = parser.peek();
+            if (line.type == LineType.Finish) {
+                return;
+            }
+            if (line.type == LineType.ItemisedListItem || line.type == LineType.OrderedListItem) {
+                if (!empty) {
+                    return;
+                }
+                parser.next();
+                elements.add(new Line(LineType.Text, line.tokens.subList(2, line.tokens.size())));
+                empty = false;
+                return;
+            }
+
+            if (line.type == LineType.Empty) {
+                return;
+            }
+
+            empty = false;
+            parser.next();
+            elements.add(line);
         }
     }
 
@@ -235,6 +282,11 @@ public class MarkdownParser extends Parser {
 
         private LineParser(Lexer lexer) {
             this.lexer = lexer;
+        }
+
+        @Override
+        protected void readNext(Collection<Line> elements) {
+            elements.add(readNext());
         }
 
         protected Line readNext() {
@@ -301,7 +353,7 @@ public class MarkdownParser extends Parser {
         static final TokenSpec equalsSpec = new SequenceSpec('=');
         static final TokenSpec dashes = new SequenceSpec('-');
         static final TokenSpec itemisedListItem = new ChoiceSpec('*', '+', '-');
-        static final TokenSpec backtick = new ChoiceSpec('`');
+        static final TokenSpec backtick = new SequenceSpec('`');
         static final TokenSpec underscore = new ChoiceSpec('_');
         static final TokenSpec numberedListItem = new NumberedItemSpec();
 

@@ -35,6 +35,19 @@ A numbered list:
     This is another paragraph in the same list item.
 4. This is the last item, number 4.
 
+Section 3 - `Code` inlines
+--------------------------
+
+Text can contain `code fragments`.
+
+This `code fragment
+spans multiple lines`.
+
+* `A list item with some code`
+* ``can include ` in code``
+
+1. `This item is all code`
+2. Item with a `mix of code` and text.
 
 Another main section
 ====================

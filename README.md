@@ -18,10 +18,10 @@ Markdown
 --------
 Supported syntax:
 
-* Paragraphs - text only
-* Setext style headers - text only
+* Paragraphs - text and code inlines
+* Setext style headers - text and code inlines
 * Unordered and ordered lists - paragraphs only (no nested lists, headers, etc).
-* Code inline `some code` - only in paragraphs
+* Code inlines
 
 DocBook 4.5 and 5
 -----------------
