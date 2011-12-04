@@ -1,4 +1,6 @@
-package net.rubygrapefruit.docs.renderer;
+package net.rubygrapefruit.docs.theme;
+
+import net.rubygrapefruit.docs.renderer.TextTheme;
 
 import java.awt.*;
 import java.math.BigDecimal;

@@ -3,7 +3,7 @@ package net.rubygrapefruit.docs.html;
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.renderer.Renderer;
 import net.rubygrapefruit.docs.renderer.TextTheme;
-import net.rubygrapefruit.docs.renderer.Theme;
+import net.rubygrapefruit.docs.theme.Theme;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -39,12 +39,18 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(), textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
                 writer.writeCharacters("; line-height: normal;");
                 writer.writeCharacters("}\n");
+                writer.writeCharacters("body { margin: 5em; background-color: white; }\n");
                 writer.writeCharacters("p { line-height: ");
                 writer.writeCharacters(textTheme.getLineSpacing().toString());
                 writer.writeCharacters("; }\n");
-                writer.writeCharacters("body { margin: 5em; }\n");
             }
             writer.writeCharacters(".unknown { color: red; }\n");
+            if (theme instanceof HtmlTheme) {
+                HtmlTheme htmlTheme = (HtmlTheme) theme;
+                StringBuilder rules = new StringBuilder();
+                htmlTheme.writeStyleRules(rules);
+                writer.writeCharacters(rules.toString());
+            }
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeEndElement();

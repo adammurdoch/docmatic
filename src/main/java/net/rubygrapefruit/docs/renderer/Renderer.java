@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.renderer;
 
 import net.rubygrapefruit.docs.model.Document;
+import net.rubygrapefruit.docs.theme.Theme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

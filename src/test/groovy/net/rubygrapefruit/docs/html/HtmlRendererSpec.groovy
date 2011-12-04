@@ -3,7 +3,8 @@ package net.rubygrapefruit.docs.html
 import net.rubygrapefruit.docs.docbook.DocbookParser
 import net.rubygrapefruit.docs.markdown.MarkdownParser
 import net.rubygrapefruit.docs.model.Document
-import net.rubygrapefruit.docs.renderer.DefaultTheme
+import net.rubygrapefruit.docs.theme.DefaultTheme
+import net.rubygrapefruit.docs.theme.Theme
 import spock.lang.Specification
 
 class HtmlRendererSpec extends Specification {
@@ -202,6 +203,19 @@ para 3
 </body>
 '''
     }
+    
+    def "applies style rules from html theme"() {
+        HtmlTheme theme = Mock()
+
+        given:
+        def doc = document 'content'
+
+        and:
+        _ * theme.writeStyleRules(!null) >> {Appendable target -> target.append('style-rule') }
+
+        expect:
+        render(doc, theme) contains 'style-rule'
+    }
 
     def document(String text) {
         return new MarkdownParser().parse(text, "document.md")
@@ -211,9 +225,9 @@ para 3
         return new DocbookParser().parse(text, "document.xml")
     }
 
-    def render(Document document) {
+    def render(Document document, Theme theme = new DefaultTheme()) {
         def outstr = new ByteArrayOutputStream()
-        renderer.render(document, new DefaultTheme(), outstr)
+        renderer.render(document, theme, outstr)
         return new String(outstr.toByteArray(), "utf-8")
     }
 }

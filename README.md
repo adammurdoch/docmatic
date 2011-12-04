@@ -18,10 +18,11 @@ Markdown
 --------
 Supported syntax:
 
-* Paragraphs - text and code inlines
-* Setext style headers - text and code inlines
+* Paragraphs
+* Setext style headers
 * Unordered and ordered lists - paragraphs only (no nested lists, headers, etc).
-* Code inlines
+* `` `code` ``
+* `_emphasis_`
 
 DocBook 4.5 and 5
 -----------------
@@ -48,14 +49,33 @@ You can also customise via the API, by implementing your own output format or th
 
 Usage
 =====
-`docmatic [--pdf] [--html] [--minimal] [--default] --out <output-dir> <input-files>*`
+`docmatic <output-formats> <themes> --out <output-dir> <input-files>*`
 
 Output formats:
 
 * `--pdf`
+
+    Generates PDF.
+
 * `--html`
+
+    Generates HTML 4
 
 Themes:
 
 * `--minimal`
+
+    Generates minimal styling and markup.
+
 * `--default`
+
+    Some lightweight styling.
+
+* `--fixed-width`
+
+    Fixed page width.
+
+API Usage
+=========
+Use a `Parser` implementation to build a `Document`. Use one or more `Renderer` implementations to generate output
+from that `Document`.

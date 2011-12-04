@@ -1,12 +1,12 @@
-Section 1 - some paragraphs
-===========================
-This is a paragraph.
+Test document
+=============
+This is a test document that exercises some of the markdown features. A document can contain paragraphs like this one.
 
 This is another paragraph
 that spans multiple lines.
 
-Section 2 - some lists
-----------------------
+Some lists
+----------
 This is a list:
 
 * item 1
@@ -35,10 +35,10 @@ A numbered list:
     This is another paragraph in the same list item.
 4. This is the last item, number 4.
 
-Section 3 - `Code` inlines
---------------------------
+`Code` inlines
+--------------
 
-Text can contain `code fragments`.
+Text can contain `code fragments`. You write them like this: `` `some code` ``.
 
 This `code fragment
 spans multiple lines`.
@@ -49,6 +49,15 @@ spans multiple lines`.
 1. `This item is all code`
 2. Item with a `mix of code` and text.
 
-Another main section
-====================
+_emphasis_ inlines
+------------------
+
+Text can contain _emphasis_ using *two different delimiters*. You write them like this: `_emphasis_` or `*emphasis*`.
+
+A top level section
+===================
 Not much here.
+
+A sub section
+-------------
+This is the last paragraph.

@@ -10,7 +10,7 @@ import net.rubygrapefruit.docs.model.Paragraph;
 import net.rubygrapefruit.docs.model.Section;
 import net.rubygrapefruit.docs.renderer.Renderer;
 import net.rubygrapefruit.docs.renderer.TextTheme;
-import net.rubygrapefruit.docs.renderer.Theme;
+import net.rubygrapefruit.docs.theme.Theme;
 
 import java.io.OutputStream;
 import java.math.BigDecimal;

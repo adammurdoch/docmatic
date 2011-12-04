@@ -9,10 +9,11 @@ import net.rubygrapefruit.docs.markdown.MarkdownParser;
 import net.rubygrapefruit.docs.model.Document;
 import net.rubygrapefruit.docs.parser.Parser;
 import net.rubygrapefruit.docs.pdf.PdfRenderer;
-import net.rubygrapefruit.docs.renderer.DefaultTheme;
-import net.rubygrapefruit.docs.renderer.MinimalTheme;
 import net.rubygrapefruit.docs.renderer.Renderer;
-import net.rubygrapefruit.docs.renderer.Theme;
+import net.rubygrapefruit.docs.theme.DefaultTheme;
+import net.rubygrapefruit.docs.theme.FixedWidthTheme;
+import net.rubygrapefruit.docs.theme.MinimalTheme;
+import net.rubygrapefruit.docs.theme.Theme;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class Main {
         optionParser.accepts("pdf", "Generate PDF output");
         optionParser.accepts("minimal", "Use the minimal theme");
         optionParser.accepts("default", "Use the default theme");
+        optionParser.accepts("fixed-width", "Use the fixed width theme (HTML only)");
         optionParser.accepts("out", "The directory to generate output to").withRequiredArg().required();
 
         OptionSet result = null;
@@ -46,12 +48,14 @@ public class Main {
         boolean pdf = result.has("pdf");
         boolean minimalOut = result.has("minimal");
         boolean defaultOut = result.has("default");
+        boolean fixedWidthOut = result.has("fixed-width");
         File outputDir = new File(result.valueOf("out").toString());
 
         Renderer htmlRenderer = new HtmlRenderer();
         Renderer pdfRenderer = new PdfRenderer();
         Theme minimalTheme = new MinimalTheme();
         Theme defaultTheme = new DefaultTheme();
+        Theme fixedWidthTheme = new FixedWidthTheme();
         for (File input : inputs) {
             Parser parser;
             if (input.getName().endsWith(".xml")) {
@@ -65,6 +69,10 @@ public class Main {
                 if (minimalOut) {
                     File htmlOutput = new File(outputDir, input.getName() + ".minimal.html");
                     htmlRenderer.render(document, minimalTheme, htmlOutput);
+                }
+                if (fixedWidthOut) {
+                    File htmlOutput = new File(outputDir, input.getName() + ".fixed.html");
+                    htmlRenderer.render(document, fixedWidthTheme, htmlOutput);
                 }
                 if (defaultOut) {
                     File htmlOutput = new File(outputDir, input.getName() + ".html");
