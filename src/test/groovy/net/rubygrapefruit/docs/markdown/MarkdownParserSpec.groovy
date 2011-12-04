@@ -368,10 +368,11 @@ para
 '''
 
         then:
-        doc.contents.size() == 2
-        doc.contents[0].title == '* item'
-        doc.contents[1].title == '- item'
-        doc.contents[1].contents[0].text == 'para'
+        doc.contents.size() == 1
+        doc.contents[0].contents.size() == 2
+        doc.contents[0].contents[0].title.text == '* item'
+        doc.contents[0].contents[1].title.text == '- item'
+        doc.contents[0].contents[1].contents[0].text == 'para'
     }
 
     def "a leading digits and . defines an ordered list item"() {
@@ -405,21 +406,21 @@ para
         then:
         doc.contents.size() == 3
         doc.contents[0].items.size() == 3
-        doc.contents[0].items[0].text == 'item 1'
-        doc.contents[0].items[1].text == 'item 2'
-        doc.contents[0].items[2].text == 'item 3'
+        doc.contents[0].items[0].contents[0].text == 'item 1'
+        doc.contents[0].items[1].contents[0].text == 'item 2'
+        doc.contents[0].items[2].contents[0].text == 'item 3'
         doc.contents[1].items.size() == 2
-        doc.contents[1].items[0].text == 'item 1'
-        doc.contents[1].items[1].text == 'item 2'
+        doc.contents[1].items[0].contents[0].text == 'item 1'
+        doc.contents[1].items[1].contents[0].text == 'item 2'
         doc.contents[2].items.size() == 1
-        doc.contents[2].items[0].text == 'item 1'
+        doc.contents[2].items[0].contents[0].text == 'item 1'
     }
 
     def "paragraphs can contain ordered list item marker"() {
         expect: false
     }
 
-    def "a series of backtick delimits code inline"() {
+    def "a series of ` delimits code inline"() {
         when:
         def doc = parse '''
 `some code`
@@ -454,7 +455,7 @@ a``b
         doc.contents[4].contents[0].text == ''
     }
 
-    def "code is terminated by equal number of backtick characters"() {
+    def "code is terminated by equal number of ` characters"() {
         when:
         def doc = parse '''
 `some code`` some code`
@@ -524,19 +525,58 @@ line   3  `
         expect: false
     }
 
-    def "underscore delimits emphasis inline"() {
+    def "_ or * character delimits emphasis inline"() {
+        when:
+        def doc = parse '''
+_some text_
+
+*some text*
+
+_ text _
+
+_text*text
+
+_text__
+
+_ __
+
+__ **
+        '''
+
+        then:
+        doc.contents[0].contents[0] instanceof Emphasis
+        doc.contents[0].contents[0].text == 'some text'
+
+        doc.contents[1].contents[0] instanceof Emphasis
+        doc.contents[1].contents[0].text == 'some text'
+
+        doc.contents[2].contents[0] instanceof Text
+        doc.contents[2].contents[0].text == '_ text _'
+
+        doc.contents[3].contents[0] instanceof Text
+        doc.contents[3].contents[0].text == '_text*text'
+
+        doc.contents[4].contents[0] instanceof Emphasis
+        doc.contents[4].contents[0].text == 'text'
+        doc.contents[4].contents[1] instanceof Text
+        doc.contents[4].contents[1].text == '_'
+
+        doc.contents[5].contents[0] instanceof Text
+        doc.contents[5].contents[0].text == '_ __'
+
+        doc.contents[6].contents[0] instanceof Text
+        doc.contents[6].contents[0].text == '__ **'
+    }
+
+    def "two _ or * characters delimits strong inline"() {
         expect: false
     }
 
-    def "asterix delimits strong inline"() {
+    def "emphasis inline can contain other inlines"() {
         expect: false
     }
 
-    def "emphasis inline can contain code inline"() {
-        expect: false
-    }
-
-    def "strong inline can contain code inline"() {
+    def "strong inline can contain other inlines"() {
         expect: false
     }
 

@@ -175,8 +175,41 @@ public class MarkdownParser extends Parser {
             if (code(parser, container)) {
                 continue;
             }
+            if (emphasis(parser, container)) {
+                continue;
+            }
             container.append(parser.next().value);
         }
+    }
+
+    private boolean emphasis(LookaheadStream<Token> parser, BuildableInlineContainer container) {
+        Token start = parser.peek();
+        if (start.type != Lexer.underscore && start.type != Lexer.star) {
+            return false;
+        }
+        Token next = parser.peek(1);
+        if (next == null || next.type == start.type || next.type == Lexer.whiteSpace) {
+            return false;
+        }
+        int pos = 2;
+        while (parser.peek(pos) != null) {
+            Token token = parser.peek(pos);
+            if (token.type == start.type && token.value.equals(start.value)) {
+                BuildableEmphasis emphasis = container.addEmphasis();
+
+                parser.next();
+                while (pos > 1) {
+                    emphasis.append(parser.next().value);
+                    pos--;
+                }
+                parser.next();
+                return true;
+            }
+
+            pos++;
+        }
+
+        return false;
     }
 
     private boolean code(LookaheadStream<Token> parser, BuildableInlineContainer container) {
@@ -189,14 +222,13 @@ public class MarkdownParser extends Parser {
         while (parser.peek(pos) != null) {
             Token token = parser.peek(pos);
             if (token.type == Lexer.backtick && token.value.length() == depth) {
-                parser.next();
                 BuildableCode code = container.addCode();
 
+                parser.next();
                 while (pos > 1) {
                     code.append(parser.next().value);
                     pos--;
                 }
-
                 parser.next();
                 return true;
             }
@@ -318,19 +350,27 @@ public class MarkdownParser extends Parser {
             if (tokens.isEmpty()) {
                 return new Line(LineType.Empty, tokens);
             }
-            if (tokens.size() > 2 && tokens.get(0).type == Lexer.itemisedListItem && tokens.get(1).type
-                    == Lexer.whiteSpace) {
-                return new Line(LineType.ItemisedListItem, tokens);
-            }
-            if (tokens.size() > 2 && tokens.get(0).type == Lexer.numberedListItem && tokens.get(1).type
-                    == Lexer.whiteSpace) {
-                return new Line(LineType.OrderedListItem, tokens);
-            }
             if (tokens.size() == 1 && tokens.get(0).type == Lexer.equalsSpec) {
                 return new Line(LineType.H1, tokens);
             }
             if (tokens.size() == 1 && tokens.get(0).type == Lexer.dashes) {
                 return new Line(LineType.H2, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.plus && tokens.get(1).type
+                    == Lexer.whiteSpace) {
+                return new Line(LineType.ItemisedListItem, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.star && tokens.get(1).type
+                    == Lexer.whiteSpace) {
+                return new Line(LineType.ItemisedListItem, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.dashes && tokens.get(0).value.length() == 1
+                    && tokens.get(1).type == Lexer.whiteSpace) {
+                return new Line(LineType.ItemisedListItem, tokens);
+            }
+            if (tokens.size() > 2 && tokens.get(0).type == Lexer.numberedListItem && tokens.get(1).type
+                    == Lexer.whiteSpace) {
+                return new Line(LineType.OrderedListItem, tokens);
             }
             return new Line(LineType.Text, tokens);
         }
@@ -349,12 +389,14 @@ public class MarkdownParser extends Parser {
     private static class Lexer {
         static final EndOfLineSpec endOfLineSpec = new EndOfLineSpec();
         static final WordSpec word = new WordSpec();
-        static final TokenSpec whiteSpace = new SequenceSpec(' ', '\t');
-        static final TokenSpec equalsSpec = new SequenceSpec('=');
-        static final TokenSpec dashes = new SequenceSpec('-');
-        static final TokenSpec itemisedListItem = new ChoiceSpec('*', '+', '-');
-        static final TokenSpec backtick = new SequenceSpec('`');
-        static final TokenSpec underscore = new ChoiceSpec('_');
+        static final TokenSpec whiteSpace = new CharSequenceSpec(' ', '\t');
+        static final TokenSpec equalsSpec = new CharSequenceSpec('=');
+        static final TokenSpec dashes = new CharSequenceSpec('-');
+        static final TokenSpec plus = new SingleCharSpec('+');
+        static final TokenSpec dash = new SingleCharSpec('-');
+        static final TokenSpec backtick = new CharSequenceSpec('`');
+        static final TokenSpec underscore = new SingleCharSpec('_');
+        static final TokenSpec star = new SingleCharSpec('*');
         static final TokenSpec numberedListItem = new NumberedItemSpec();
 
         private final Buffer buffer;
@@ -383,16 +425,16 @@ public class MarkdownParser extends Parser {
             if (buffer.scanFor(endOfLineSpec)) {
                 return endOfLineSpec;
             }
-            if (atStartOfLine && buffer.scanFor(itemisedListItem)) {
-                return itemisedListItem;
-            }
             if (atStartOfLine && buffer.scanFor(numberedListItem)) {
                 return numberedListItem;
             }
             if (atStartOfLine && buffer.scanFor(equalsSpec)) {
                 return equalsSpec;
             }
-            if (atStartOfLine && buffer.scanFor(dashes)) {
+            if (buffer.scanFor(plus)) {
+                return plus;
+            }
+            if (buffer.scanFor(dashes)) {
                 return dashes;
             }
             if (buffer.scanFor(backtick)) {
@@ -400,6 +442,9 @@ public class MarkdownParser extends Parser {
             }
             if (buffer.scanFor(underscore)) {
                 return underscore;
+            }
+            if (buffer.scanFor(star)) {
+                return star;
             }
             if (buffer.scanFor(whiteSpace)) {
                 return whiteSpace;
@@ -418,10 +463,10 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class SequenceSpec implements TokenSpec {
+    private static class CharSequenceSpec implements TokenSpec {
         private final char[] candidates;
 
-        private SequenceSpec(char... candidates) {
+        private CharSequenceSpec(char... candidates) {
             this.candidates = candidates;
         }
 
@@ -431,20 +476,17 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class ChoiceSpec implements TokenSpec {
+    private static class SingleCharSpec implements TokenSpec {
         private final char[] candidates;
 
-        private ChoiceSpec(char... candidates) {
+        private SingleCharSpec(char... candidates) {
             this.candidates = candidates;
         }
 
         public void match(Buffer buffer) {
             for (char candidate : candidates) {
                 if (buffer.consume(candidate)) {
-                    if (!buffer.lookingAt(candidate)) {
-                        return;
-                    }
-                    buffer.unwind();
+                    return;
                 }
             }
         }
@@ -466,7 +508,7 @@ public class MarkdownParser extends Parser {
 
     private static class WordSpec implements TokenSpec {
         public void match(Buffer buffer) {
-            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n', '`')) {
+            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n', '`', '_', '*')) {
             }
         }
     }
