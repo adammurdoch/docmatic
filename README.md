@@ -6,13 +6,17 @@ DocBook, and generates HTML 4 or PDF output.
 
 Why?
 ----
-Existing tool-chains for the JVM are unwieldy, slow and hard to customise.
+* Existing tool-chains for the JVM are unwieldy, slow and hard to customise. Docmatic is small, fast and easy to install.
+* Docbook has a comprehensive model for documentation, but awkward to use for authoring documents. Markdown, on the
+other hand, is nice for authoring, but the resulting documents lack a lot of useful structural information. Docmatic
+is an experiment in allowing you to build documentation from these two formats, using the strengths of each as
+appropriate.
 
 Supported Inputs
 ================
 Can parse a subset of Markdown and DocBook 4.5 and 5. You can also use the API to build a document programmatically.
 
-Note that Docmatic is a work-in-progress, so not everything is supported.
+Note that Docmatic is a very early work-in-progress, so not much is supported.
 
 Markdown
 --------
@@ -28,12 +32,12 @@ DocBook 4.5 and 5
 -----------------
 Supported elements:
 
-* `<book>` - `<title>`, `<part>`, `<chapter>`, `<appendix>` only
-* `<part>` - `<title>`, `<chapter>`, `<appendix>` only.
-* `<chapter>`, `<appendix>`, `<section>` - `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` only
-* `<title>`, `<para>` - text, `<code>`, `<literal>`, `<emphasis>` only
-* `<itemizedlist>`, `<orderedlist>` - `<listitem>` only
-* `<listitem>` - `<para>`, `<itemizedlist>`, `<orderedlist>` only
+* `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
+* `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
+* `<chapter>`, with `<appendix>`, `<section>` - `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
+* `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
 
 Supported 4.5 elements:
 

@@ -2,7 +2,7 @@ apply plugin: 'groovy'
 apply plugin: 'application'
 apply plugin: 'idea'
 
-mainClassName = 'net.rubygrapefruit.markdown.launcher.Main'
+mainClassName = 'net.rubygrapefruit.docs.launcher.Main'
 
 repositories {
     mavenCentral()
@@ -25,5 +25,5 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.0-milestone-6'
+    gradleVersion = '1.0-milestone-8'
 }
