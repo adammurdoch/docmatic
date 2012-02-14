@@ -49,6 +49,11 @@ Supported Outputs
 Can generate HTML 4 and PDF output. There are some built-in themes that offer some degree of customisation.
 You can also customise via the API, by implementing your own output format or theme.
 
+Building from source
+====================
+
+Run `./gradlew install` to build an installation in `build/install/docmatic'.
+
 Usage
 =====
 `docmatic <output-formats> <themes> --out <output-dir> <input-files>*`
