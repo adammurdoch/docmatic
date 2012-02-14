@@ -1,8 +1,7 @@
 package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
-import net.rubygrapefruit.docs.renderer.Renderer;
-import net.rubygrapefruit.docs.renderer.TextTheme;
+import net.rubygrapefruit.docs.renderer.*;
 import net.rubygrapefruit.docs.theme.Theme;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -14,7 +13,7 @@ public class HtmlRenderer extends Renderer {
     private final String EOL = String.format("%n");
 
     @Override
-    protected void doRender(Document document, Theme theme, OutputStream outputStream) throws Exception {
+    protected void doRender(RenderableDocument document, Theme theme, OutputStream outputStream) throws Exception {
         XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream);
         try {
             writer.writeDTD(
@@ -57,7 +56,7 @@ public class HtmlRenderer extends Renderer {
             writer.writeCharacters(EOL);
             writer.writeStartElement("body");
             writer.writeCharacters(EOL);
-            writeComponent(document, 1, writer);
+            writeDocument(document, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeEndElement();
@@ -67,12 +66,30 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
+    private void writeDocument(RenderableDocument document, XMLStreamWriter writer) throws XMLStreamException {
+        for (BuildableChunk chunk : document.getContents()) {
+            for (Block block : chunk.getContents()) {
+                if (block instanceof TitleBlock) {
+                    TitleBlock titleBlock = (TitleBlock) block;
+                    writeTitle(titleBlock.getComponent(), 1, writer);
+                } else if (block instanceof Component) {
+                    writeComponent((Component) block, 1, writer);
+                } else if (block instanceof Unknown) {
+                    writeUnknown((Unknown) block, writer);
+                } else {
+                    throw new IllegalStateException(String.format("Don't know how to render top-level block of type '%s'.",
+                            block.getClass().getSimpleName()));
+                }
+            }
+        }
+    }
+
     private void writeComponent(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        writeTitle(component, 1, writer);
+        writeTitle(component, depth, writer);
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                writeSection(child, depth == 1 ? 1: 2, writer);
+                writeSection(child, depth + 1, writer);
             } else if (block instanceof Component) {
                 Component child = (Component) block;
                 writeComponent(child, depth + 1, writer);
@@ -126,16 +143,19 @@ public class HtmlRenderer extends Renderer {
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof Unknown) {
-            Unknown unknown = (Unknown) block;
-            writer.writeStartElement("div");
-            writer.writeAttribute("class", "unknown");
-            writer.writeCharacters(unknown.getMessage());
-            writer.writeEndElement();
-            writer.writeCharacters(EOL);
+            writeUnknown((Unknown) block, writer);
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
         }
+    }
+
+    private void writeUnknown(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("div");
+        writer.writeAttribute("class", "unknown");
+        writer.writeCharacters(unknown.getMessage());
+        writer.writeEndElement();
+        writer.writeCharacters(EOL);
     }
 
     private void writeInline(InlineContainer inline, XMLStreamWriter writer) throws XMLStreamException {

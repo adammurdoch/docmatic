@@ -1,15 +1,14 @@
 package net.rubygrapefruit.docs.pdf;
 
 import com.itextpdf.text.*;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.pdf.PdfWriter;
 import net.rubygrapefruit.docs.model.*;
-import net.rubygrapefruit.docs.model.Document;
 import net.rubygrapefruit.docs.model.List;
 import net.rubygrapefruit.docs.model.ListItem;
 import net.rubygrapefruit.docs.model.Paragraph;
 import net.rubygrapefruit.docs.model.Section;
-import net.rubygrapefruit.docs.renderer.Renderer;
-import net.rubygrapefruit.docs.renderer.TextTheme;
+import net.rubygrapefruit.docs.renderer.*;
 import net.rubygrapefruit.docs.theme.Theme;
 
 import java.io.OutputStream;
@@ -25,7 +24,7 @@ public class PdfRenderer extends Renderer {
     private BigDecimal lineHeight;
 
     @Override
-    protected void doRender(Document document, Theme theme, OutputStream stream) throws Exception {
+    protected void doRender(RenderableDocument document, Theme theme, OutputStream stream) throws Exception {
         TextTheme textTheme = theme.asTextTheme();
         Font.FontFamily fontFamily = Font.FontFamily.TIMES_ROMAN;
         BaseColor textColor = BaseColor.BLACK;
@@ -52,8 +51,32 @@ public class PdfRenderer extends Renderer {
         com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4, 40, 20, 40, 20);
         PdfWriter.getInstance(pdfDocument, stream);
         pdfDocument.open();
-        writeComponent(document, 0, pdfDocument);
+        writeDocument(document, pdfDocument);
         pdfDocument.close();
+    }
+
+    private void writeDocument(RenderableDocument document, com.itextpdf.text.Document pdfDocument)
+            throws DocumentException {
+        boolean first = true;
+        for (BuildableChunk chunk : document.getContents()) {
+            if (!first) {
+                pdfDocument.newPage();
+            }
+            first = false;
+            for (Block block : chunk.getContents()) {
+                if (block instanceof Component) {
+                    writeComponent((Component) block, 1, pdfDocument);
+                } else if (block instanceof TitleBlock) {
+                    TitleBlock titleBlock = (TitleBlock) block;
+                    writeTitle(titleBlock.getComponent(), 1, pdfDocument);
+                } else if (block instanceof Unknown) {
+                    pdfDocument.add(createUnknown((Unknown) block));
+                } else {
+                    throw new IllegalStateException(String.format("Don't know how to render top-level block of type '%s'.",
+                            block.getClass().getSimpleName()));
+                }
+            }
+        }
     }
 
     private void writeComponent(Component component, int depth, com.itextpdf.text.Document target)
@@ -127,15 +150,18 @@ public class PdfRenderer extends Renderer {
             addItems(list, pdfList);
             return pdfList;
         } else if (block instanceof Unknown) {
-            Unknown unknown = (Unknown) block;
-            com.itextpdf.text.Paragraph paragraph = new com.itextpdf.text.Paragraph();
-            paragraph.setFont(this.unknown);
-            paragraph.add(unknown.getMessage());
-            return paragraph;
+            return createUnknown((Unknown) block);
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
         }
+    }
+
+    private Element createUnknown(Unknown unknown) {
+        com.itextpdf.text.Paragraph paragraph = new com.itextpdf.text.Paragraph();
+        paragraph.setFont(this.unknown);
+        paragraph.add(unknown.getMessage());
+        return paragraph;
     }
 
     private void writeContents(InlineContainer inlineContainer, com.itextpdf.text.Paragraph paragraph) {

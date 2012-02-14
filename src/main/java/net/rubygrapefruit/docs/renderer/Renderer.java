@@ -36,5 +36,11 @@ public abstract class Renderer {
         }
     }
 
-    protected abstract void doRender(Document document, Theme theme, OutputStream stream) throws Exception;
+    protected void doRender(Document document, Theme theme, OutputStream stream) throws Exception {
+        RenderableDocument renderableDocument = new RenderableDocument();
+        theme.getDocumentBuilder().buildDocument(document, renderableDocument);
+        doRender(renderableDocument, theme, stream);
+    }
+
+    protected abstract void doRender(RenderableDocument document, Theme theme, OutputStream stream) throws Exception;
 }

@@ -6,6 +6,10 @@ import java.awt.*;
 import java.math.BigDecimal;
 
 public class DefaultTheme implements Theme, TextTheme {
+    public RenderableDocumentBuilder getDocumentBuilder() {
+        return new MultipleChunkBuilder();
+    }
+
     public TextTheme asTextTheme() {
         return this;
     }

@@ -28,19 +28,17 @@ DocBook 4.5 and 5
 -----------------
 Supported elements:
 
-* book > title, part, chapter, appendix
-* part > title, chapter, appendix
-* chapter, appendix, section > title, section, para, itemizedlist, orderedlist
-* title > text, code, literal, emphasis
-* para > text, code, literal, emphasis
-* itemizedlist > listitem
-* orderedlist > listitem
-* listitem > para, itemizedlist, orderedlist
+* `<book>` - `<title>`, `<part>`, `<chapter>`, `<appendix>` only
+* `<part>` - `<title>`, `<chapter>`, `<appendix>` only.
+* `<chapter>`, `<appendix>`, `<section>` - `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` only
+* `<title>`, `<para>` - text, `<code>`, `<literal>`, `<emphasis>` only
+* `<itemizedlist>`, `<orderedlist>` - `<listitem>` only
+* `<listitem>` - `<para>`, `<itemizedlist>`, `<orderedlist>` only
 
 Supported 4.5 elements:
 
-* book > bookinfo
-* bookinfo > title
+* `<book>` - `<bookinfo>`
+* `<bookinfo>` - `<title>` only
 
 Supported Outputs
 =================
@@ -51,17 +49,18 @@ Usage
 =====
 `docmatic <output-formats> <themes> --out <output-dir> <input-files>*`
 
-Output formats:
-
+Output formats
+--------------
 * `--pdf`
 
     Generates PDF.
 
 * `--html`
 
-    Generates HTML 4
+    Generates HTML 4.
 
-Themes:
+Themes
+------
 
 * `--minimal`
 
@@ -73,9 +72,14 @@ Themes:
 
 * `--fixed-width`
 
-    Fixed page width.
+    Fixed page width (HTML only).
 
 API Usage
 =========
 Use a `Parser` implementation to build a `Document`. Use one or more `Renderer` implementations to generate output
 from that `Document`.
+
+Known Issues
+============
+* Exception rendering a markdown document that does not start with a header.
+* Fonts are not correct for inline elements in headers in PDFs.
