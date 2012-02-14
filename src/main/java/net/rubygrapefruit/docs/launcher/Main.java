@@ -14,6 +14,8 @@ import net.rubygrapefruit.docs.theme.DefaultTheme;
 import net.rubygrapefruit.docs.theme.FixedWidthTheme;
 import net.rubygrapefruit.docs.theme.MinimalTheme;
 import net.rubygrapefruit.docs.theme.Theme;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) throws IOException {
         OptionParser optionParser = new OptionParser();
         optionParser.accepts("html", "Generate HTML 4 output");
@@ -35,6 +39,9 @@ public class Main {
             result = optionParser.parse(args);
         } catch (OptionException e) {
             System.err.println(e.getMessage());
+            System.err.println();
+            System.err.println("USAGE: docmatic [options] --out <output-dir> <input-file>...");
+            System.err.println();
             optionParser.printHelpOn(System.err);
             System.exit(1);
         }
@@ -46,9 +53,20 @@ public class Main {
 
         boolean html = result.has("html");
         boolean pdf = result.has("pdf");
+
+        if (!html && !pdf) {
+            LOGGER.warn("No output formats specified. Generating HTML.");
+            html = true;
+        }
+
         boolean minimalOut = result.has("minimal");
         boolean defaultOut = result.has("default");
         boolean fixedWidthOut = result.has("fixed-width");
+
+        if (!minimalOut && !defaultOut && !fixedWidthOut) {
+            defaultOut = true;
+        }
+
         File outputDir = new File(result.valueOf("out").toString());
 
         Renderer htmlRenderer = new HtmlRenderer();
