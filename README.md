@@ -7,7 +7,7 @@ DocBook, and generates HTML 4 or PDF output.
 Why?
 ----
 * Existing tool-chains for the JVM are unwieldy, slow and hard to customise. Docmatic is small, fast and easy to install.
-* Docbook has a comprehensive model for documentation, but awkward to use for authoring documents. Markdown, on the
+* Docbook has a comprehensive model for documentation, but is awkward to use for authoring documents. Markdown, on the
 other hand, is nice for authoring, but the resulting documents lack a lot of useful structural information. Docmatic
 is an experiment in allowing you to build documentation from these two formats, using the strengths of each as
 appropriate.
@@ -41,8 +41,8 @@ Supported elements:
 
 Supported 4.5 elements:
 
-* `<book>` - `<bookinfo>`
-* `<bookinfo>` - `<title>` only
+* `<book>`, with `<bookinfo>` child element.
+* `<bookinfo>`, with `<title>` child element only.
 
 Supported Outputs
 =================
@@ -52,7 +52,7 @@ You can also customise via the API, by implementing your own output format or th
 Building from source
 ====================
 
-Run `./gradlew install` to build an installation in `build/install/docmatic'.
+Run `./gradlew install` to build an installation in `build/install/docmatic`.
 
 Usage
 =====
@@ -91,4 +91,4 @@ from that `Document`.
 Known Issues
 ============
 * Exception rendering a markdown document that does not start with a header.
-* Fonts are not correct for inline elements in headers in PDFs.
+* Paragraph fonts are used for inline elements in headers in PDFs.
