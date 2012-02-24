@@ -12,11 +12,17 @@ other hand, is nice for authoring, but the resulting documents lack a lot of use
 is an experiment in allowing you to build documentation from these two formats, using the strengths of each as
 appropriate.
 
+Features
+--------
+* Generate single or multi-paged HTML.
+* Themes.
+* Java API, to allow you to programmatically build, transform, theme, or render a document.
+
 Supported Inputs
 ================
-Can parse a subset of Markdown and DocBook 4.5 and 5. You can also use the API to build a document programmatically.
+Docmatic can parse a subset of Markdown and DocBook 4.5 and 5. You can also use the API to build a document programmatically.
 
-Note that Docmatic is a very early work-in-progress, so not much is supported.
+Note that Docmatic is a very early work-in-progress, so not much of these input formats is supported yet.
 
 Markdown
 --------
@@ -47,12 +53,12 @@ Supported 4.5 elements:
 Supported Outputs
 =================
 Can generate HTML 4 and PDF output. There are some built-in themes that offer some degree of customisation.
-You can also customise via the API, by implementing your own output format or theme.
+You can also customise via the API, by implementing your own output renderer or theme.
 
 Building from source
 ====================
 
-Run `./gradlew install` to build an installation in `build/install/docmatic`.
+Run `./gradlew installApp` to build an installation in `build/install/docmatic`.
 
 Usage
 =====
@@ -86,9 +92,9 @@ Themes
 API Usage
 =========
 Use a `Parser` implementation to build a `Document`. Use one or more `Renderer` implementations to generate output
-from that `Document`.
+from that `Document`. Use a `Theme` implementation to tweak the output.
 
 Known Issues
 ============
-* Exception rendering a markdown document that does not start with a header.
+* A markdown document that does not start with a header is rendered across multiple pages.
 * Paragraph fonts are used for inline elements in headers in PDFs.
