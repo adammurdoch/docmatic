@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.pdf;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfWriter;
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.model.List;
@@ -15,7 +16,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 
-public class PdfRenderer extends Renderer {
+public class PdfRenderer extends SingleFileRenderer {
     private Font base;
     private java.util.List<Font> headerFonts = new ArrayList<Font>();
     private Font unknown;
@@ -72,8 +73,7 @@ public class PdfRenderer extends Renderer {
                 } else if (block instanceof Unknown) {
                     pdfDocument.add(createUnknown((Unknown) block));
                 } else {
-                    throw new IllegalStateException(String.format("Don't know how to render top-level block of type '%s'.",
-                            block.getClass().getSimpleName()));
+                    writeComponentBlock(block, pdfDocument);
                 }
             }
         }
@@ -90,7 +90,7 @@ public class PdfRenderer extends Renderer {
                 Component child = (Component) block;
                 writeComponent(child, depth + 1, target);
             } else {
-                target.add(convertBlock(block));
+                writeComponentBlock(block, target);
             }
         }
     }
@@ -103,7 +103,7 @@ public class PdfRenderer extends Renderer {
                 Section child = (Section) block;
                 writeSection(child, depth + 1, target);
             } else {
-                target.add(convertBlock(block));
+                writeComponentBlock(block, target);
             }
         }
     }
@@ -122,6 +122,10 @@ public class PdfRenderer extends Renderer {
         title.setSpacingBefore(15);
         title.setSpacingAfter(8);
         target.add(title);
+    }
+
+    private void writeComponentBlock(Block block, Document target) throws DocumentException {
+        target.add(convertBlock(block));
     }
 
     private Element convertBlock(Block block) throws DocumentException {

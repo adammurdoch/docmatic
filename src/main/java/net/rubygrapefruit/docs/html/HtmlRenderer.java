@@ -9,12 +9,12 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.OutputStream;
 
-public class HtmlRenderer extends Renderer {
+public class HtmlRenderer extends MultiPageRenderer {
     private final String EOL = String.format("%n");
 
     @Override
-    protected void doRender(RenderableDocument document, Theme theme, OutputStream outputStream) throws Exception {
-        XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(outputStream);
+    protected void doRender(Page page, Theme theme, OutputStream stream) throws Exception {
+        XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(stream);
         try {
             writer.writeDTD(
                     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -35,13 +35,19 @@ public class HtmlRenderer extends Renderer {
                 writer.writeCharacters("html { font-family: ");
                 writer.writeCharacters(textTheme.getFontName());
                 writer.writeCharacters("; font-size: 12pt; color: #");
-                writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(), textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
+                writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(),
+                        textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
                 writer.writeCharacters("; line-height: normal;");
                 writer.writeCharacters("}\n");
-                writer.writeCharacters("body { margin: 5em; background-color: white; }\n");
+                writer.writeCharacters("body { margin: 3em 5em; background-color: white; }\n");
                 writer.writeCharacters("p { line-height: ");
                 writer.writeCharacters(textTheme.getLineSpacing().toString());
                 writer.writeCharacters("; }\n");
+                writer.writeCharacters("div.header { overflow: auto; height: 2em; margin-bottom: 1.5em; }\n");
+                writer.writeCharacters("div.footer { overflow: auto; margin-top: 6.5em; }\n");
+                writer.writeCharacters("div.navbar { text-align: right; }\n");
+                writer.writeCharacters("div.navbar a { color: #909090; margin-left: 2em; }\n");
+                writer.writeCharacters("div.navbar a:visited { color: #909090; }\n");
             }
             writer.writeCharacters(".unknown { color: red; }\n");
             if (theme instanceof HtmlTheme) {
@@ -56,7 +62,9 @@ public class HtmlRenderer extends Renderer {
             writer.writeCharacters(EOL);
             writer.writeStartElement("body");
             writer.writeCharacters(EOL);
-            writeDocument(document, writer);
+            writeHeader(page, writer);
+            writeChunk(page.getChunk(), writer);
+            writeFooter(page, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
             writer.writeEndElement();
@@ -66,20 +74,55 @@ public class HtmlRenderer extends Renderer {
         }
     }
 
-    private void writeDocument(RenderableDocument document, XMLStreamWriter writer) throws XMLStreamException {
-        for (BuildableChunk chunk : document.getContents()) {
-            for (Block block : chunk.getContents()) {
-                if (block instanceof TitleBlock) {
-                    TitleBlock titleBlock = (TitleBlock) block;
-                    writeTitle(titleBlock.getComponent(), 1, writer);
-                } else if (block instanceof Component) {
-                    writeComponent((Component) block, 1, writer);
-                } else if (block instanceof Unknown) {
-                    writeUnknown((Unknown) block, writer);
-                } else {
-                    throw new IllegalStateException(String.format("Don't know how to render top-level block of type '%s'.",
-                            block.getClass().getSimpleName()));
-                }
+    private void writeHeader(Page page, XMLStreamWriter writer) throws XMLStreamException {
+        writeNavLinks(page, "header", writer);
+    }
+
+    private void writeFooter(Page page, XMLStreamWriter writer) throws XMLStreamException {
+        writeNavLinks(page, "footer", writer);
+    }
+
+    private void writeNavLinks(Page page, String htmlClass, XMLStreamWriter writer) throws XMLStreamException {
+        if (page.getPreviousUrl() == null && page.getHomeUrl() == null && page.getNextUrl() == null) {
+            return;
+        }
+        writer.writeStartElement("div");
+        writer.writeAttribute("class", "navbar " + htmlClass);
+        if (page.getPreviousUrl() != null) {
+            writer.writeStartElement("a");
+            writer.writeAttribute("href", page.getPreviousUrl());
+            writer.writeAttribute("class", "previouslink");
+            writer.writeCharacters("Previous");
+            writer.writeEndElement();
+        }
+        if (page.getHomeUrl() != null) {
+            writer.writeStartElement("a");
+            writer.writeAttribute("href", page.getHomeUrl());
+            writer.writeAttribute("class", "homelink");
+            writer.writeCharacters("Home");
+            writer.writeEndElement();
+        }
+        if (page.getNextUrl() != null) {
+            writer.writeStartElement("a");
+            writer.writeAttribute("href", page.getNextUrl());
+            writer.writeAttribute("class", "nextlink");
+            writer.writeCharacters("Next");
+            writer.writeEndElement();
+        }
+        writer.writeEndElement();
+    }
+
+    private void writeChunk(Chunk chunk, XMLStreamWriter writer) throws XMLStreamException {
+        for (Block block : chunk.getContents()) {
+            if (block instanceof TitleBlock) {
+                TitleBlock titleBlock = (TitleBlock) block;
+                writeTitle(titleBlock.getComponent(), 1, writer);
+            } else if (block instanceof Component) {
+                writeComponent((Component) block, 1, writer);
+            } else if (block instanceof Unknown) {
+                writeUnknown((Unknown) block, writer);
+            } else {
+                writeComponentChildBlock(block, writer);
             }
         }
     }
@@ -94,7 +137,7 @@ public class HtmlRenderer extends Renderer {
                 Component child = (Component) block;
                 writeComponent(child, depth + 1, writer);
             } else {
-                writeBlock(block, writer);
+                writeComponentChildBlock(block, writer);
             }
         }
     }
@@ -106,7 +149,7 @@ public class HtmlRenderer extends Renderer {
                 Section child = (Section) block;
                 writeSection(child, depth + 1, writer);
             } else {
-                writeBlock(block, writer);
+                writeComponentChildBlock(block, writer);
             }
         }
     }
@@ -121,7 +164,7 @@ public class HtmlRenderer extends Renderer {
         writer.writeCharacters(EOL);
     }
 
-    private void writeBlock(Block block, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeComponentChildBlock(Block block, XMLStreamWriter writer) throws XMLStreamException {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             writer.writeStartElement("p");
@@ -201,7 +244,7 @@ public class HtmlRenderer extends Renderer {
             writer.writeStartElement("li");
             writer.writeCharacters(EOL);
             for (Block childBlock : item.getContents()) {
-                writeBlock(childBlock, writer);
+                writeComponentChildBlock(childBlock, writer);
             }
             writer.writeEndElement();
             writer.writeCharacters(EOL);

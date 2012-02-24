@@ -4,10 +4,15 @@ import net.rubygrapefruit.docs.docbook.DocbookParser
 import net.rubygrapefruit.docs.markdown.MarkdownParser
 import net.rubygrapefruit.docs.model.Document
 import net.rubygrapefruit.docs.theme.DefaultTheme
+import net.rubygrapefruit.docs.theme.MinimalTheme
+import net.rubygrapefruit.docs.theme.SingleChunkBuilder
 import net.rubygrapefruit.docs.theme.Theme
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 class HtmlRendererSpec extends Specification {
+    @Rule final TemporaryFolder tmpDir = new TemporaryFolder()
     final HtmlRenderer renderer = new HtmlRenderer()
 
     def "renders an empty document"() {
@@ -16,7 +21,7 @@ class HtmlRendererSpec extends Specification {
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 </body>
 '''
     }
@@ -30,7 +35,7 @@ class HtmlRendererSpec extends Specification {
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <h1>title</h1>
 </body>
 '''
@@ -44,7 +49,7 @@ para 2.
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <p>para 1.</p>
 <p>para 2.</p>
 </body>
@@ -62,7 +67,7 @@ section 2
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <h1>section 1</h1>
 <h2>section 2</h2>
 </body>
@@ -89,7 +94,7 @@ section 2
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <h1>chapter 1</h1>
 <h2>section 2</h2>
 <h3>section 3</h3>
@@ -113,7 +118,7 @@ para 3
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <h1>section 1</h1>
 <p>para 1</p>
 <p>para 2</p>
@@ -132,7 +137,7 @@ para 3
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <ul>
 <li>
 <p>para 1</p>
@@ -157,7 +162,7 @@ para 3
 '''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <ol>
 <li>
 <p>para 1</p>
@@ -183,7 +188,7 @@ para 3
 </chapter></book>'''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <p><code class="code">code</code> <code class="literal">literal</code></p>
 </body>
 '''
@@ -198,7 +203,7 @@ para 3
 </chapter></book>'''
 
         expect:
-        render doc contains '''<body>
+        rendered doc contains '''<body>
 <p><em>emphasis</em></p>
 </body>
 '''
@@ -211,10 +216,42 @@ para 3
         def doc = document 'content'
 
         and:
+        _ * theme.documentBuilder >> new SingleChunkBuilder()
         _ * theme.writeStyleRules(!null) >> {Appendable target -> target.append('style-rule') }
 
         expect:
-        render(doc, theme) contains 'style-rule'
+        rendered(doc, theme) contains 'style-rule'
+    }
+
+    def "renders each document chunk to a separate page"() {
+        def outFile = new File(tmpDir.root, "out.html")
+        
+        given:
+        def doc = docbook("<book><chapter><title>chapter 1</title></chapter><chapter><title>chapter 2</title></chapter></book>")
+        
+        when:
+        rendered(doc, outFile, new DefaultTheme())
+        
+        then:
+        outFile.file
+        new File(tmpDir.root, "out.html.content/page1.html").file
+    }
+
+    def "renders navigation links for a page"() {
+        def outFile = new File(tmpDir.root, "out.html")
+        
+        given:
+        def doc = docbook("<book><chapter><title>chapter 1</title></chapter><chapter><title>chapter 2</title></chapter></book>")
+        
+        when:
+        rendered(doc, outFile, new DefaultTheme())
+        
+        then:
+        outFile.text.contains '''<div class="navbar header"><a href="out.html.content/page1.html" class="nextlink">Next</a></div>'''
+        outFile.text.contains '''<div class="navbar footer"><a href="out.html.content/page1.html" class="nextlink">Next</a></div>'''
+        def page1 = new File(tmpDir.root, "out.html.content/page1.html")
+        page1.text.contains '''<div class="navbar header"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
+        page1.text.contains '''<div class="navbar footer"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
     }
 
     def document(String text) {
@@ -225,9 +262,14 @@ para 3
         return new DocbookParser().parse(text, "document.xml")
     }
 
-    def render(Document document, Theme theme = new DefaultTheme()) {
-        def outstr = new ByteArrayOutputStream()
-        renderer.render(document, theme, outstr)
-        return new String(outstr.toByteArray(), "utf-8")
+    def rendered(Document document, Theme theme = new MinimalTheme()) {
+        def out = new File(tmpDir.root, "out.html")
+        renderer.render(document, theme, out)
+        assert out.file
+        return out.text
+    }
+
+    def rendered(Document document, File outputDir, Theme theme = new MinimalTheme()) {
+        renderer.render(document, theme, outputDir)
     }
 }
