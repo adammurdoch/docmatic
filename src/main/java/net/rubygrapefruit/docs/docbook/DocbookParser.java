@@ -8,11 +8,9 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
-import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 
@@ -21,9 +19,7 @@ import java.util.LinkedList;
  */
 public class DocbookParser extends Parser {
     @Override
-    protected Document doParse(Reader input, String fileName)
-            throws SAXException, ParserConfigurationException, IOException {
-        BuildableDocument document = new BuildableDocument();
+    protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
         final LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
         int pos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf(File.separatorChar));
         if (pos >= 0) {
@@ -50,7 +46,7 @@ public class DocbookParser extends Parser {
                     throws SAXException {
                 ElementHandler childHandler = stack.getLast().pushChild(elementName, context);
                 stack.add(childHandler);
-                childHandler.start(elementName, context);
+                childHandler.start(elementName, attributes, context);
             }
 
             @Override
@@ -64,8 +60,6 @@ public class DocbookParser extends Parser {
             }
         });
         saxParser.getXMLReader().parse(new InputSource(input));
-
-        return document;
     }
 
     private interface Context {
@@ -150,7 +144,7 @@ public class DocbookParser extends Parser {
     }
 
     private interface ElementHandler {
-        void start(String name, Context context);
+        void start(String name, Attributes attributes, Context context);
 
         ElementHandler pushChild(String name, Context context);
 
@@ -167,7 +161,7 @@ public class DocbookParser extends Parser {
         public void handleText(String text, Context context) {
         }
 
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
         }
 
         public void finish(Context context) {
@@ -175,7 +169,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class DefaultElementHandler implements ElementHandler {
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
         }
 
         public ElementHandler pushChild(String name, Context context) {
@@ -212,8 +206,13 @@ public class DocbookParser extends Parser {
         protected abstract BuildableComponent create(Context context);
 
         @Override
-        public void start(String name, Context context) {
-            context.pushContainer(create(context));
+        public void start(String name, Attributes attributes, Context context) {
+            BuildableComponent container = create(context);
+            String id = attributes.getValue("id");
+            if (id != null) {
+                container.setId(id);
+            }
+            context.pushContainer(container);
         }
 
         @Override
@@ -303,8 +302,13 @@ public class DocbookParser extends Parser {
         }
 
         @Override
-        public void start(String name, Context context) {
-            context.pushContainer(create(context));
+        public void start(String name, Attributes attributes, Context context) {
+            BuildableComponent container = create(context);
+            String id = attributes.getValue("id");
+            if (id != null) {
+                container.setId(id);
+            }
+            context.pushContainer(container);
         }
 
         @Override
@@ -344,7 +348,7 @@ public class DocbookParser extends Parser {
         abstract BuildableList create(Context context);
 
         @Override
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
             list = create(context);
         }
 
@@ -379,7 +383,7 @@ public class DocbookParser extends Parser {
         }
 
         @Override
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
             context.pushContainer(list.addItem());
         }
 
@@ -390,7 +394,7 @@ public class DocbookParser extends Parser {
     }
 
     private static class DefaultInlineHandler implements ElementHandler {
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
         }
 
         public ElementHandler pushChild(String name, Context context) {
@@ -427,7 +431,7 @@ public class DocbookParser extends Parser {
         abstract BuildableInlineContainer create(Context context);
 
         @Override
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
             context.pushInline(create(context));
         }
 
@@ -460,7 +464,7 @@ public class DocbookParser extends Parser {
 
     private static class ParaHandler extends InlineHandler {
         @Override
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
             context.pushInline(context.currentContainer().addParagraph());
         }
 
@@ -472,7 +476,7 @@ public class DocbookParser extends Parser {
 
     private static class TitleHandler extends InlineHandler {
         @Override
-        public void start(String name, Context context) {
+        public void start(String name, Attributes attributes, Context context) {
             context.pushInline(context.currentComponent().getTitle());
         }
 

@@ -18,8 +18,7 @@ import java.util.List;
  */
 public class MarkdownParser extends Parser {
     @Override
-    protected Document doParse(Reader input, String fileName) throws Exception {
-        BuildableDocument document = new BuildableDocument();
+    protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
         Lexer lexer = new Lexer(input);
         LineParser parser = new LineParser(lexer);
         while (parser.peek().type != LineType.Finish) {
@@ -44,8 +43,6 @@ public class MarkdownParser extends Parser {
 
             throw new UnsupportedOperationException(String.format("Did not match any productions."));
         }
-
-        return document;
     }
 
     private boolean para(LookaheadStream<Line> parser, BuildableBlockContainer container) throws IOException {

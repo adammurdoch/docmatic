@@ -3,7 +3,26 @@ package net.rubygrapefruit.docs.model
 import spock.lang.Specification
 
 class BuildableComponentSpec extends Specification {
-    final BuildableComponent document = new BuildableComponent()
+    final BuildableComponent document = new BuildableComponent() {
+        String getTypeName() {
+            return "component"
+        }
+    }
+
+    def "normalises id"(String raw, String normalised) {
+        when:
+        document.id = raw
+
+        then:
+        document.id == normalised
+
+        where:
+        raw     | normalised
+        ''      | null
+        '   '   | null
+        'abc'   | 'abc'
+        ' abc ' | 'abc'
+    }
 
     def "can append level 1 section"() {
         when:

@@ -14,23 +14,14 @@ class PageRegistrySpec extends Specification {
         registry.getPageFor(frontPage).file == outputFile
     }
 
-    def "calculates output file for first page relative to the front page"() {
+    def "calculates output file for subsequent pages relative to the front page"() {
         doc.addChunk()
         def firstPage = doc.addChunk()
+        firstPage.id = 'first_page'
         def registry = new PageRegistry(doc, outputFile)
 
         expect:
-        registry.getPageFor(firstPage).file == new File("output.html.content/page1.html")
-    }
-
-    def "calculates output file for subsequent page relative to the front page"() {
-        doc.addChunk()
-        doc.addChunk()
-        def secondPage = doc.addChunk()
-        def registry = new PageRegistry(doc, outputFile)
-
-        expect:
-        registry.getPageFor(secondPage).file == new File("output.html.content/page2.html")
+        registry.getPageFor(firstPage).file == new File("output.html.content/first_page.html")
     }
 
     def "calculates urls for single page document"() {
@@ -46,53 +37,53 @@ class PageRegistrySpec extends Specification {
 
     def "calculates urls for front page"() {
         def frontPage = doc.addChunk()
-        doc.addChunk()
+        doc.addChunk().id = 'second_page'
         def registry = new PageRegistry(doc, outputFile)
 
         expect:
         def page = registry.getPageFor(frontPage)
         page.homeUrl == null
         page.previousUrl == null
-        page.nextUrl == "output.html.content/page1.html"
+        page.nextUrl == "output.html.content/second_page.html"
     }
 
     def "calculates urls for first page"() {
         doc.addChunk()
         def firstPage = doc.addChunk()
-        doc.addChunk()
+        doc.addChunk().id = 'next_page'
         def registry = new PageRegistry(doc, outputFile)
 
         expect:
         def page = registry.getPageFor(firstPage)
         page.homeUrl == "../output.html"
         page.previousUrl == "../output.html"
-        page.nextUrl == "page2.html"
+        page.nextUrl == "next_page.html"
     }
 
     def "calculates urls for subsequent page"() {
         doc.addChunk()
-        doc.addChunk()
+        doc.addChunk().id = "previous_page"
         def secondPage = doc.addChunk()
-        doc.addChunk()
+        doc.addChunk().id = "next_page"
         def registry = new PageRegistry(doc, outputFile)
 
         expect:
         def page = registry.getPageFor(secondPage)
         page.homeUrl == "../output.html"
-        page.previousUrl == "page1.html"
-        page.nextUrl == "page3.html"
+        page.previousUrl == "previous_page.html"
+        page.nextUrl == "next_page.html"
     }
 
     def "calculates urls for last page"() {
         doc.addChunk()
-        doc.addChunk()
+        doc.addChunk().id = "previous_page"
         def lastPage = doc.addChunk()
         def registry = new PageRegistry(doc, outputFile)
 
         expect:
         def page = registry.getPageFor(lastPage)
         page.homeUrl == "../output.html"
-        page.previousUrl == "page1.html"
+        page.previousUrl == "previous_page.html"
         page.nextUrl == null
     }
 

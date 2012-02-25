@@ -1,5 +1,7 @@
 package net.rubygrapefruit.docs.renderer;
 
+import net.rubygrapefruit.docs.model.Nullable;
+
 import java.io.File;
 
 public class Page {
@@ -25,14 +27,17 @@ public class Page {
         return chunk;
     }
 
+    @Nullable
     public String getHomeUrl() {
         return homeUrl;
     }
 
+    @Nullable
     public String getNextUrl() {
         return nextUrl;
     }
 
+    @Nullable
     public String getPreviousUrl() {
         return previousUrl;
     }

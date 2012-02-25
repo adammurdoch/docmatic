@@ -10,16 +10,36 @@ class SingleChunkBuilderTest extends Specification {
     final BuildableDocument source = new BuildableDocument()
     final RenderableDocument doc = new RenderableDocument()
 
+    def "returns empty chunk when source document is empty"() {
+        when:
+        builder.buildDocument(source, doc)
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].contents.empty
+    }
+
+    def "uses document id as chunk id"() {
+        given:
+        source.id = 'doc1'
+        source.title.append("a document")
+
+        when:
+        builder.buildDocument(source, doc)
+
+        then:
+        doc.contents[0].id == 'doc1'
+    }
+
     def "adds a title page for the document"() {
         given:
-        source.getTitle().append("a document")
+        source.title.append("a document")
 
         when:
         builder.buildDocument(source, doc)
 
         then:
         doc.contents.size() == 1
-        doc.contents[0].id == null
         doc.contents[0].contents.size() == 1
         doc.contents[0].contents[0] instanceof TitleBlock
         doc.contents[0].contents[0].component == source
@@ -27,13 +47,13 @@ class SingleChunkBuilderTest extends Specification {
 
     def "adds each top level component in the document"() {
         given:
-        source.getTitle().append("a book")
+        source.title.append("a book")
         def section = source.addSection()
-        section.getTitle().append("a section")
+        section.title.append("a section")
         def chapter = source.addChapter()
-        chapter.getTitle().append("a chapter")
+        chapter.title.append("a chapter")
         def appendix = source.addAppendix()
-        appendix.getTitle().append("appendix")
+        appendix.title.append("appendix")
 
         when:
         builder.buildDocument(source, doc)
@@ -48,11 +68,11 @@ class SingleChunkBuilderTest extends Specification {
 
     def "adds a title page for each part"() {
         given:
-        source.getTitle().append("book")
+        source.title.append("book")
         def part1 = source.addPart()
-        part1.getTitle().append("part 1")
+        part1.title.append("part 1")
         def part2 = source.addPart()
-        part2.getTitle().append("part 2")
+        part2.title.append("part 2")
 
         when:
         builder.buildDocument(source, doc)
@@ -67,13 +87,13 @@ class SingleChunkBuilderTest extends Specification {
 
     def "adds each top level component in a part"() {
         given:
-        source.getTitle().append("book")
+        source.title.append("book")
         def part1 = source.addPart()
-        part1.getTitle().append("part 1")
+        part1.title.append("part 1")
         def chapter1 = part1.addChapter()
         def chapter2 = part1.addChapter()
         def part2 = source.addPart()
-        part2.getTitle().append("part 2")
+        part2.title.append("part 2")
 
         when:
         builder.buildDocument(source, doc)

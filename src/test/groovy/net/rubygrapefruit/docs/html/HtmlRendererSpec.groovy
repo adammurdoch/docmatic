@@ -210,14 +210,16 @@ para 3
     }
     
     def "applies style rules from html theme"() {
-        HtmlTheme theme = Mock()
+        Theme theme = Mock()
+        HtmlTheme htmlTheme = Mock()
 
         given:
         def doc = document 'content'
 
         and:
         _ * theme.documentBuilder >> new SingleChunkBuilder()
-        _ * theme.writeStyleRules(!null) >> {Appendable target -> target.append('style-rule') }
+        _ * theme.getAspect(HtmlTheme) >> htmlTheme
+        _ * htmlTheme.writeStyleRules(!null) >> {Appendable target -> target.append('style-rule') }
 
         expect:
         rendered(doc, theme) contains 'style-rule'
@@ -233,8 +235,9 @@ para 3
         rendered(doc, outFile, new DefaultTheme())
         
         then:
-        outFile.file
-        new File(tmpDir.root, "out.html.content/page1.html").file
+        outFile.text.contains("<h1>chapter 1</h1>")
+        def page2 = new File(tmpDir.root, "out.html.content/chapter_2.html")
+        page2.text.contains("<h1>chapter 2</h1>")
     }
 
     def "renders navigation links for a page"() {
@@ -247,11 +250,11 @@ para 3
         rendered(doc, outFile, new DefaultTheme())
         
         then:
-        outFile.text.contains '''<div class="navbar header"><a href="out.html.content/page1.html" class="nextlink">Next</a></div>'''
-        outFile.text.contains '''<div class="navbar footer"><a href="out.html.content/page1.html" class="nextlink">Next</a></div>'''
-        def page1 = new File(tmpDir.root, "out.html.content/page1.html")
-        page1.text.contains '''<div class="navbar header"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
-        page1.text.contains '''<div class="navbar footer"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
+        outFile.text.contains '''<div class="navbar header"><a href="out.html.content/chapter_2.html" class="nextlink">Next</a></div>'''
+        outFile.text.contains '''<div class="navbar footer"><a href="out.html.content/chapter_2.html" class="nextlink">Next</a></div>'''
+        def page2 = new File(tmpDir.root, "out.html.content/chapter_2.html")
+        page2.text.contains '''<div class="navbar header"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
+        page2.text.contains '''<div class="navbar footer"><a href="../out.html" class="previouslink">Previous</a><a href="../out.html" class="homelink">Home</a></div>'''
     }
 
     def document(String text) {

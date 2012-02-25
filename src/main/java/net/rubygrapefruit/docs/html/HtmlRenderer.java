@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.renderer.*;
+import net.rubygrapefruit.docs.theme.TextTheme;
 import net.rubygrapefruit.docs.theme.Theme;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -14,7 +15,7 @@ public class HtmlRenderer extends MultiPageRenderer {
 
     @Override
     protected void doRender(Page page, Theme theme, OutputStream stream) throws Exception {
-        XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(stream);
+        XMLStreamWriter writer = XMLOutputFactory.newFactory().createXMLStreamWriter(stream, "utf-8");
         try {
             writer.writeDTD(
                     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -30,7 +31,7 @@ public class HtmlRenderer extends MultiPageRenderer {
             writer.writeCharacters(EOL);
             writer.writeStartElement("style");
             writer.writeCharacters(EOL);
-            TextTheme textTheme = theme.asTextTheme();
+            TextTheme textTheme = theme.getAspect(TextTheme.class);
             if (textTheme != null) {
                 writer.writeCharacters("html { font-family: ");
                 writer.writeCharacters(textTheme.getFontName());
@@ -50,8 +51,8 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writer.writeCharacters("div.navbar a:visited { color: #909090; }\n");
             }
             writer.writeCharacters(".unknown { color: red; }\n");
-            if (theme instanceof HtmlTheme) {
-                HtmlTheme htmlTheme = (HtmlTheme) theme;
+            HtmlTheme htmlTheme = theme.getAspect(HtmlTheme.class);
+            if (htmlTheme != null) {
                 StringBuilder rules = new StringBuilder();
                 htmlTheme.writeStyleRules(rules);
                 writer.writeCharacters(rules.toString());

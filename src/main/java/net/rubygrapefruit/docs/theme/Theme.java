@@ -1,6 +1,6 @@
 package net.rubygrapefruit.docs.theme;
 
-import net.rubygrapefruit.docs.renderer.TextTheme;
+import net.rubygrapefruit.docs.model.Nullable;
 
 public interface Theme {
     /**
@@ -10,9 +10,10 @@ public interface Theme {
     RenderableDocumentBuilder getDocumentBuilder();
 
     /**
-     * Returns the text components of this theme, if any.
+     * Returns the given aspect of this theme, if any.
      *
-     * @return The text components, or null.
+     * @return The aspect, or null.
      */
-    public TextTheme asTextTheme();
+    @Nullable
+    public <T extends Aspect> T getAspect(Class<T> type);
 }

@@ -10,16 +10,26 @@ class MultipleChunkBuilderTest extends Specification {
     final BuildableDocument source = new BuildableDocument()
     final RenderableDocument doc = new RenderableDocument()
 
+    def "returns empty chunk for document with no contents"() {
+        when:
+        builder.buildDocument(source, doc)
+
+        then:
+        doc.contents.size() == 1
+        doc.contents[0].contents.empty
+    }
+
     def "adds a title page for the document"() {
         given:
-        source.getTitle().append("a document")
+        source.id = 'doc'
+        source.title.append("a document")
 
         when:
         builder.buildDocument(source, doc)
 
         then:
         doc.contents.size() == 1
-        doc.contents[0].id == null
+        doc.contents[0].id == 'doc'
         doc.contents[0].contents.size() == 1
         doc.contents[0].contents[0] instanceof TitleBlock
         doc.contents[0].contents[0].component == source
@@ -27,52 +37,62 @@ class MultipleChunkBuilderTest extends Specification {
 
     def "adds a new chunk for each top level component in the document"() {
         given:
-        source.getTitle().append("a book")
+        source.title.append("a book")
         def section = source.addSection()
-        section.getTitle().append("a section")
+        section.id = 'section'
+        section.title.append("a section")
         def chapter = source.addChapter()
-        chapter.getTitle().append("a chapter")
+        chapter.id = 'chapter'
+        chapter.title.append("a chapter")
         def appendix = source.addAppendix()
-        appendix.getTitle().append("appendix")
+        appendix.id = 'appendix'
+        appendix.title.append("appendix")
 
         when:
         builder.buildDocument(source, doc)
 
         then:
         doc.contents.size() == 4
+        doc.contents[1].id == 'section'
         doc.contents[1].contents == [section]
+        doc.contents[2].id == 'chapter'
         doc.contents[2].contents == [chapter]
+        doc.contents[3].id == 'appendix'
         doc.contents[3].contents == [appendix]
     }
 
     def "adds a title page for each part"() {
         given:
-        source.getTitle().append("book")
+        source.title.append("book")
         def part1 = source.addPart()
-        part1.getTitle().append("part 1")
+        part1.id = 'part1'
+        part1.title.append("part 1")
         def part2 = source.addPart()
-        part2.getTitle().append("part 2")
+        part2.id = 'part2'
+        part2.title.append("part 2")
 
         when:
         builder.buildDocument(source, doc)
 
         then:
         doc.contents.size() == 3
-        doc.contents[1].contents[0] instanceof TitleBlock
+        doc.contents[1].id == 'part1'
         doc.contents[1].contents[0].component == part1
+        doc.contents[1].contents[0].component == part1
+        doc.contents[2].id == 'part2'
         doc.contents[2].contents[0] instanceof TitleBlock
         doc.contents[2].contents[0].component == part2
     }
 
     def "adds a new chunk for each top level component in a part"() {
         given:
-        source.getTitle().append("book")
+        source.title.append("book")
         def part1 = source.addPart()
-        part1.getTitle().append("part 1")
+        part1.title.append("part 1")
         def chapter1 = part1.addChapter()
         def chapter2 = part1.addChapter()
         def part2 = source.addPart()
-        part2.getTitle().append("part 2")
+        part2.title.append("part 2")
 
         when:
         builder.buildDocument(source, doc)
@@ -114,20 +134,25 @@ class MultipleChunkBuilderTest extends Specification {
         doc.contents[1].contents == [chapter2]
     }
 
-    def "includes unknown blocks in the current chunk"() {
+    def "groups non-component blocks on a separate chunk"() {
         given:
         def unknown1 = source.addUnknown("unknown1")
-        def unknown2 = source.addUnknown("unknown2")
+        def para1 = source.addParagraph()
         def chapter = source.addChapter()
-        def unknown3 = source.addUnknown("unknown3")
-        def unknown4 = source.addUnknown("unknown4")
+        chapter.id = 'chapter1'
+        def para2 = source.addParagraph()
+        def unknown2 = source.addUnknown("unknown4")
 
         when:
         builder.buildDocument(source, doc)
 
         then:
-        doc.contents.size() == 2
-        doc.contents[0].contents == [unknown1, unknown2]
-        doc.contents[1].contents == [chapter, unknown3, unknown4]
+        doc.contents.size() == 3
+        doc.contents[0].id == 'page1'
+        doc.contents[0].contents == [unknown1, para1]
+        doc.contents[1].id == 'chapter1'
+        doc.contents[1].contents == [chapter]
+        doc.contents[2].id == 'page3'
+        doc.contents[2].contents == [para2, unknown2]
     }
 }

@@ -10,6 +10,7 @@ import net.rubygrapefruit.docs.renderer.RenderableDocument;
 public class SingleChunkBuilder implements RenderableDocumentBuilder {
     public void buildDocument(Document source, RenderableDocument target) {
         BuildableChunk chunk = target.addChunk();
+        chunk.setId(source.getId());
         addChunks(source, chunk);
     }
 

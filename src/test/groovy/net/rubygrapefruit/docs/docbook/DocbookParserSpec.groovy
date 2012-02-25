@@ -124,7 +124,7 @@ class DocbookParserSpec extends Specification {
         doc.contents[1].contents[0].title.text == 'section 2'
     }
 
-    def "builds tree structure"() {
+    def "builds component structure"() {
         when:
         def doc = parse '''
 <book>
@@ -153,6 +153,26 @@ class DocbookParserSpec extends Specification {
 
         doc.contents[0].contents[0].contents[0].contents[0] instanceof Section
         doc.contents[0].contents[0].contents[0].contents[0].title.text == 'section 1.1'
+    }
+
+    def "attaches specified ids to component elements"() {
+        when:
+        def doc = parse '''
+<book id="book">
+    <part id="part"/>
+    <chapter id="chapter">
+        <section id="section"/>
+    </chapter>
+    <appendix id="appendix"/>
+</book>'''
+
+        then:
+
+        doc.id == 'book'
+        doc.contents[0].id == 'part'
+        doc.contents[1].id == 'chapter'
+        doc.contents[1].contents[0].id == 'section'
+        doc.contents[2].id == 'appendix'
     }
 
     def "normalises text in titles"() {

@@ -10,6 +10,7 @@ import net.rubygrapefruit.docs.model.ListItem;
 import net.rubygrapefruit.docs.model.Paragraph;
 import net.rubygrapefruit.docs.model.Section;
 import net.rubygrapefruit.docs.renderer.*;
+import net.rubygrapefruit.docs.theme.TextTheme;
 import net.rubygrapefruit.docs.theme.Theme;
 
 import java.io.OutputStream;
@@ -26,7 +27,7 @@ public class PdfRenderer extends SingleFileRenderer {
 
     @Override
     protected void doRender(RenderableDocument document, Theme theme, OutputStream stream) throws Exception {
-        TextTheme textTheme = theme.asTextTheme();
+        TextTheme textTheme = theme.getAspect(TextTheme.class);
         Font.FontFamily fontFamily = Font.FontFamily.TIMES_ROMAN;
         BaseColor textColor = BaseColor.BLACK;
         lineHeight = BigDecimal.valueOf(14, 1);

@@ -1,7 +1,5 @@
 package net.rubygrapefruit.docs.theme;
 
-import net.rubygrapefruit.docs.renderer.TextTheme;
-
 import java.awt.*;
 import java.math.BigDecimal;
 
@@ -10,8 +8,14 @@ public class DefaultTheme implements Theme, TextTheme {
         return new MultipleChunkBuilder();
     }
 
-    public TextTheme asTextTheme() {
-        return this;
+    /**
+     * Default implementation simply checks if this theme object implements the given type, and returns 'this' if so.
+     */
+    public <T extends Aspect> T getAspect(Class<T> type) {
+        if (type.isInstance(this)) {
+            return type.cast(this);
+        }
+        return null;
     }
 
     public String getFontName() {

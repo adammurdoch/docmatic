@@ -1,5 +1,6 @@
 package net.rubygrapefruit.docs.parser;
 
+import net.rubygrapefruit.docs.model.BuildableDocument;
 import net.rubygrapefruit.docs.model.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,13 @@ public abstract class Parser {
             throw new ParseException(String.format("Could not parse '%s'.", fileName), e);
         }
     }
-    
-    protected abstract Document doParse(Reader input, String fileName) throws Exception;
+
+    private Document doParse(Reader input, String fileName) throws Exception {
+        BuildableDocument document = new BuildableDocument();
+        doParse(input, fileName, document);
+        document.finish();
+        return document;
+    }
+
+    protected abstract void doParse(Reader input, String fileName, BuildableDocument document) throws Exception;
 }

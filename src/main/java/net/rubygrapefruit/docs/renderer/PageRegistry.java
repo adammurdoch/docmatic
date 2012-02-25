@@ -17,7 +17,8 @@ public class PageRegistry {
         File outputDir = new File(outputFile.getParentFile(), outputFile.getName() + ".content");
 
         BuildableChunk firstChunk = chunks.get(0);
-        pages.put(firstChunk, new Page(firstChunk, outputFile, null, chunks.size()>1 ? outputDir.getName() + "/page1.html" : null, null));
+        String nextUrl = chunks.size() > 1 ? String.format("%s/%s.html", outputDir.getName(), chunks.get(1).getId()) : null;
+        pages.put(firstChunk, new Page(firstChunk, outputFile, null, nextUrl, null));
 
         for (int i = 1; i < chunks.size(); i++) {
             BuildableChunk chunk = chunks.get(i);
@@ -26,14 +27,14 @@ public class PageRegistry {
             if (i == 1) {
                 previous = home;
             } else {
-                previous = "page" + (i - 1) + ".html";
+                previous = String.format("%s.html", chunks.get(i-1).getId());
             }
             String next = null;
             if (i < chunks.size() - 1) {
-                next = "page" + (i + 1) + ".html";
+                next = String.format("%s.html", chunks.get(i+1).getId());
             }
 
-            File pageFile = new File(outputDir, "page" + i + ".html");
+            File pageFile = new File(outputDir, String.format("%s.html", chunk.getId()));
             pages.put(chunk, new Page(chunk, pageFile, home, next, previous));
         }
     }
