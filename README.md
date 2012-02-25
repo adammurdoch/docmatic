@@ -94,7 +94,10 @@ API Usage
 Use a `Parser` implementation to build a `Document`. Use one or more `Renderer` implementations to generate output
 from that `Document`. Use a `Theme` implementation to tweak the output.
 
+License
+=======
+Docmatic is licensed under the ASL 2.0.
+
 Known Issues
 ============
-* A markdown document that does not start with a header is rendered across multiple pages.
 * Paragraph fonts are used for inline elements in headers in PDFs.

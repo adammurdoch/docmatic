@@ -8,17 +8,18 @@
             </title>
             <para>This is a para.</para>
             <para>
-                This is another para. It spans multiple lines.
+                This is another para.
+                It spans multiple lines.
             </para>
             <section>
                 <title>Lists</title>
                 <itemizedlist>
                     <listitem>
-                        <para>item 1.</para>
+                        <para>item 1. Here are some Greek characters: &#x03B1;, &#x03B2;, &#x03B3;</para>
                     </listitem>
                     <listitem>
                         <para>item 2.</para>
-                        <para>This is a second para.</para>
+                        <para>This is a second para in item 2.</para>
                     </listitem>
                     <listitem>
                         <para>item 3.</para>
@@ -87,7 +88,7 @@
     <part>
         <title>This is the second part</title>
         <chapter>
-            <title>A chapter in the secont part</title>
+            <title>A chapter in the second part</title>
         </chapter>
     </part>
     <appendix>

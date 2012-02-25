@@ -1,0 +1,10 @@
+<book>
+    <unknown-1/>
+    <unknown-2/>
+    <title>A broken book</title>
+    <chapter>
+        <title>A chapter</title>
+        <para>Some text with an <unknown/> element.</para>
+    </chapter>
+    <unknown-3/>
+</book>
