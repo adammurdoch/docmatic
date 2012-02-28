@@ -43,7 +43,7 @@ public class BuildableBlockContainer implements BlockContainer {
         return add(new BuildableOrderedList());
     }
 
-    public DefaultUnknown addUnknown(String message) {
-        return add(new DefaultUnknown(message));
+    public BuildableErrorElement addError(String message) {
+        return add(new BuildableErrorElement(message));
     }
 }

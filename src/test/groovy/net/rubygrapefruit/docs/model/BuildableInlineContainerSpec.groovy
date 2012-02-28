@@ -39,7 +39,7 @@ class BuildableInlineContainerSpec extends Specification {
     def "can append unknown after text"() {
         when:
         container.append("text")
-        container.addUnknown("message")
+        container.addError("message")
 
         then:
         container.contents.size() == 2
@@ -49,7 +49,7 @@ class BuildableInlineContainerSpec extends Specification {
 
     def "can append text after unknown"() {
         when:
-        container.addUnknown("message")
+        container.addError("message")
         container.append("text")
 
         then:
@@ -69,7 +69,7 @@ class BuildableInlineContainerSpec extends Specification {
     def "preserves whitespace around inline elements"() {
         when:
         container.append(" 1 \t")
-        container.addUnknown("unknown")
+        container.addError("unknown")
         container.append("  \n 2\r\n")
 
         then:

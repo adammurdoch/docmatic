@@ -1,9 +1,9 @@
 package net.rubygrapefruit.docs.model;
 
-public class DefaultUnknown implements Unknown, BuildableBlock, BuildableInline {
+public class BuildableErrorElement implements Error, BuildableBlock, BuildableInline {
     private final String message;
 
-    public DefaultUnknown(String message) {
+    public BuildableErrorElement(String message) {
         this.message = message;
     }
 

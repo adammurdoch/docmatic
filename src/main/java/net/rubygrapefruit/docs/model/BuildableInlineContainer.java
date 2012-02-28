@@ -64,8 +64,8 @@ public class BuildableInlineContainer implements InlineContainer {
         return element;
     }
 
-    public Unknown addUnknown(String message) {
-        return add(new DefaultUnknown(message));
+    public Error addError(String message) {
+        return add(new BuildableErrorElement(message));
     }
 
     public List<? extends Inline> getContents() {

@@ -136,11 +136,11 @@ class SingleChunkBuilderTest extends Specification {
 
     def "adds unknown blocks "() {
         given:
-        def unknown1 = source.addUnknown("unknown1")
-        def unknown2 = source.addUnknown("unknown2")
+        def unknown1 = source.addError("unknown1")
+        def unknown2 = source.addError("unknown2")
         def chapter = source.addChapter()
-        def unknown3 = source.addUnknown("unknown3")
-        def unknown4 = source.addUnknown("unknown4")
+        def unknown3 = source.addError("unknown3")
+        def unknown4 = source.addError("unknown4")
 
         when:
         builder.buildDocument(source, doc)

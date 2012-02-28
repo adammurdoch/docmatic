@@ -5,6 +5,7 @@ import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfWriter;
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.Error;
 import net.rubygrapefruit.docs.model.List;
 import net.rubygrapefruit.docs.model.ListItem;
 import net.rubygrapefruit.docs.model.Paragraph;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 public class PdfRenderer extends SingleFileRenderer {
     private Font base;
     private java.util.List<Font> headerFonts = new ArrayList<Font>();
-    private Font unknown;
+    private Font error;
     private Font code;
     private Font emphasis;
     private Font link;
@@ -49,7 +50,7 @@ public class PdfRenderer extends SingleFileRenderer {
         headerFonts.add(new Font(fontFamily, 12, Font.BOLD, textColor));
         code = new Font(Font.FontFamily.COURIER, 12, Font.NORMAL, textColor);
         emphasis = new Font(fontFamily, 12, Font.ITALIC, textColor);
-        unknown = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
+        error = new Font(fontFamily, 12, Font.NORMAL, BaseColor.RED);
 
         // TODO - theme margins
         com.itextpdf.text.Document pdfDocument = new com.itextpdf.text.Document(PageSize.A4, 40, 20, 40, 20);
@@ -72,8 +73,8 @@ public class PdfRenderer extends SingleFileRenderer {
                     writeComponent((Component) block, 1, pdfDocument);
                 } else if (block instanceof TitleBlock) {
                     writeTitleBlock((TitleBlock) block, pdfDocument);
-                } else if (block instanceof Unknown) {
-                    pdfDocument.add(createUnknown((Unknown) block));
+                } else if (block instanceof Error) {
+                    pdfDocument.add(createErrorBlock((Error) block));
                 } else {
                     writeComponentBlock(block, pdfDocument);
                 }
@@ -163,18 +164,18 @@ public class PdfRenderer extends SingleFileRenderer {
             com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true, 24);
             addItems(list, pdfList);
             return pdfList;
-        } else if (block instanceof Unknown) {
-            return createUnknown((Unknown) block);
+        } else if (block instanceof Error) {
+            return createErrorBlock((Error) block);
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
         }
     }
 
-    private Element createUnknown(Unknown unknown) {
+    private Element createErrorBlock(Error error) {
         com.itextpdf.text.Paragraph paragraph = new com.itextpdf.text.Paragraph();
-        paragraph.setFont(this.unknown);
-        paragraph.add(unknown.getMessage());
+        paragraph.setFont(this.error);
+        paragraph.add(error.getMessage());
         return paragraph;
     }
 
@@ -191,9 +192,9 @@ public class PdfRenderer extends SingleFileRenderer {
             } else if (inline instanceof CrossReference) {
                 writerCrossReference((CrossReference) inline, owner);
                 current = owner;
-            } else if (inline instanceof Unknown) {
-                Unknown unknown = (Unknown) inline;
-                current.add(new Chunk(unknown.getMessage(), this.unknown));
+            } else if (inline instanceof Error) {
+                Error error = (Error) inline;
+                current.add(new Chunk(error.getMessage(), this.error));
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         inline.getClass().getSimpleName()));

@@ -184,7 +184,7 @@ public class DocbookParser extends Parser {
         public ElementHandler pushChild(String name, Context context) {
             String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber(), name);
-            context.currentContainer().addUnknown(message);
+            context.currentContainer().addError(message);
             return new NoOpElementHandler();
         }
 
@@ -194,7 +194,7 @@ public class DocbookParser extends Parser {
             }
             String message = String.format("(text %s, line %s, column %s)", context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber());
-            context.currentContainer().addUnknown(message);
+            context.currentContainer().addError(message);
         }
 
         public void finish(Context context) {
@@ -411,7 +411,7 @@ public class DocbookParser extends Parser {
         public ElementHandler pushChild(String name, Context context) {
             String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber(), name);
-            context.currentInline().addUnknown(message);
+            context.currentInline().addError(message);
             return new NoOpElementHandler();
         }
 

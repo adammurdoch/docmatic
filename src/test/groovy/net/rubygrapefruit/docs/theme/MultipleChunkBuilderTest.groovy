@@ -136,12 +136,12 @@ class MultipleChunkBuilderTest extends Specification {
 
     def "groups non-component blocks on a separate chunk"() {
         given:
-        def unknown1 = source.addUnknown("unknown1")
+        def unknown1 = source.addError("unknown1")
         def para1 = source.addParagraph()
         def chapter = source.addChapter()
         chapter.id = 'chapter1'
         def para2 = source.addParagraph()
-        def unknown2 = source.addUnknown("unknown4")
+        def unknown2 = source.addError("unknown4")
 
         when:
         builder.buildDocument(source, doc)

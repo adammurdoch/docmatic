@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.Error;
 import net.rubygrapefruit.docs.renderer.*;
 import net.rubygrapefruit.docs.theme.TextTheme;
 import net.rubygrapefruit.docs.theme.Theme;
@@ -120,8 +121,8 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writeTitle(titleBlock.getComponent(), 1, writer);
             } else if (block instanceof Component) {
                 writeComponent((Component) block, 1, writer);
-            } else if (block instanceof Unknown) {
-                writeUnknownBlock((Unknown) block, writer);
+            } else if (block instanceof Error) {
+                writeErrorBlock((Error) block, writer);
             } else {
                 writeComponentChildBlock(block, writer);
             }
@@ -191,18 +192,18 @@ public class HtmlRenderer extends MultiPageRenderer {
             writeItems(list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
-        } else if (block instanceof Unknown) {
-            writeUnknownBlock((Unknown) block, writer);
+        } else if (block instanceof Error) {
+            writeErrorBlock((Error) block, writer);
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
         }
     }
 
-    private void writeUnknownBlock(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeErrorBlock(Error error, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("div");
         writer.writeAttribute("class", "unknown");
-        writer.writeCharacters(unknown.getMessage());
+        writer.writeCharacters(error.getMessage());
         writer.writeEndElement();
         writer.writeCharacters(EOL);
     }
@@ -220,8 +221,8 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writeEmphasisInline(element, writer);
             } else if (element instanceof CrossReference) {
                 writeCrossReference((CrossReference) element, writer);
-            } else if (element instanceof Unknown) {
-                writerUnknownInline((Unknown) element, writer);
+            } else if (element instanceof Error) {
+                writeErrorInline((Error) element, writer);
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         element.getClass().getSimpleName()));
@@ -237,10 +238,10 @@ public class HtmlRenderer extends MultiPageRenderer {
         writer.writeEndElement();
     }
 
-    private void writerUnknownInline(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeErrorInline(Error error, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("span");
         writer.writeAttribute("class", "unknown");
-        writer.writeCharacters(unknown.getMessage());
+        writer.writeCharacters(error.getMessage());
         writer.writeEndElement();
         writer.writeCharacters(EOL);
     }
