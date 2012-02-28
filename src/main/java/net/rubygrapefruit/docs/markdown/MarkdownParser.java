@@ -1,6 +1,6 @@
 package net.rubygrapefruit.docs.markdown;
 
-import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.buildable.*;
 import net.rubygrapefruit.docs.parser.Buffer;
 import net.rubygrapefruit.docs.parser.LookaheadStream;
 import net.rubygrapefruit.docs.parser.Parser;

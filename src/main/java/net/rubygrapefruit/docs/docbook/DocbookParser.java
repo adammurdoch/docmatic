@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.docbook;
 
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.buildable.*;
 import net.rubygrapefruit.docs.parser.Parser;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;

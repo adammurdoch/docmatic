@@ -1,6 +1,6 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
 
-public class BuildableErrorElement implements Error, BuildableBlock, BuildableInline {
+public class BuildableErrorElement implements net.rubygrapefruit.docs.model.Error, BuildableBlock, BuildableInline {
     private final String message;
 
     public BuildableErrorElement(String message) {

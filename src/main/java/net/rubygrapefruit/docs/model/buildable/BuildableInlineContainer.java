@@ -1,4 +1,6 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
+
+import net.rubygrapefruit.docs.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +66,7 @@ public class BuildableInlineContainer implements InlineContainer {
         return element;
     }
 
-    public Error addError(String message) {
+    public net.rubygrapefruit.docs.model.Error addError(String message) {
         return add(new BuildableErrorElement(message));
     }
 

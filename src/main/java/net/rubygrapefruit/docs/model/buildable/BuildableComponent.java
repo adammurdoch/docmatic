@@ -1,4 +1,7 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
+
+import net.rubygrapefruit.docs.model.Action;
+import net.rubygrapefruit.docs.model.Component;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,8 @@
-package net.rubygrapefruit.docs.model
+package net.rubygrapefruit.docs.model.buildable
 
 import spock.lang.Specification
+import net.rubygrapefruit.docs.model.LinkResolver
+import net.rubygrapefruit.docs.model.LinkTarget
 
 class BuildableDocumentSpec extends Specification {
     final BuildableDocument doc = new BuildableDocument()

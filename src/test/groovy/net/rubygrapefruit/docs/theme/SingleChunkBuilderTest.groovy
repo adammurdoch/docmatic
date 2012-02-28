@@ -1,6 +1,6 @@
 package net.rubygrapefruit.docs.theme
 
-import net.rubygrapefruit.docs.model.BuildableDocument
+import net.rubygrapefruit.docs.model.buildable.BuildableDocument
 import net.rubygrapefruit.docs.renderer.RenderableDocument
 import net.rubygrapefruit.docs.renderer.TitleBlock
 import spock.lang.Specification

@@ -1,4 +1,8 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
+
+import net.rubygrapefruit.docs.model.CrossReference;
+import net.rubygrapefruit.docs.model.LinkResolver;
+import net.rubygrapefruit.docs.model.LinkTarget;
 
 public class BuildableCrossReference implements CrossReference, BuildableInline {
     private LinkTarget target;

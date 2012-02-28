@@ -1,6 +1,6 @@
 package net.rubygrapefruit.docs.parser;
 
-import net.rubygrapefruit.docs.model.BuildableDocument;
+import net.rubygrapefruit.docs.model.buildable.BuildableDocument;
 import net.rubygrapefruit.docs.model.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,9 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.rubygrapefruit.docs.model.Action;
+import net.rubygrapefruit.docs.model.Document;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package net.rubygrapefruit.docs.model;
+package net.rubygrapefruit.docs.model.buildable;
 
 public class BuildableTextInline {
     private StringBuilder text = new StringBuilder();

@@ -1,4 +1,4 @@
-package net.rubygrapefruit.docs.model
+package net.rubygrapefruit.docs.model.buildable
 
 import spock.lang.Specification
 
