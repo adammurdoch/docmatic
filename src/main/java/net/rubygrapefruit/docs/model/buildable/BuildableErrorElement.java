@@ -11,7 +11,7 @@ public class BuildableErrorElement implements net.rubygrapefruit.docs.model.Erro
     }
 
     public String getText() {
-        return "";
+        return message;
     }
 
     public String getMessage() {

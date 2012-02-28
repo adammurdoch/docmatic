@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.model.buildable;
 
 import net.rubygrapefruit.docs.model.Action;
 import net.rubygrapefruit.docs.model.Component;
+import net.rubygrapefruit.docs.model.Referenceable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,11 @@ public abstract class BuildableComponent extends BuildableBlockContainer impleme
     }
 
     @Override
+    public String toString() {
+        return String.format("[%s id:%s title:%s]", getTypeName().toLowerCase(), id, title.getText());
+    }
+
+    @Override
     public void finish() {
         title.finish();
         super.finish();
@@ -39,6 +45,18 @@ public abstract class BuildableComponent extends BuildableBlockContainer impleme
 
     public List<? extends BuildableComponent> getComponents() {
         return components;
+    }
+
+    public boolean contains(Referenceable element) {
+        if (element == this || components.contains(element)) {
+            return true;
+        }
+        for (BuildableComponent component : components) {
+            if (component.contains(element)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

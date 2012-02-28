@@ -1,22 +1,17 @@
 package net.rubygrapefruit.docs.renderer;
 
 import net.rubygrapefruit.docs.model.Nullable;
+import net.rubygrapefruit.docs.model.Referenceable;
 
 import java.io.File;
 
-public class Page {
+public abstract class Page {
     private final Chunk chunk;
     private final File file;
-    private final String homeUrl;
-    private final String nextUrl;
-    private final String previousUrl;
 
-    Page(Chunk chunk, File file, String homeUrl, String nextUrl, String previousUrl) {
+    Page(Chunk chunk, File file) {
         this.chunk = chunk;
         this.file = file;
-        this.homeUrl = homeUrl;
-        this.nextUrl = nextUrl;
-        this.previousUrl = previousUrl;
     }
 
     public File getFile() {
@@ -28,17 +23,19 @@ public class Page {
     }
 
     @Nullable
-    public String getHomeUrl() {
-        return homeUrl;
-    }
+    public abstract String getHomeUrl();
 
     @Nullable
-    public String getNextUrl() {
-        return nextUrl;
-    }
+    public abstract String getNextUrl();
 
     @Nullable
-    public String getPreviousUrl() {
-        return previousUrl;
-    }
+    public abstract String getPreviousUrl();
+
+    /**
+     * Returns null when other == this
+     */
+    @Nullable
+    public abstract String getUrlTo(Page other);
+
+    public abstract Page getPageFor(Referenceable element);
 }

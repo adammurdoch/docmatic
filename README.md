@@ -41,7 +41,7 @@ Supported elements:
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
 * `<chapter>`, `<appendix>`, `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref>` child elements only.
+* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref linkend="..">` child elements only.
 * `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
 
@@ -102,3 +102,4 @@ Known Issues
 ============
 
 * Paragraph fonts are used for inline elements in PDF headers.
+* Docbook `<xref/>` elements can refer to `<book>`, `<part>`, `<chapter>`, `<appendix>` and `<section>` elements only.

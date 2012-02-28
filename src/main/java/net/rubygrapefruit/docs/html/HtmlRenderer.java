@@ -68,7 +68,7 @@ public class HtmlRenderer extends MultiPageRenderer {
             writer.writeStartElement("body");
             writer.writeCharacters(EOL);
             writeHeader(page, writer);
-            writeChunk(page.getChunk(), writer);
+            writeChunk(page, page.getChunk(), writer);
             writeFooter(page, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
@@ -117,49 +117,49 @@ public class HtmlRenderer extends MultiPageRenderer {
         writer.writeEndElement();
     }
 
-    private void writeChunk(Chunk chunk, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeChunk(Page page, Chunk chunk, XMLStreamWriter writer) throws XMLStreamException {
         for (Block block : chunk.getContents()) {
             if (block instanceof TitleBlock) {
                 TitleBlock titleBlock = (TitleBlock) block;
-                writeTitle(titleBlock.getComponent(), 1, writer);
+                writeTitle(page, titleBlock.getComponent(), 1, writer);
             } else if (block instanceof Component) {
-                writeComponent((Component) block, 1, writer);
+                writeComponent(page, (Component) block, 1, writer);
             } else if (block instanceof Error) {
                 writeErrorBlock((Error) block, writer);
             } else {
-                writeComponentChildBlock(block, writer);
+                writeComponentChildBlock(page, block, writer);
             }
         }
     }
 
-    private void writeComponent(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        writeTitle(component, depth, writer);
+    private void writeComponent(Page page, Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        writeTitle(page, component, depth, writer);
         for (Block block : component.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                writeSection(child, depth + 1, writer);
+                writeSection(page, child, depth + 1, writer);
             } else if (block instanceof Component) {
                 Component child = (Component) block;
-                writeComponent(child, depth + 1, writer);
+                writeComponent(page, child, depth + 1, writer);
             } else {
-                writeComponentChildBlock(block, writer);
+                writeComponentChildBlock(page, block, writer);
             }
         }
     }
 
-    private void writeSection(Section section, int depth, XMLStreamWriter writer) throws XMLStreamException {
-        writeTitle(section, depth, writer);
+    private void writeSection(Page page, Section section, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        writeTitle(page, section, depth, writer);
         for (Block block : section.getContents()) {
             if (block instanceof Section) {
                 Section child = (Section) block;
-                writeSection(child, depth + 1, writer);
+                writeSection(page, child, depth + 1, writer);
             } else {
-                writeComponentChildBlock(block, writer);
+                writeComponentChildBlock(page, block, writer);
             }
         }
     }
 
-    private void writeTitle(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeTitle(Page page, Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("a");
         writer.writeAttribute("name", component.getId());
         writer.writeEndElement();
@@ -169,30 +169,30 @@ public class HtmlRenderer extends MultiPageRenderer {
         }
 
         writer.writeStartElement("h" + Math.min(depth, 6));
-        writeInline(component.getTitle(), writer);
+        writeInline(page, component.getTitle(), writer);
         writer.writeEndElement();
         writer.writeCharacters(EOL);
     }
 
-    private void writeComponentChildBlock(Block block, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeComponentChildBlock(Page page, Block block, XMLStreamWriter writer) throws XMLStreamException {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             writer.writeStartElement("p");
-            writeInline(paragraph, writer);
+            writeInline(page, paragraph, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
             writer.writeStartElement("ul");
             writer.writeCharacters(EOL);
-            writeItems(list, writer);
+            writeItems(page, list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof OrderedList) {
             OrderedList list = (OrderedList) block;
             writer.writeStartElement("ol");
             writer.writeCharacters(EOL);
-            writeItems(list, writer);
+            writeItems(page, list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof Error) {
@@ -211,7 +211,7 @@ public class HtmlRenderer extends MultiPageRenderer {
         writer.writeCharacters(EOL);
     }
 
-    private void writeInline(InlineContainer inline, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeInline(Page page, InlineContainer inline, XMLStreamWriter writer) throws XMLStreamException {
         for (Inline element : inline.getContents()) {
             if (element instanceof Text) {
                 Text text = (Text) element;
@@ -223,7 +223,7 @@ public class HtmlRenderer extends MultiPageRenderer {
             } else if (element instanceof Emphasis) {
                 writeEmphasisInline(element, writer);
             } else if (element instanceof CrossReference) {
-                writeCrossReference((CrossReference) element, writer);
+                writeCrossReference(page, (CrossReference) element, writer);
             } else if (element instanceof Error) {
                 writeErrorInline((Error) element, writer);
             } else {
@@ -233,10 +233,15 @@ public class HtmlRenderer extends MultiPageRenderer {
         }
     }
 
-    private void writeCrossReference(CrossReference crossReference, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeCrossReference(Page page, CrossReference crossReference, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("a");
         Referenceable target = crossReference.getTarget();
-        writer.writeAttribute("href", "#" + target.getId());
+        Page targetPage = page.getPageFor(target);
+        if (targetPage != page) {
+            writer.writeAttribute("href", page.getUrlTo(targetPage) + "#" + target.getId());
+        } else {
+            writer.writeAttribute("href", "#" + target.getId());
+        }
         writer.writeCharacters(target.getReferenceText());
         writer.writeEndElement();
     }
@@ -262,12 +267,12 @@ public class HtmlRenderer extends MultiPageRenderer {
         writer.writeEndElement();
     }
 
-    private void writeItems(List list, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeItems(Page page, List list, XMLStreamWriter writer) throws XMLStreamException {
         for (ListItem item : list.getItems()) {
             writer.writeStartElement("li");
             writer.writeCharacters(EOL);
             for (Block childBlock : item.getContents()) {
-                writeComponentChildBlock(childBlock, writer);
+                writeComponentChildBlock(page, childBlock, writer);
             }
             writer.writeEndElement();
             writer.writeCharacters(EOL);

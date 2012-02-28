@@ -209,7 +209,7 @@ para 3
 '''
     }
 
-    def "renders cross-references"() {
+    def "renders cross-reference to element on same page"() {
         given:
         def doc = docbook '''<book>
             <chapter>
@@ -226,6 +226,21 @@ para 3
 <a name="chapter2"></a><h1>second chapter</h1>
 </body>
 '''
+    }
+
+    def "renders cross-reference to element on other page"() {
+        given:
+        def doc = docbook '''<book>
+            <chapter>
+                <para><xref linkend="chapter2"/></para>
+            </chapter>
+            <chapter id="chapter2">
+                <title>second chapter</title>
+            </chapter>
+        </book>'''
+
+        expect:
+        rendered(doc, new DefaultTheme()) contains '''<a name="chapter1"></a><p><a href="out.html.content/chapter2.html#chapter2">second chapter</a></p>'''
     }
 
     def "applies style rules from html theme"() {
