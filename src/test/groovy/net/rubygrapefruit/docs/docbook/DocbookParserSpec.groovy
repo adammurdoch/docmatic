@@ -313,6 +313,23 @@ chapter
         doc.contents[0].contents[0].items[1].contents[0].text == 'item 2'
     }
 
+    def "converts xref elements"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para><xref linkend="chapter2"/></para>
+    </chapter>
+    <chapter id="chapter2"/>
+</book>'''
+
+        then:
+        doc.contents[0].contents[0].contents.size() == 1
+        doc.contents[0].contents[0].contents[0] instanceof CrossReference
+        doc.contents[0].contents[0].contents[0].target instanceof InternalTarget
+        doc.contents[0].contents[0].contents[0].target.element == doc.contents[1]
+    }
+
     def "converts unexpected elements and text"() {
         when:
         def doc = parse '''
@@ -332,6 +349,11 @@ chapter
         doc.contents[1].message == '(text book.xml, line 5, column 5)'
 
         doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 35</unexpected-inline>'
+    }
+
+    def "converts badly formed xref"() {
+        // link to unknown element, missing 'linkend' attribute, has contents
+        expect: false
     }
 
     def parse(String string) {

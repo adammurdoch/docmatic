@@ -40,8 +40,8 @@ Supported elements:
 
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
-* `<chapter>`, with `<appendix>`, `<section>` - `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<chapter>`, `<appendix>`, `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref>` child elements only.
 * `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
 
@@ -100,4 +100,5 @@ Docmatic is licensed under the ASL 2.0.
 
 Known Issues
 ============
-* Paragraph fonts are used for inline elements in headers in PDFs.
+
+* Paragraph fonts are used for inline elements in PDF headers.

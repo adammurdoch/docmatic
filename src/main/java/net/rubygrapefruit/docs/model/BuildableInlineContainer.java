@@ -4,9 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuildableInlineContainer implements InlineContainer {
-    private final List<Inline> contents = new ArrayList<Inline>();
+    private final List<BuildableInline> contents = new ArrayList<BuildableInline>();
     private BuildableText text;
     private boolean needWhitespace;
+
+    public void finish() {
+        for (BuildableInline inline : contents) {
+            inline.finish();
+        }
+    }
 
     public String getText() {
         StringBuilder builder = new StringBuilder();
@@ -48,7 +54,7 @@ public class BuildableInlineContainer implements InlineContainer {
         }
     }
 
-    protected <T extends Inline> T add(T element) {
+    protected <T extends BuildableInline> T add(T element) {
         contents.add(element);
         if (text != null && needWhitespace) {
             text.append(' ');
@@ -76,5 +82,9 @@ public class BuildableInlineContainer implements InlineContainer {
 
     public BuildableEmphasis addEmphasis() {
         return add(new BuildableEmphasis());
+    }
+
+    public BuildableCrossReference addCrossReference(LinkResolver resolver) {
+        return add(new BuildableCrossReference(resolver));
     }
 }

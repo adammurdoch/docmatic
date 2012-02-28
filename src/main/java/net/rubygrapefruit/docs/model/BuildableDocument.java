@@ -12,9 +12,19 @@ public class BuildableDocument extends BuildableComponent implements Document {
     }
 
     /**
-     * Finishes building this document. Assigns ids to those components with no id assigned already.
+     * Finishes building this document. Does the following:
+     *
+     * <ul>
+     * <li>Assigns ids to those components with no id assigned already.
+     * <li>Resolves links and cross references.
+     * </ul>
      */
     public void finish() {
+        assignIds();
+        super.finish();
+    }
+
+    private void assignIds() {
         final Multimap<String, BuildableComponent> unassigned = HashMultimap.create();
         final Map<String, BuildableComponent> assigned = new HashMap<String, BuildableComponent>();
         final Map<String, Integer> typeCounts = new HashMap<String, Integer>();

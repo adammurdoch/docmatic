@@ -3,8 +3,14 @@ package net.rubygrapefruit.docs.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BuildableList {
-    private final List<ListItem> items = new ArrayList<ListItem>();
+public class BuildableList implements BuildableBlock {
+    private final List<BuildableListItem> items = new ArrayList<BuildableListItem>();
+
+    public void finish() {
+        for (BuildableListItem item : items) {
+            item.finish();
+        }
+    }
 
     public List<? extends ListItem> getItems() {
         return items;

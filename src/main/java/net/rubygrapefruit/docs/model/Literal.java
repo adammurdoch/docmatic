@@ -1,4 +1,4 @@
 package net.rubygrapefruit.docs.model;
 
-public interface Literal extends Inline, InlineContainer {
+public interface Literal extends Span {
 }

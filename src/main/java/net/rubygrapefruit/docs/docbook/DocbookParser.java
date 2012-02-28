@@ -12,7 +12,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Builds a document for some Docbook input.
@@ -82,6 +84,8 @@ public class DocbookParser extends Parser {
         void pushContainer(BuildableBlockContainer container);
 
         void popContainer();
+
+        Map<String, Component> getComponentsById();
     }
 
     private static class DefaultContext implements Context {
@@ -89,6 +93,7 @@ public class DocbookParser extends Parser {
         final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
         final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
         final LinkedList<BuildableInlineContainer> inlineStack = new LinkedList<BuildableInlineContainer>();
+        final Map<String, Component> componentsById = new HashMap<String, Component>();
         Locator location;
 
         private DefaultContext(String fileName) {
@@ -105,6 +110,10 @@ public class DocbookParser extends Parser {
 
         public int getColumnNumber() {
             return location.getColumnNumber();
+        }
+
+        public Map<String, Component> getComponentsById() {
+            return componentsById;
         }
 
         public BuildableComponent currentComponent() {
@@ -211,6 +220,7 @@ public class DocbookParser extends Parser {
             String id = attributes.getValue("id");
             if (id != null) {
                 container.setId(id);
+                context.getComponentsById().put(id, container);
             }
             context.pushContainer(container);
         }
@@ -307,6 +317,7 @@ public class DocbookParser extends Parser {
             String id = attributes.getValue("id");
             if (id != null) {
                 container.setId(id);
+                context.getComponentsById().put(id, container);
             }
             context.pushContainer(container);
         }
@@ -423,6 +434,9 @@ public class DocbookParser extends Parser {
             if (name.equals("emphasis")) {
                 return new EmphasisHandler();
             }
+            if (name.equals("xref")) {
+                return new XrefHandler();
+            }
             return super.pushChild(name, context);
         }
     }
@@ -438,6 +452,24 @@ public class DocbookParser extends Parser {
         @Override
         public void finish(Context context) {
             context.popInline();
+        }
+    }
+
+    private static class XrefHandler extends DefaultElementHandler {
+        @Override
+        public void start(String name, Attributes attributes, Context context) {
+            final Map<String, Component> components = context.getComponentsById();
+            final String target = attributes.getValue("linkend");
+            context.currentInline().addCrossReference(new LinkResolver() {
+                public LinkTarget resolve() {
+                    final Component component = components.get(target);
+                    return new InternalTarget() {
+                        public Referenceable getElement() {
+                            return component;
+                        }
+                    };
+                }
+            });
         }
     }
 

@@ -23,6 +23,7 @@ public class PdfRenderer extends SingleFileRenderer {
     private Font unknown;
     private Font code;
     private Font emphasis;
+    private Font link;
     private BigDecimal lineHeight;
 
     @Override
@@ -40,6 +41,7 @@ public class PdfRenderer extends SingleFileRenderer {
 
         // TODO - theme font sizes
         base = new Font(fontFamily, 12, Font.NORMAL, textColor);
+        link = new Font(fontFamily, 12, Font.UNDERLINE, textColor);
         headerFonts.clear();
         headerFonts.add(new Font(fontFamily, 22, Font.BOLD, textColor));
         headerFonts.add(new Font(fontFamily, 16, Font.BOLD, textColor));
@@ -69,8 +71,7 @@ public class PdfRenderer extends SingleFileRenderer {
                 if (block instanceof Component) {
                     writeComponent((Component) block, 1, pdfDocument);
                 } else if (block instanceof TitleBlock) {
-                    TitleBlock titleBlock = (TitleBlock) block;
-                    writeTitle(titleBlock.getComponent(), 1, pdfDocument);
+                    writeTitleBlock((TitleBlock) block, pdfDocument);
                 } else if (block instanceof Unknown) {
                     pdfDocument.add(createUnknown((Unknown) block));
                 } else {
@@ -78,6 +79,10 @@ public class PdfRenderer extends SingleFileRenderer {
                 }
             }
         }
+    }
+
+    private void writeTitleBlock(TitleBlock titleBlock, Document pdfDocument) throws DocumentException {
+        writeTitle(titleBlock.getComponent(), 0, pdfDocument);
     }
 
     private void writeComponent(Component component, int depth, com.itextpdf.text.Document target)
@@ -117,7 +122,11 @@ public class PdfRenderer extends SingleFileRenderer {
 
         com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph();
         title.setFont(depth < headerFonts.size() ? headerFonts.get(depth) : headerFonts.get(headerFonts.size() - 1));
-        writeContents(component.getTitle(), title);
+        Anchor anchor = new Anchor();
+        anchor.setFont(title.getFont());
+        anchor.setName(component.getId());
+        title.add(anchor);
+        writeContents(component.getTitle(), anchor, title);
 
         // TODO - theme spacing
         title.setSpacingBefore(15);
@@ -139,7 +148,7 @@ public class PdfRenderer extends SingleFileRenderer {
             pdfParagraph.setSpacingBefore(4);
             pdfParagraph.setSpacingAfter(4);
             pdfParagraph.setMultipliedLeading(lineHeight.floatValue());
-            writeContents(paragraph, pdfParagraph);
+            writeContents(paragraph, pdfParagraph, pdfParagraph);
             return pdfParagraph;
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
@@ -169,23 +178,34 @@ public class PdfRenderer extends SingleFileRenderer {
         return paragraph;
     }
 
-    private void writeContents(InlineContainer inlineContainer, com.itextpdf.text.Paragraph paragraph) {
+    private void writeContents(InlineContainer inlineContainer, Phrase phrase, com.itextpdf.text.Paragraph owner) {
+        Phrase current = phrase;
         for (Inline inline : inlineContainer.getContents()) {
             if (inline instanceof Text) {
                 Text text = (Text) inline;
-                paragraph.add(text.getText());
+                current.add(text.getText());
             } else if (inline instanceof Code || inline instanceof Literal) {
-                paragraph.add(new Chunk(inline.getText(), this.code));
+                current.add(new Chunk(inline.getText(), this.code));
             } else if (inline instanceof Emphasis) {
-                paragraph.add(new Chunk(inline.getText(), this.emphasis));
+                current.add(new Chunk(inline.getText(), this.emphasis));
+            } else if (inline instanceof CrossReference) {
+                writerCrossReference((CrossReference) inline, owner);
+                current = owner;
             } else if (inline instanceof Unknown) {
                 Unknown unknown = (Unknown) inline;
-                paragraph.add(new Chunk(unknown.getMessage(), this.unknown));
+                current.add(new Chunk(unknown.getMessage(), this.unknown));
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         inline.getClass().getSimpleName()));
             }
         }
+    }
+
+    private void writerCrossReference(CrossReference crossReference, Phrase phrase) {
+        InternalTarget target = (InternalTarget) crossReference.getTarget();
+        Anchor anchor = new Anchor(target.getElement().getReferenceText(), this.link);
+        anchor.setReference("#" + target.getElement().getId());
+        phrase.add(anchor);
     }
 
     private void addItems(List list, com.itextpdf.text.List pdfList) throws DocumentException {

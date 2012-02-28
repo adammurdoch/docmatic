@@ -91,4 +91,21 @@ class BuildableDocumentSpec extends Specification {
         chapter1.id == 'chapter1_1'
         chapter2.id == 'chapter1'
     }
+    
+    def "resolves links"() {
+        LinkResolver resolver = Mock()
+        LinkTarget target = Mock()
+        
+        def para = doc.addParagraph()
+        def xref = para.addCrossReference(resolver)
+
+        when:
+        doc.finish()
+
+        then:
+        xref.target == target
+
+        and:
+        1 * resolver.resolve() >> target
+    }
 }

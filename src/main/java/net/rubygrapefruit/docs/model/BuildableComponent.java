@@ -3,7 +3,7 @@ package net.rubygrapefruit.docs.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BuildableComponent extends BuildableBlockContainer implements Component {
+public abstract class BuildableComponent extends BuildableBlockContainer implements Component, BuildableBlock {
     private final BuildableTitle title = new BuildableTitle();
     private final List<BuildableComponent> components = new ArrayList<BuildableComponent>();
     private BuildableComponent current;
@@ -24,7 +24,17 @@ public abstract class BuildableComponent extends BuildableBlockContainer impleme
         return title;
     }
 
-    public List<? extends Component> getComponents() {
+    public String getReferenceText() {
+        return title.getText();
+    }
+
+    @Override
+    public void finish() {
+        title.finish();
+        super.finish();
+    }
+
+    public List<? extends BuildableComponent> getComponents() {
         return components;
     }
 

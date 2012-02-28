@@ -1,4 +1,4 @@
-<book>
+<book id="home">
     <title>A DocBook sample</title>
     <part>
         <title>This is the first part</title>
@@ -64,6 +64,13 @@
                     <title>Title with <code>code</code> and <literal>literal text</literal> and <emphasis>emphasis</emphasis></title>
                 </section>
             </section>
+            <section>
+                <title>Links</title>
+                <para>This is a cross reference to <xref linkend="part_2_chapter"/> and <xref linkend="home"/>.</para>
+                <section>
+                    <title>A title with a cross reference to <xref linkend="appendix1"/> and some <code>code</code></title>
+                </section>
+            </section>
         </chapter>
         <chapter>
             <title>
@@ -87,13 +94,13 @@
     </part>
     <part>
         <title>This is the second part</title>
-        <chapter>
+        <chapter id="part_2_chapter">
             <title>A chapter in the second part</title>
         </chapter>
     </part>
-    <appendix>
+    <appendix id="appendix1">
         <title>
-            This is an appendix
+            An appendix
         </title>
         <para>Some interesting stuff goes here.</para>
     </appendix>

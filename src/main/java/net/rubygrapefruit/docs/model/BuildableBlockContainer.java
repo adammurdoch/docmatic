@@ -4,9 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuildableBlockContainer implements BlockContainer {
-    private final List<Block> contents = new ArrayList<Block>();
+    private final List<BuildableBlock> contents = new ArrayList<BuildableBlock>();
 
-    public List<? extends Block> getContents() {
+    public void finish() {
+        for (BuildableBlock block : contents) {
+            block.finish();
+        }
+    }
+
+    public List<? extends BuildableBlock> getContents() {
         return contents;
     }
 
@@ -20,7 +26,7 @@ public class BuildableBlockContainer implements BlockContainer {
         return matches;
     }
 
-    protected <T extends Block> T add(T block) {
+    protected <T extends BuildableBlock> T add(T block) {
         contents.add(block);
         return block;
     }

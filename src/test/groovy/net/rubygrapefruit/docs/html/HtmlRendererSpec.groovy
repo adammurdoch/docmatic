@@ -36,7 +36,7 @@ class HtmlRendererSpec extends Specification {
 
         expect:
         rendered doc contains '''<body>
-<h1>title</h1>
+<a name="title"></a><h1>title</h1>
 </body>
 '''
     }
@@ -68,8 +68,8 @@ section 2
 
         expect:
         rendered doc contains '''<body>
-<h1>section 1</h1>
-<h2>section 2</h2>
+<a name="section_1"></a><h1>section 1</h1>
+<a name="section_2"></a><h2>section 2</h2>
 </body>
 '''
     }
@@ -95,10 +95,10 @@ section 2
 
         expect:
         rendered doc contains '''<body>
-<h1>chapter 1</h1>
-<h2>section 2</h2>
-<h3>section 3</h3>
-<h4>section 4</h4>
+<a name="chapter_1"></a><h1>chapter 1</h1>
+<a name="section_2"></a><h2>section 2</h2>
+<a name="section_3"></a><h3>section 3</h3>
+<a name="section_4"></a><h4>section 4</h4>
 </body>
 '''
     }
@@ -119,10 +119,10 @@ para 3
 
         expect:
         rendered doc contains '''<body>
-<h1>section 1</h1>
+<a name="section_1"></a><h1>section 1</h1>
 <p>para 1</p>
 <p>para 2</p>
-<h2>section 2</h2>
+<a name="section_2"></a><h2>section 2</h2>
 <p>para 3</p>
 </body>
 '''
@@ -189,7 +189,7 @@ para 3
 
         expect:
         rendered doc contains '''<body>
-<p><code class="code">code</code> <code class="literal">literal</code></p>
+<a name="chapter1"></a><p><code class="code">code</code> <code class="literal">literal</code></p>
 </body>
 '''
     }
@@ -204,11 +204,30 @@ para 3
 
         expect:
         rendered doc contains '''<body>
-<p><em>emphasis</em></p>
+<a name="chapter1"></a><p><em>emphasis</em></p>
 </body>
 '''
     }
-    
+
+    def "renders cross-references"() {
+        given:
+        def doc = docbook '''<book>
+            <chapter>
+                <para><xref linkend="chapter2"/></para>
+            </chapter>
+            <chapter id="chapter2">
+                <title>second chapter</title>
+            </chapter>
+        </book>'''
+
+        expect:
+        rendered doc contains '''<body>
+<a name="chapter1"></a><p><a href="#chapter2">second chapter</a></p>
+<a name="chapter2"></a><h1>second chapter</h1>
+</body>
+'''
+    }
+
     def "applies style rules from html theme"() {
         Theme theme = Mock()
         HtmlTheme htmlTheme = Mock()

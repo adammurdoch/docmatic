@@ -121,7 +121,7 @@ public class HtmlRenderer extends MultiPageRenderer {
             } else if (block instanceof Component) {
                 writeComponent((Component) block, 1, writer);
             } else if (block instanceof Unknown) {
-                writeUnknown((Unknown) block, writer);
+                writeUnknownBlock((Unknown) block, writer);
             } else {
                 writeComponentChildBlock(block, writer);
             }
@@ -156,9 +156,14 @@ public class HtmlRenderer extends MultiPageRenderer {
     }
 
     private void writeTitle(Component component, int depth, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("a");
+        writer.writeAttribute("name", component.getId());
+        writer.writeEndElement();
+
         if (component.getTitle().isEmpty()) {
             return;
         }
+
         writer.writeStartElement("h" + Math.min(depth, 6));
         writeInline(component.getTitle(), writer);
         writer.writeEndElement();
@@ -187,14 +192,14 @@ public class HtmlRenderer extends MultiPageRenderer {
             writer.writeEndElement();
             writer.writeCharacters(EOL);
         } else if (block instanceof Unknown) {
-            writeUnknown((Unknown) block, writer);
+            writeUnknownBlock((Unknown) block, writer);
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
         }
     }
 
-    private void writeUnknown(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeUnknownBlock(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("div");
         writer.writeAttribute("class", "unknown");
         writer.writeCharacters(unknown.getMessage());
@@ -213,18 +218,31 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writeCodeInline(element, "literal", writer);
             } else if (element instanceof Emphasis) {
                 writeEmphasisInline(element, writer);
+            } else if (element instanceof CrossReference) {
+                writeCrossReference((CrossReference) element, writer);
             } else if (element instanceof Unknown) {
-                Unknown unknown = (Unknown) element;
-                writer.writeStartElement("span");
-                writer.writeAttribute("class", "unknown");
-                writer.writeCharacters(unknown.getMessage());
-                writer.writeEndElement();
-                writer.writeCharacters(EOL);
+                writerUnknownInline((Unknown) element, writer);
             } else {
                 throw new IllegalStateException(String.format("Don't know how to render inline of type '%s'.",
                         element.getClass().getSimpleName()));
             }
         }
+    }
+
+    private void writeCrossReference(CrossReference crossReference, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("a");
+        InternalTarget target = (InternalTarget) crossReference.getTarget();
+        writer.writeAttribute("href", "#" + target.getElement().getId());
+        writer.writeCharacters(target.getElement().getReferenceText());
+        writer.writeEndElement();
+    }
+
+    private void writerUnknownInline(Unknown unknown, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("span");
+        writer.writeAttribute("class", "unknown");
+        writer.writeCharacters(unknown.getMessage());
+        writer.writeEndElement();
+        writer.writeCharacters(EOL);
     }
 
     private void writeCodeInline(Inline code, String htmlClass, XMLStreamWriter writer) throws XMLStreamException {
