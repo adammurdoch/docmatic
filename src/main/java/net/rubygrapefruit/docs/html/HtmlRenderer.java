@@ -2,7 +2,10 @@ package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
 import net.rubygrapefruit.docs.model.Error;
-import net.rubygrapefruit.docs.renderer.*;
+import net.rubygrapefruit.docs.renderer.Chunk;
+import net.rubygrapefruit.docs.renderer.MultiPageRenderer;
+import net.rubygrapefruit.docs.renderer.Page;
+import net.rubygrapefruit.docs.renderer.TitleBlock;
 import net.rubygrapefruit.docs.theme.TextTheme;
 import net.rubygrapefruit.docs.theme.Theme;
 
@@ -232,9 +235,9 @@ public class HtmlRenderer extends MultiPageRenderer {
 
     private void writeCrossReference(CrossReference crossReference, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("a");
-        InternalTarget target = (InternalTarget) crossReference.getTarget();
-        writer.writeAttribute("href", "#" + target.getElement().getId());
-        writer.writeCharacters(target.getElement().getReferenceText());
+        Referenceable target = crossReference.getTarget();
+        writer.writeAttribute("href", "#" + target.getId());
+        writer.writeCharacters(target.getReferenceText());
         writer.writeEndElement();
     }
 

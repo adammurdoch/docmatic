@@ -3,8 +3,9 @@
     <unknown-2/>
     <title>A broken book</title>
     <chapter>
-        <title>A chapter</title>
+        <title>A chapter <broken/></title>
         <para>Some text with an <unknown/> element.</para>
+        <para>Some invalid cross references: <xref/> and <xref linkend="unknown"/></para>
     </chapter>
     <unknown-3/>
 </book>

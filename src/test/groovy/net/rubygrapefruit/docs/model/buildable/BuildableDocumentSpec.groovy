@@ -1,8 +1,6 @@
 package net.rubygrapefruit.docs.model.buildable
 
 import spock.lang.Specification
-import net.rubygrapefruit.docs.model.LinkResolver
-import net.rubygrapefruit.docs.model.LinkTarget
 
 class BuildableDocumentSpec extends Specification {
     final BuildableDocument doc = new BuildableDocument()
@@ -96,18 +94,19 @@ class BuildableDocumentSpec extends Specification {
     
     def "resolves links"() {
         LinkResolver resolver = Mock()
-        LinkTarget target = Mock()
-        
+
         def para = doc.addParagraph()
-        def xref = para.addCrossReference(resolver)
+        def chapter = doc.addChapter()
+        para.addCrossReference(resolver)
 
         when:
         doc.finish()
 
         then:
-        xref.target == target
+        def xref = para.contents[0]
+        xref.target == chapter
 
         and:
-        1 * resolver.resolve() >> target
+        1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.crossReference(chapter) }
     }
 }

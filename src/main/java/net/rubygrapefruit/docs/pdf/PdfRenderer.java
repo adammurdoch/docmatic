@@ -203,9 +203,9 @@ public class PdfRenderer extends SingleFileRenderer {
     }
 
     private void writerCrossReference(CrossReference crossReference, Phrase phrase) {
-        InternalTarget target = (InternalTarget) crossReference.getTarget();
-        Anchor anchor = new Anchor(target.getElement().getReferenceText(), this.link);
-        anchor.setReference("#" + target.getElement().getId());
+        Referenceable target = crossReference.getTarget();
+        Anchor anchor = new Anchor(target.getReferenceText(), this.link);
+        anchor.setReference("#" + target.getId());
         phrase.add(anchor);
     }
 

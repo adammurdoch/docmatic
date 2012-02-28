@@ -1,6 +1,9 @@
 package net.rubygrapefruit.docs.model.buildable
 
 import spock.lang.Specification
+import net.rubygrapefruit.docs.model.CrossReference
+import net.rubygrapefruit.docs.model.Referenceable
+import net.rubygrapefruit.docs.model.Error
 
 class BuildableInlineContainerSpec extends Specification {
     final BuildableInlineContainer container = new BuildableInlineContainer()
@@ -76,6 +79,41 @@ class BuildableInlineContainerSpec extends Specification {
         container.contents.size() == 3
         container.contents[0].text == '1 '
         container.contents[2].text == ' 2'
+    }
+
+    def "resolves cross reference on finish"() {
+        LinkResolver resolver = Mock()
+        Referenceable target = Mock()
+        
+        given:
+        container.addCrossReference(resolver)
+
+        when:
+        container.finish()
+        
+        then:
+        container.contents[0] instanceof CrossReference
+        container.contents[0].target == target
+
+        and:
+        1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.crossReference(target) }
+    }
+
+    def "resolves broken link on finish"() {
+        LinkResolver resolver = Mock()
+
+        given:
+        container.addCrossReference(resolver)
+
+        when:
+        container.finish()
+
+        then:
+        container.contents[0] instanceof Error
+        container.contents[0].message == '<broken>'
+
+        and:
+        1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.error("<broken>") }
     }
 }
 

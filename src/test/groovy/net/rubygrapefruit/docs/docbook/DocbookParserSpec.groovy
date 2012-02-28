@@ -326,8 +326,7 @@ chapter
         then:
         doc.contents[0].contents[0].contents.size() == 1
         doc.contents[0].contents[0].contents[0] instanceof CrossReference
-        doc.contents[0].contents[0].contents[0].target instanceof InternalTarget
-        doc.contents[0].contents[0].contents[0].target.element == doc.contents[1]
+        doc.contents[0].contents[0].contents[0].target == doc.contents[1]
     }
 
     def "converts unexpected elements and text"() {
@@ -343,17 +342,25 @@ chapter
 
         then:
         doc.contents.size() == 3
-
         doc.contents[0].message == '<para>book.xml, line 3, column 11</para>'
-
         doc.contents[1].message == '(text book.xml, line 5, column 5)'
-
         doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 35</unexpected-inline>'
     }
 
     def "converts badly formed xref"() {
-        // link to unknown element, missing 'linkend' attribute, has contents
-        expect: false
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para><xref/><xref linkend="unknown"/></para>
+    </chapter>
+</book>'''
+
+        then:
+        def para = doc.contents[0].contents[0]
+        para instanceof Paragraph
+        para.contents[0].message == '<xref>no "linkend" attribute specified in book.xml, line 4, column 22</xref>'
+        para.contents[1].message == '<xref>unknown linkend "unknown" in book.xml, line 4, column 47</xref>'
     }
 
     def parse(String string) {

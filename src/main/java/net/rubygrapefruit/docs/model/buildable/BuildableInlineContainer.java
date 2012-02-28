@@ -4,6 +4,7 @@ import net.rubygrapefruit.docs.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 public class BuildableInlineContainer implements InlineContainer {
     private final List<BuildableInline> contents = new ArrayList<BuildableInline>();
@@ -11,8 +12,15 @@ public class BuildableInlineContainer implements InlineContainer {
     private boolean needWhitespace;
 
     public void finish() {
-        for (BuildableInline inline : contents) {
-            inline.finish();
+        ListIterator<BuildableInline> iter = contents.listIterator();
+        while (iter.hasNext()) {
+            BuildableInline inline = iter.next();
+            if (inline instanceof UnresolvedLink) {
+                iter.remove();
+                iter.add(((UnresolvedLink) inline).resolve());
+            } else {
+                inline.finish();
+            }
         }
     }
 
@@ -86,7 +94,7 @@ public class BuildableInlineContainer implements InlineContainer {
         return add(new BuildableEmphasis());
     }
 
-    public BuildableCrossReference addCrossReference(LinkResolver resolver) {
-        return add(new BuildableCrossReference(resolver));
+    public void addCrossReference(LinkResolver resolver) {
+        add(new UnresolvedLink(resolver));
     }
 }

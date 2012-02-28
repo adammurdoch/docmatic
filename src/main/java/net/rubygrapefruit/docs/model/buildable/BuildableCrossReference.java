@@ -1,30 +1,23 @@
 package net.rubygrapefruit.docs.model.buildable;
 
 import net.rubygrapefruit.docs.model.CrossReference;
-import net.rubygrapefruit.docs.model.LinkResolver;
-import net.rubygrapefruit.docs.model.LinkTarget;
+import net.rubygrapefruit.docs.model.Referenceable;
 
 public class BuildableCrossReference implements CrossReference, BuildableInline {
-    private LinkTarget target;
-    private LinkResolver resolver;
+    private final Referenceable target;
 
-    public BuildableCrossReference(LinkResolver resolver) {
-        this.resolver = resolver;
+    public BuildableCrossReference(Referenceable target) {
+        this.target = target;
     }
 
-    public LinkTarget getTarget() {
+    public Referenceable getTarget() {
         return target;
     }
 
     public void finish() {
-        try {
-            target = resolver.resolve();
-        } finally {
-            resolver = null;
-        }
     }
 
     public String getText() {
-        return "";
+        return target.getReferenceText();
     }
 }

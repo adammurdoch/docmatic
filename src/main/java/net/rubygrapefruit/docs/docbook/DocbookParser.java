@@ -1,6 +1,6 @@
 package net.rubygrapefruit.docs.docbook;
 
-import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.Component;
 import net.rubygrapefruit.docs.model.buildable.*;
 import net.rubygrapefruit.docs.parser.Parser;
 import org.xml.sax.Attributes;
@@ -458,17 +458,29 @@ public class DocbookParser extends Parser {
 
     private static class XrefHandler extends DefaultElementHandler {
         @Override
-        public void start(String name, Attributes attributes, Context context) {
-            final Map<String, Component> components = context.getComponentsById();
+        public void start(String name, Attributes attributes, final Context context) {
             final String target = attributes.getValue("linkend");
+            if (target == null || target.isEmpty()) {
+                String message = String.format("<xref>no \"linkend\" attribute specified in %s, line %s, column %s</xref>",
+                        context.getFileName(), context.getLineNumber(), context.getColumnNumber());
+                context.currentInline().addError(String.format(message));
+                return;
+            }
+
+            final Map<String, Component> components = context.getComponentsById();
+            final String fileName = context.getFileName();
+            final int lineNumber = context.getLineNumber();
+            final int columnNumber = context.getColumnNumber();
             context.currentInline().addCrossReference(new LinkResolver() {
-                public LinkTarget resolve() {
-                    final Component component = components.get(target);
-                    return new InternalTarget() {
-                        public Referenceable getElement() {
-                            return component;
-                        }
-                    };
+                public void resolve(LinkResolverContext resolverContext) {
+                    Component component = components.get(target);
+                    if (component == null) {
+                        String message = String.format("<xref>unknown linkend \"%s\" in %s, line %s, column %s</xref>",
+                                target, fileName, lineNumber, columnNumber);
+                        resolverContext.error(message);
+                    } else {
+                        resolverContext.crossReference(component);
+                    }
                 }
             });
         }
