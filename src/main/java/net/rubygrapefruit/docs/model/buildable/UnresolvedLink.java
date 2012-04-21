@@ -4,7 +4,7 @@ import net.rubygrapefruit.docs.model.Referenceable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class UnresolvedLink implements BuildableInline {
+public class UnresolvedLink extends BuildableInlineContainer implements BuildableInline {
     private LinkResolver resolver;
 
     public UnresolvedLink(LinkResolver resolver) {
@@ -19,16 +19,11 @@ public class UnresolvedLink implements BuildableInline {
             }
 
             public void crossReference(Referenceable target) {
-                result.set(new BuildableCrossReference(target));
+                BuildableCrossReference crossReference = new BuildableCrossReference(target);
+                moveContentsTo(crossReference);
+                result.set(crossReference);
             }
         });
         return result.get();
-    }
-
-    public void finish() {
-    }
-
-    public String getText() {
-        return "";
     }
 }

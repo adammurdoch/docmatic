@@ -242,7 +242,7 @@ public class HtmlRenderer extends MultiPageRenderer {
         } else {
             writer.writeAttribute("href", "#" + target.getId());
         }
-        writer.writeCharacters(target.getReferenceText());
+        writeInline(page, crossReference, writer);
         writer.writeEndElement();
     }
 

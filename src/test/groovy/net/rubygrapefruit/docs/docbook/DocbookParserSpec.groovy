@@ -320,13 +320,56 @@ chapter
     <chapter>
         <para><xref linkend="chapter2"/></para>
     </chapter>
+    <chapter id="chapter2"><title>chapter 2</title></chapter>
+</book>'''
+
+        then:
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 1
+        para.contents[0] instanceof CrossReference
+        para.contents[0].target == doc.contents[1]
+        para.contents[0].text == 'chapter 2'
+    }
+
+    def "converts link elements"() {
+        when:
+        def doc = parse '''
+<book xmlns:xlink="http://www.w3.org/1999/xlink">
+    <chapter>
+        <para><link linkend="chapter2">another chapter</link><link xlink:href="http://somehost/">some link</link></para>
+    </chapter>
     <chapter id="chapter2"/>
 </book>'''
 
         then:
-        doc.contents[0].contents[0].contents.size() == 1
-        doc.contents[0].contents[0].contents[0] instanceof CrossReference
-        doc.contents[0].contents[0].contents[0].target == doc.contents[1]
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 2
+        para.contents[0] instanceof CrossReference
+        para.contents[0].target == doc.contents[1]
+        para.contents[0].text == 'another chapter'
+        para.contents[1] instanceof Link
+        para.contents[1].target == new URI("http://somehost/")
+        para.contents[1].text == 'some link'
+    }
+
+    def "converts ulink elements"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para><ulink href="http://somehost/">some link</ulink><ulink href="http://somehost/"/></para>
+    </chapter>
+</book>'''
+
+        then:
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 2
+        para.contents[0] instanceof Link
+        para.contents[0].target == new URI("http://somehost/")
+        para.contents[0].text == 'some link'
+        para.contents[1] instanceof Link
+        para.contents[1].target == new URI("http://somehost/")
+        para.contents[1].text == 'http://somehost/'
     }
 
     def "converts unexpected elements and text"() {
@@ -347,12 +390,19 @@ chapter
         doc.contents[2].contents[0].contents[0].message == '<unexpected-inline>book.xml, line 6, column 35</unexpected-inline>'
     }
 
-    def "converts badly formed xref"() {
+    def "converts badly formed links"() {
         when:
         def doc = parse '''
-<book>
+<book xmlns:xlink="http://www.w3.org/1999/xlink">
     <chapter>
-        <para><xref/><xref linkend="unknown"/></para>
+        <para>
+            <xref/>
+            <xref linkend="unknown"/>
+            <link/>
+            <link linkend="unknown"/>
+            <link linkend="12" xlink:xhref="12"/>
+            <ulink/>
+        </para>
     </chapter>
 </book>'''
 
@@ -361,6 +411,10 @@ chapter
         para instanceof Paragraph
         para.contents[0].message == '<xref>no "linkend" attribute specified in book.xml, line 4, column 22</xref>'
         para.contents[1].message == '<xref>unknown linkend "unknown" in book.xml, line 4, column 47</xref>'
+        para.contents[2].message == '<link>no "linkend" or "href" attribute specified in book.xml, line 4, column 22</link>'
+        para.contents[3].message == '<link>unknown linkend "unknown" in book.xml, line 4, column 47</link>'
+        para.contents[4].message == '<link>both "linkend" and "href" attribute specified in book.xml, line 4, column 47</link>'
+        para.contents[5].message == '<ulink>no "url" attribute specified in book.xml, line 4, column 22</ulink>'
     }
 
     def parse(String string) {

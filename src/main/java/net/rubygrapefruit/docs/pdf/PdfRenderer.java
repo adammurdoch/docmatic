@@ -190,7 +190,7 @@ public class PdfRenderer extends SingleFileRenderer {
             } else if (inline instanceof Emphasis) {
                 current.add(new Chunk(inline.getText(), this.emphasis));
             } else if (inline instanceof CrossReference) {
-                writerCrossReference((CrossReference) inline, owner);
+                writeCrossReference((CrossReference) inline, owner, owner);
                 current = owner;
             } else if (inline instanceof Error) {
                 Error error = (Error) inline;
@@ -202,9 +202,11 @@ public class PdfRenderer extends SingleFileRenderer {
         }
     }
 
-    private void writerCrossReference(CrossReference crossReference, Phrase phrase) {
+    private void writeCrossReference(CrossReference crossReference, Phrase phrase, com.itextpdf.text.Paragraph owner) {
         Referenceable target = crossReference.getTarget();
-        Anchor anchor = new Anchor(target.getReferenceText(), this.link);
+        Anchor anchor = new Anchor();
+        anchor.setFont(link);
+        writeContents(crossReference, anchor, owner);
         anchor.setReference("#" + target.getId());
         phrase.add(anchor);
     }

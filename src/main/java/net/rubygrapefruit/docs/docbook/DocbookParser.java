@@ -23,14 +23,15 @@ import java.util.Map;
 public class DocbookParser extends Parser {
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
-        final LinkedList<ElementHandler> stack = new LinkedList<ElementHandler>();
+        final LinkedList<ElementHandler> handlerStack = new LinkedList<ElementHandler>();
+        final LinkedList<String> elementNameStack = new LinkedList<String>();
         int pos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf(File.separatorChar));
         if (pos >= 0) {
             fileName = fileName.substring(pos + 1);
         }
         final DefaultContext context = new DefaultContext(fileName);
         context.pushContainer(document);
-        stack.add(new RootHandler());
+        handlerStack.add(new RootHandler());
         SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(true);
         saxParserFactory.setXIncludeAware(true);
@@ -47,19 +48,23 @@ public class DocbookParser extends Parser {
             @Override
             public void startElement(String uri, String elementName, String qName, Attributes attributes)
                     throws SAXException {
-                ElementHandler childHandler = stack.getLast().pushChild(elementName, context);
-                stack.add(childHandler);
+                ElementHandler childHandler = handlerStack.getLast().pushChild(elementName, context);
+                elementNameStack.add(elementName);
+                handlerStack.add(childHandler);
+                context.setElementName(elementName);
                 childHandler.start(elementName, attributes, context);
             }
 
             @Override
             public void characters(char[] chars, int start, int length) throws SAXException {
-                stack.getLast().handleText(new String(chars, start, length), context);
+                handlerStack.getLast().handleText(new String(chars, start, length), context);
             }
 
             @Override
             public void endElement(String uri, String elementName, String qName) throws SAXException {
-                stack.removeLast().finish(context);
+                handlerStack.removeLast().finish(context);
+                elementNameStack.removeLast();
+                context.setElementName(elementNameStack.isEmpty() ? null : elementNameStack.getLast());
             }
         });
         saxParser.getXMLReader().parse(new InputSource(input));
@@ -87,6 +92,8 @@ public class DocbookParser extends Parser {
         void popContainer();
 
         Map<String, Component> getComponentsById();
+
+        String getElementName();
     }
 
     private static class DefaultContext implements Context {
@@ -96,6 +103,7 @@ public class DocbookParser extends Parser {
         final LinkedList<BuildableInlineContainer> inlineStack = new LinkedList<BuildableInlineContainer>();
         final Map<String, Component> componentsById = new HashMap<String, Component>();
         Locator location;
+        private String elementName;
 
         private DefaultContext(String fileName) {
             this.fileName = fileName;
@@ -151,6 +159,14 @@ public class DocbookParser extends Parser {
                 componentStack.removeLast();
             }
         }
+
+        public String getElementName() {
+            return elementName;
+        }
+
+        public void setElementName(String elementName) {
+            this.elementName = elementName;
+        }
     }
 
     private interface ElementHandler {
@@ -178,7 +194,29 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class DefaultElementHandler implements ElementHandler {
+    private static abstract class AbstractElementHandler implements ElementHandler {
+        protected BuildableInlineContainer attachCrossReference(Context context, final String target) {
+            final Map<String, Component> components = context.getComponentsById();
+            final String fileName = context.getFileName();
+            final int lineNumber = context.getLineNumber();
+            final int columnNumber = context.getColumnNumber();
+            final String elementName = context.getElementName();
+            return context.currentInline().addCrossReference(new LinkResolver() {
+                public void resolve(LinkResolverContext resolverContext) {
+                    Component component = components.get(target);
+                    if (component == null) {
+                        String message = String.format("<%s>unknown linkend \"%s\" in %s, line %s, column %s</%s>",
+                                elementName, target, fileName, lineNumber, columnNumber, elementName);
+                        resolverContext.error(message);
+                    } else {
+                        resolverContext.crossReference(component);
+                    }
+                }
+            });
+        }
+    }
+
+    private static class DefaultElementHandler extends AbstractElementHandler {
         public void start(String name, Attributes attributes, Context context) {
         }
 
@@ -405,7 +443,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class DefaultInlineHandler implements ElementHandler {
+    private static class DefaultInlineHandler extends AbstractElementHandler {
         public void start(String name, Attributes attributes, Context context) {
         }
 
@@ -438,16 +476,22 @@ public class DocbookParser extends Parser {
             if (name.equals("xref")) {
                 return new XrefHandler();
             }
+            if (name.equals("link")) {
+                return new LinkHandler();
+            }
+            if (name.equals("ulink")) {
+                return new UlinkHandler();
+            }
             return super.pushChild(name, context);
         }
     }
 
     private static abstract class TextOnlyInlineHandler extends DefaultInlineHandler {
-        abstract BuildableInlineContainer create(Context context);
+        abstract BuildableInlineContainer create(Context context, Attributes attributes);
 
         @Override
         public void start(String name, Attributes attributes, Context context) {
-            context.pushInline(create(context));
+            context.pushInline(create(context, attributes));
         }
 
         @Override
@@ -467,42 +511,41 @@ public class DocbookParser extends Parser {
                 return;
             }
 
-            final Map<String, Component> components = context.getComponentsById();
-            final String fileName = context.getFileName();
-            final int lineNumber = context.getLineNumber();
-            final int columnNumber = context.getColumnNumber();
-            context.currentInline().addCrossReference(new LinkResolver() {
-                public void resolve(LinkResolverContext resolverContext) {
-                    Component component = components.get(target);
-                    if (component == null) {
-                        String message = String.format("<xref>unknown linkend \"%s\" in %s, line %s, column %s</xref>",
-                                target, fileName, lineNumber, columnNumber);
-                        resolverContext.error(message);
-                    } else {
-                        resolverContext.crossReference(component);
-                    }
-                }
-            });
+            attachCrossReference(context, target);
+        }
+    }
+
+    private static class LinkHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context, Attributes attributes) {
+            return attachCrossReference(context, attributes.getValue("linkend"));
+        }
+    }
+
+    private static class UlinkHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context, Attributes attributes) {
+            throw new UnsupportedOperationException();
         }
     }
 
     private static class CodeHandler extends TextOnlyInlineHandler {
         @Override
-        BuildableInlineContainer create(Context context) {
+        BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addCode();
         }
     }
 
     private static class LiteralHandler extends TextOnlyInlineHandler {
         @Override
-        BuildableInlineContainer create(Context context) {
+        BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addLiteral();
         }
     }
 
     private static class EmphasisHandler extends TextOnlyInlineHandler {
         @Override
-        BuildableInlineContainer create(Context context) {
+        BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addEmphasis();
         }
     }

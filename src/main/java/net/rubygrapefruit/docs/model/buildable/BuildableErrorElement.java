@@ -1,10 +1,17 @@
 package net.rubygrapefruit.docs.model.buildable;
 
-public class BuildableErrorElement implements net.rubygrapefruit.docs.model.Error, BuildableBlock, BuildableInline {
+import net.rubygrapefruit.docs.model.Error;
+
+public class BuildableErrorElement implements Error, BuildableBlock, BuildableInline {
     private final String message;
 
     public BuildableErrorElement(String message) {
         this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[error %s]", message);
     }
 
     public void finish() {

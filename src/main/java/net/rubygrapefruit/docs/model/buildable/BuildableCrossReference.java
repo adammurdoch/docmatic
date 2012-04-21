@@ -1,9 +1,13 @@
 package net.rubygrapefruit.docs.model.buildable;
 
 import net.rubygrapefruit.docs.model.CrossReference;
+import net.rubygrapefruit.docs.model.Inline;
 import net.rubygrapefruit.docs.model.Referenceable;
 
-public class BuildableCrossReference implements CrossReference, BuildableInline {
+import java.util.Arrays;
+import java.util.List;
+
+public class BuildableCrossReference extends BuildableInlineContainer implements CrossReference, BuildableInline {
     private final Referenceable target;
 
     public BuildableCrossReference(Referenceable target) {
@@ -14,10 +18,14 @@ public class BuildableCrossReference implements CrossReference, BuildableInline 
         return target;
     }
 
-    public void finish() {
-    }
-
-    public String getText() {
-        return target.getReferenceText();
+    @Override
+    public List<? extends Inline> getContents() {
+        List<? extends Inline> contents = super.getContents();
+        if (contents.isEmpty()) {
+            BuildableText text = new BuildableText();
+            text.append(target.getReferenceText());
+            return Arrays.asList(text);
+        }
+        return contents;
     }
 }

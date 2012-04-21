@@ -115,5 +115,25 @@ class BuildableInlineContainerSpec extends Specification {
         and:
         1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.error("<broken>") }
     }
+
+    def "moves contents of unresolved link to resolved link"() {
+        LinkResolver resolver = Mock()
+        Referenceable target = Mock()
+
+        given:
+        def link = container.addCrossReference(resolver)
+        link.append("some text")
+
+        when:
+        container.finish()
+
+        then:
+        container.contents[0] instanceof CrossReference
+        container.contents[0].target == target
+        container.contents[0].text == "some text"
+
+        and:
+        1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.crossReference(target) }
+    }
 }
 

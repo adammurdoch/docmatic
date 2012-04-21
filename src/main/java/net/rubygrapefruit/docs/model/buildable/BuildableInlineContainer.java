@@ -26,7 +26,7 @@ public class BuildableInlineContainer implements InlineContainer {
 
     public String getText() {
         StringBuilder builder = new StringBuilder();
-        for (Inline content : contents) {
+        for (Inline content : getContents()) {
             builder.append(content.getText());
         }
         return builder.toString();
@@ -34,6 +34,13 @@ public class BuildableInlineContainer implements InlineContainer {
 
     public boolean isEmpty() {
         return contents.isEmpty();
+    }
+
+    public void moveContentsTo(BuildableInlineContainer target) {
+        for (BuildableInline element : contents) {
+            target.add(element);
+        }
+        contents.clear();
     }
 
     public void append(CharSequence src) {
@@ -94,7 +101,7 @@ public class BuildableInlineContainer implements InlineContainer {
         return add(new BuildableEmphasis());
     }
 
-    public void addCrossReference(LinkResolver resolver) {
-        add(new UnresolvedLink(resolver));
+    public BuildableInlineContainer addCrossReference(LinkResolver resolver) {
+        return add(new UnresolvedLink(resolver));
     }
 }
