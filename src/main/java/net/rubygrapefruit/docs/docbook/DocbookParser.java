@@ -13,6 +13,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -211,6 +213,27 @@ public class DocbookParser extends Parser {
                     } else {
                         resolverContext.crossReference(component);
                     }
+                }
+            });
+        }
+
+        protected BuildableInlineContainer attachLink(Context context, final String target) {
+            final String fileName = context.getFileName();
+            final int lineNumber = context.getLineNumber();
+            final int columnNumber = context.getColumnNumber();
+            final String elementName = context.getElementName();
+            return context.currentInline().addCrossReference(new LinkResolver() {
+                public void resolve(LinkResolverContext resolverContext) {
+                    URI url;
+                    try {
+                        url = new URI(target);
+                    } catch (URISyntaxException e) {
+                        String message = String.format("<%s>badly formed URL \"%s\" specified in %s, line %s, column %s</%s>",
+                                elementName, target, fileName, lineNumber, columnNumber, elementName);
+                        resolverContext.error(message);
+                        return;
+                    }
+                    resolverContext.url(url);
                 }
             });
         }
@@ -504,27 +527,40 @@ public class DocbookParser extends Parser {
         @Override
         public void start(String name, Attributes attributes, final Context context) {
             final String target = attributes.getValue("linkend");
-            if (target == null || target.isEmpty()) {
-                String message = String.format("<xref>no \"linkend\" attribute specified in %s, line %s, column %s</xref>",
-                        context.getFileName(), context.getLineNumber(), context.getColumnNumber());
-                context.currentInline().addError(String.format(message));
+            if (target != null && !target.isEmpty()) {
+
+                attachCrossReference(context, target);
                 return;
             }
 
-            attachCrossReference(context, target);
+            String message = String.format("<xref>no \"linkend\" attribute specified in %s, line %s, column %s</xref>",
+                    context.getFileName(), context.getLineNumber(), context.getColumnNumber());
+            context.currentInline().addError(String.format(message));
         }
     }
 
     private static class LinkHandler extends TextOnlyInlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
-            return attachCrossReference(context, attributes.getValue("linkend"));
+            String linkend = attributes.getValue("linkend");
+            if (linkend != null && !linkend.isEmpty()) {
+                return attachCrossReference(context, linkend);
+            }
+            String href = attributes.getValue("http://www.w3.org/1999/xlink", "href");
+            if (href != null && !href.isEmpty()) {
+                return attachLink(context, href);
+            }
+            throw new UnsupportedOperationException();
         }
     }
 
     private static class UlinkHandler extends TextOnlyInlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
+            String href = attributes.getValue("url");
+            if (href != null && !href.isEmpty()) {
+                return attachLink(context, href);
+            }
             throw new UnsupportedOperationException();
         }
     }

@@ -243,6 +243,18 @@ para 3
         rendered(doc, new DefaultTheme()) contains '''<a name="chapter1"></a><p><a href="out.html.content/chapter2.html#chapter2">second chapter</a></p>'''
     }
 
+    def "renders link"() {
+        given:
+        def doc = docbook '''<book>
+            <chapter>
+                <para><ulink url="chapter2">second chapter</ulink></para>
+            </chapter>
+        </book>'''
+
+        expect:
+        rendered(doc, new DefaultTheme()) contains '''<a name="chapter1"></a><p><a href="chapter2">second chapter</a></p>'''
+    }
+
     def "applies style rules from html theme"() {
         Theme theme = Mock()
         HtmlTheme htmlTheme = Mock()

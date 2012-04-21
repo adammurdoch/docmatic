@@ -41,14 +41,16 @@ Supported elements:
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
 * `<chapter>`, `<appendix>`, `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref linkend="..">`, `<link linkend='..">` child elements only.
+* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
 * `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>`, with text only.
 
 Supported 4.5 elements:
 
 * `<book>`, with `<bookinfo>` child element.
 * `<bookinfo>`, with `<title>` child element only.
+* `<ulink>`, with text only.
 
 Supported Outputs
 =================

@@ -1,4 +1,4 @@
-<book id="home">
+<book id="home" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>A DocBook sample</title>
     <part>
         <title>This is the first part</title>
@@ -66,7 +66,10 @@
             </section>
             <section>
                 <title>Links</title>
-                <para><link linkend="part_2_chapter">This is a cross reference</link> to <xref linkend="part_2_chapter"/>. Here is another cross reference: <xref linkend="home"/>.
+                <para>Here is a <link linkend="part_2_chapter">cross reference</link> to <xref linkend="part_2_chapter"/>.
+                    Here is another cross reference: <xref linkend="home"/>.
+                </para>
+                <para>Here is a <link xlink:href="https://github.com/adammurdoch/docmatic">link</link> to <ulink url="https://github.com/adammurdoch/docmatic"/>.
                 </para>
                 <section>
                     <title>A title with a cross reference to <xref linkend="appendix1"/> and some <code>code</code></title>

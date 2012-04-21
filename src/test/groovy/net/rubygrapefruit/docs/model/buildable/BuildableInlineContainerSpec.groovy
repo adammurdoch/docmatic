@@ -4,6 +4,7 @@ import spock.lang.Specification
 import net.rubygrapefruit.docs.model.CrossReference
 import net.rubygrapefruit.docs.model.Referenceable
 import net.rubygrapefruit.docs.model.Error
+import net.rubygrapefruit.docs.model.Link
 
 class BuildableInlineContainerSpec extends Specification {
     final BuildableInlineContainer container = new BuildableInlineContainer()
@@ -97,6 +98,24 @@ class BuildableInlineContainerSpec extends Specification {
 
         and:
         1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.crossReference(target) }
+    }
+
+    def "resolves link on finish"() {
+        LinkResolver resolver = Mock()
+        def target = new URI("http://url")
+
+        given:
+        container.addCrossReference(resolver)
+
+        when:
+        container.finish()
+
+        then:
+        container.contents[0] instanceof Link
+        container.contents[0].target == target
+
+        and:
+        1 * resolver.resolve(!null) >> { LinkResolverContext context -> context.url(target) }
     }
 
     def "resolves broken link on finish"() {

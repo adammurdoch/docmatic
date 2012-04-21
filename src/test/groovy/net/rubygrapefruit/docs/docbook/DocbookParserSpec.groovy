@@ -248,29 +248,82 @@ chapter
 <book>
     <chapter>
         <para>
-            para
+            text
             <code>code</code>
             <literal>literal</literal>
-            para</para>
+            text</para>
     </chapter>
 </book>'''
 
         then:
-        doc.contents[0].contents[0].contents.size() == 5
-        doc.contents[0].contents[0].contents[0] instanceof Text
-        doc.contents[0].contents[0].contents[0].text == 'para '
-        doc.contents[0].contents[0].contents[1] instanceof Code
-        doc.contents[0].contents[0].contents[1].text == 'code'
-        doc.contents[0].contents[0].contents[2] instanceof Text
-        doc.contents[0].contents[0].contents[2].text == ' '
-        doc.contents[0].contents[0].contents[3] instanceof Literal
-        doc.contents[0].contents[0].contents[3].text == 'literal'
-        doc.contents[0].contents[0].contents[4] instanceof Text
-        doc.contents[0].contents[0].contents[4].text == ' para'
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 5
+        para.contents[0] instanceof Text
+        para.contents[0].text == 'text '
+        para.contents[1] instanceof Code
+        para.contents[1].text == 'code'
+        para.contents[2] instanceof Text
+        para.contents[2].text == ' '
+        para.contents[3] instanceof Literal
+        para.contents[3].text == 'literal'
+        para.contents[4] instanceof Text
+        para.contents[4].text == ' text'
     }
 
     def "normalises whitespace in para with inline elements"() {
-        expect: false
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para>
+            <code>code</code>
+            text
+            text
+            <literal>literal</literal>
+            text
+        </para>
+    </chapter>
+</book>'''
+
+        then:
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 4
+        para.contents[0] instanceof Code
+        para.contents[0].text == 'code'
+        para.contents[1] instanceof Text
+        para.contents[1].text == ' text text '
+        para.contents[2] instanceof Literal
+        para.contents[2].text == 'literal'
+        para.contents[3] instanceof Text
+        para.contents[3].text == ' text'
+    }
+
+    def "normalises nested whitespace in inline elements in para"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <para>
+            <code>  code  </code>
+            text
+            text<literal>
+                literal
+            </literal>text
+        </para>
+    </chapter>
+</book>'''
+
+        then:
+        def para = doc.contents[0].contents[0]
+        para.contents.size() == 4
+        para.contents[0] instanceof Code
+        para.contents[0].text == 'code'
+        para.contents[1] instanceof Text
+        para.contents[1].text == ' text text'
+        para.contents[2] instanceof Literal
+        para.contents[2].text == ' literal '
+        para.contents[3] instanceof Text
+        para.contents[3].text == 'text'
     }
 
     def "converts itemizedlist elements to itemized list"() {
@@ -336,7 +389,10 @@ chapter
         def doc = parse '''
 <book xmlns:xlink="http://www.w3.org/1999/xlink">
     <chapter>
-        <para><link linkend="chapter2">another chapter</link><link xlink:href="http://somehost/">some link</link></para>
+        <para>
+            <link linkend="chapter2">another chapter</link>
+            <link xlink:href="http://somehost/">some link</link>
+        </para>
     </chapter>
     <chapter id="chapter2"/>
 </book>'''
@@ -357,7 +413,10 @@ chapter
         def doc = parse '''
 <book>
     <chapter>
-        <para><ulink href="http://somehost/">some link</ulink><ulink href="http://somehost/"/></para>
+        <para>
+            <ulink url="http://somehost/">some link</ulink>
+            <ulink url="http://somehost/"/>
+        </para>
     </chapter>
 </book>'''
 

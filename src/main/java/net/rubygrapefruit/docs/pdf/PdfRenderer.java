@@ -192,6 +192,9 @@ public class PdfRenderer extends SingleFileRenderer {
             } else if (inline instanceof CrossReference) {
                 writeCrossReference((CrossReference) inline, owner, owner);
                 current = owner;
+            } else if (inline instanceof Link) {
+                writeLink((Link) inline, owner, owner);
+                current = owner;
             } else if (inline instanceof Error) {
                 Error error = (Error) inline;
                 current.add(new Chunk(error.getMessage(), this.error));
@@ -208,6 +211,14 @@ public class PdfRenderer extends SingleFileRenderer {
         anchor.setFont(link);
         writeContents(crossReference, anchor, owner);
         anchor.setReference("#" + target.getId());
+        phrase.add(anchor);
+    }
+
+    private void writeLink(Link link, Phrase phrase, com.itextpdf.text.Paragraph owner) {
+        Anchor anchor = new Anchor();
+        anchor.setFont(this.link);
+        writeContents(link, anchor, owner);
+        anchor.setReference(link.getTarget().toString());
         phrase.add(anchor);
     }
 

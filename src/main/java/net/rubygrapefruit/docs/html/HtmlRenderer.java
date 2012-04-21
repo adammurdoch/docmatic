@@ -224,6 +224,8 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writeEmphasisInline(element, writer);
             } else if (element instanceof CrossReference) {
                 writeCrossReference(page, (CrossReference) element, writer);
+            } else if (element instanceof Link) {
+                writeLink(page, (Link) element, writer);
             } else if (element instanceof Error) {
                 writeErrorInline((Error) element, writer);
             } else {
@@ -243,6 +245,13 @@ public class HtmlRenderer extends MultiPageRenderer {
             writer.writeAttribute("href", "#" + target.getId());
         }
         writeInline(page, crossReference, writer);
+        writer.writeEndElement();
+    }
+
+    private void writeLink(Page page, Link link, XMLStreamWriter writer) throws XMLStreamException {
+        writer.writeStartElement("a");
+        writer.writeAttribute("href", link.getTarget().toString());
+        writeInline(page, link, writer);
         writer.writeEndElement();
     }
 
