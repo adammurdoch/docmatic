@@ -59,6 +59,17 @@
                 <para>paragraphs can contain <code>some code</code> and <literal>literal text</literal>
                     and <emphasis>emphasised text</emphasis>
                     .</para>
+                <para>
+                    <code>
+                        code
+                    </code>
+                    <literal>
+                        literal
+                    </literal>
+                    <emphasis>
+                        emphasis
+                    </emphasis>
+                </para>
 
                 <section>
                     <title>Title with <code>code</code> and <literal>literal text</literal> and <emphasis>emphasis</emphasis></title>

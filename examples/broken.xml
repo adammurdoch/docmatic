@@ -1,11 +1,14 @@
-<book>
+<book xmlns:xlink="http://www.w3.org/1999/xlink">
     <unknown-1/>
     <unknown-2/>
     <title>A broken book</title>
-    <chapter>
+    <chapter id="some_chapter">
         <title>A chapter <broken/></title>
         <para>Some text with an <unknown/> element.</para>
-        <para>Some invalid cross references: <xref/> and <xref linkend="unknown"/></para>
+        <para>Some invalid cross references: <xref/>, <xref linkend="unknown"/>, <xref linkend=""/>,
+            <link/>, <link linkend="unknown"/>, <link xlink:hrref=""/>, <ulink/>.
+        </para>
+        <para><xref linkend="some_chapter">some content</xref>.</para>
     </chapter>
     <unknown-3/>
 </book>

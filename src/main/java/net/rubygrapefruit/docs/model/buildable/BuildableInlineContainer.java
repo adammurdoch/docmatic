@@ -45,13 +45,14 @@ public class BuildableInlineContainer implements InlineContainer {
 
     public void append(CharSequence src) {
         boolean isFirstElement = contents.isEmpty();
-        if (text == null) {
-            text = add(new BuildableText());
-        }
         int pos = 0;
         while (pos < src.length()) {
             char ch = src.charAt(pos);
             if (!Character.isWhitespace(ch)) {
+                if (text == null) {
+                    text = new BuildableText();
+                    contents.add(text);
+                }
                 if (needWhitespace) {
                     text.append(' ');
                     needWhitespace = false;
@@ -69,15 +70,22 @@ public class BuildableInlineContainer implements InlineContainer {
                 pos = end;
             }
         }
+        if (isFirstElement && text == null) {
+            needWhitespace = false;
+        }
     }
 
     protected <T extends BuildableInline> T add(T element) {
-        contents.add(element);
-        if (text != null && needWhitespace) {
+        if (needWhitespace) {
+            if (text == null) {
+                text = new BuildableText();
+                contents.add(text);
+            }
             text.append(' ');
             needWhitespace = false;
         }
         text = null;
+        contents.add(element);
         return element;
     }
 

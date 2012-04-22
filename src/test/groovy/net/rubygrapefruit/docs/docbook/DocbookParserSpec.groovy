@@ -321,7 +321,7 @@ chapter
         para.contents[1] instanceof Text
         para.contents[1].text == ' text text'
         para.contents[2] instanceof Literal
-        para.contents[2].text == ' literal '
+        para.contents[2].text == 'literal'
         para.contents[3] instanceof Text
         para.contents[3].text == 'text'
     }
@@ -399,13 +399,13 @@ chapter
 
         then:
         def para = doc.contents[0].contents[0]
-        para.contents.size() == 2
+        para.contents.size() == 3
         para.contents[0] instanceof CrossReference
         para.contents[0].target == doc.contents[1]
         para.contents[0].text == 'another chapter'
-        para.contents[1] instanceof Link
-        para.contents[1].target == new URI("http://somehost/")
-        para.contents[1].text == 'some link'
+        para.contents[2] instanceof Link
+        para.contents[2].target == new URI("http://somehost/")
+        para.contents[2].text == 'some link'
     }
 
     def "converts ulink elements"() {
@@ -422,13 +422,13 @@ chapter
 
         then:
         def para = doc.contents[0].contents[0]
-        para.contents.size() == 2
+        para.contents.size() == 3
         para.contents[0] instanceof Link
         para.contents[0].target == new URI("http://somehost/")
         para.contents[0].text == 'some link'
-        para.contents[1] instanceof Link
-        para.contents[1].target == new URI("http://somehost/")
-        para.contents[1].text == 'http://somehost/'
+        para.contents[2] instanceof Link
+        para.contents[2].target == new URI("http://somehost/")
+        para.contents[2].text == 'http://somehost/'
     }
 
     def "converts unexpected elements and text"() {
@@ -459,7 +459,7 @@ chapter
             <xref linkend="unknown"/>
             <link/>
             <link linkend="unknown"/>
-            <link linkend="12" xlink:xhref="12"/>
+            <link linkend="12" xlink:href="12"/>
             <ulink/>
         </para>
     </chapter>
@@ -468,12 +468,13 @@ chapter
         then:
         def para = doc.contents[0].contents[0]
         para instanceof Paragraph
-        para.contents[0].message == '<xref>no "linkend" attribute specified in book.xml, line 4, column 22</xref>'
-        para.contents[1].message == '<xref>unknown linkend "unknown" in book.xml, line 4, column 47</xref>'
-        para.contents[2].message == '<link>no "linkend" or "href" attribute specified in book.xml, line 4, column 22</link>'
-        para.contents[3].message == '<link>unknown linkend "unknown" in book.xml, line 4, column 47</link>'
-        para.contents[4].message == '<link>both "linkend" and "href" attribute specified in book.xml, line 4, column 47</link>'
-        para.contents[5].message == '<ulink>no "url" attribute specified in book.xml, line 4, column 22</ulink>'
+        def contents = para.contents.findAll { it instanceof Error }
+        contents[0].message == '<xref>no "linkend" attribute specified in book.xml, line 5, column 20</xref>'
+        contents[1].message == '<xref>unknown linkend "unknown" in book.xml, line 6, column 38</xref>'
+        contents[2].message == '<link>no "linkend" or "href" attribute specified in book.xml, line 7, column 20</link>'
+        contents[3].message == '<link>unknown linkend "unknown" in book.xml, line 8, column 38</link>'
+        contents[4].message == '<link>both "linkend" and "href" attribute specified in book.xml, line 9, column 49</link>'
+        contents[5].message == '<ulink>no "url" attribute specified in book.xml, line 10, column 21</ulink>'
     }
 
     def parse(String string) {
