@@ -1,5 +1,5 @@
 package net.rubygrapefruit.docs.parser;
 
-public interface TokenSpec {
+public interface CharToken {
     void match(Buffer buffer);
 }

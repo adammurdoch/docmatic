@@ -2,9 +2,9 @@ package net.rubygrapefruit.docs.markdown;
 
 import net.rubygrapefruit.docs.model.buildable.*;
 import net.rubygrapefruit.docs.parser.Buffer;
+import net.rubygrapefruit.docs.parser.CharToken;
 import net.rubygrapefruit.docs.parser.LookaheadStream;
 import net.rubygrapefruit.docs.parser.Parser;
-import net.rubygrapefruit.docs.parser.TokenSpec;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -323,7 +323,7 @@ public class MarkdownParser extends Parser {
             boolean hasContent = false;
             while (lexer.next()) {
                 hasContent = true;
-                if (lexer.getType() == Lexer.endOfLineSpec) {
+                if (lexer.getType() == Lexer.endOfLine) {
                     break;
                 }
                 tokens.add(lexer.getToken());
@@ -347,7 +347,7 @@ public class MarkdownParser extends Parser {
             if (tokens.isEmpty()) {
                 return new Line(LineType.Empty, tokens);
             }
-            if (tokens.size() == 1 && tokens.get(0).type == Lexer.equalsSpec) {
+            if (tokens.size() == 1 && tokens.get(0).type == Lexer.equalsToken) {
                 return new Line(LineType.H1, tokens);
             }
             if (tokens.size() == 1 && tokens.get(0).type == Lexer.dashes) {
@@ -374,31 +374,31 @@ public class MarkdownParser extends Parser {
     }
 
     private static class Token {
-        private final TokenSpec type;
+        private final CharToken type;
         private final String value;
 
-        private Token(TokenSpec type, String value) {
+        private Token(CharToken type, String value) {
             this.type = type;
             this.value = value;
         }
     }
 
     private static class Lexer {
-        static final EndOfLineSpec endOfLineSpec = new EndOfLineSpec();
-        static final WordSpec word = new WordSpec();
-        static final TokenSpec whiteSpace = new CharSequenceSpec(' ', '\t');
-        static final TokenSpec equalsSpec = new CharSequenceSpec('=');
-        static final TokenSpec dashes = new CharSequenceSpec('-');
-        static final TokenSpec plus = new SingleCharSpec('+');
-        static final TokenSpec dash = new SingleCharSpec('-');
-        static final TokenSpec backtick = new CharSequenceSpec('`');
-        static final TokenSpec underscore = new SingleCharSpec('_');
-        static final TokenSpec star = new SingleCharSpec('*');
-        static final TokenSpec numberedListItem = new NumberedItemSpec();
+        static final EndOfLineToken endOfLine = new EndOfLineToken();
+        static final WordToken word = new WordToken();
+        static final CharToken whiteSpace = new CharSequenceToken(' ', '\t');
+        static final CharToken equalsToken = new CharSequenceToken('=');
+        static final CharToken dashes = new CharSequenceToken('-');
+        static final CharToken plus = new SingleCharToken('+');
+        static final CharToken dash = new SingleCharToken('-');
+        static final CharToken backtick = new CharSequenceToken('`');
+        static final CharToken underscore = new SingleCharToken('_');
+        static final CharToken star = new SingleCharToken('*');
+        static final CharToken numberedListItem = new NumberedItemToken();
 
         private final Buffer buffer;
         private boolean atStartOfLine;
-        private TokenSpec type;
+        private CharToken type;
 
         private Lexer(Reader input) {
             this.buffer = new Buffer(input);
@@ -408,25 +408,25 @@ public class MarkdownParser extends Parser {
             return new Token(type, buffer.getValue());
         }
 
-        TokenSpec getType() {
+        CharToken getType() {
             return type;
         }
 
         boolean next() {
             type = scanNext();
-            atStartOfLine = (type == endOfLineSpec);
+            atStartOfLine = (type == endOfLine);
             return type != null;
         }
 
-        TokenSpec scanNext() {
-            if (buffer.scanFor(endOfLineSpec)) {
-                return endOfLineSpec;
+        CharToken scanNext() {
+            if (buffer.scanFor(endOfLine)) {
+                return endOfLine;
             }
             if (atStartOfLine && buffer.scanFor(numberedListItem)) {
                 return numberedListItem;
             }
-            if (atStartOfLine && buffer.scanFor(equalsSpec)) {
-                return equalsSpec;
+            if (atStartOfLine && buffer.scanFor(equalsToken)) {
+                return equalsToken;
             }
             if (buffer.scanFor(plus)) {
                 return plus;
@@ -453,17 +453,17 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class EndOfLineSpec implements TokenSpec {
+    private static class EndOfLineToken implements CharToken {
         public void match(Buffer buffer) {
             buffer.consume('\r');
             buffer.consume('\n');
         }
     }
 
-    private static class CharSequenceSpec implements TokenSpec {
+    private static class CharSequenceToken implements CharToken {
         private final char[] candidates;
 
-        private CharSequenceSpec(char... candidates) {
+        private CharSequenceToken(char... candidates) {
             this.candidates = candidates;
         }
 
@@ -473,10 +473,10 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class SingleCharSpec implements TokenSpec {
+    private static class SingleCharToken implements CharToken {
         private final char[] candidates;
 
-        private SingleCharSpec(char... candidates) {
+        private SingleCharToken(char... candidates) {
             this.candidates = candidates;
         }
 
@@ -489,7 +489,7 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class NumberedItemSpec implements TokenSpec {
+    private static class NumberedItemToken implements CharToken {
         public void match(Buffer buffer) {
             if (!buffer.consumeRange('0', '9')) {
                 return;
@@ -503,7 +503,7 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class WordSpec implements TokenSpec {
+    private static class WordToken implements CharToken {
         public void match(Buffer buffer) {
             while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n', '`', '_', '*')) {
             }

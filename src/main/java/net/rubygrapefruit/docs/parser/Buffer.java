@@ -35,7 +35,7 @@ public class Buffer {
         reader = EMPTY_READER;
     }
 
-    public boolean scanFor(TokenSpec spec) {
+    public boolean scanFor(CharToken spec) {
         startToken = endToken;
         matched = false;
         spec.match(this);
