@@ -1,10 +1,7 @@
 package net.rubygrapefruit.docs.markdown;
 
 import net.rubygrapefruit.docs.model.buildable.*;
-import net.rubygrapefruit.docs.parser.Buffer;
-import net.rubygrapefruit.docs.parser.CharToken;
-import net.rubygrapefruit.docs.parser.LookaheadStream;
-import net.rubygrapefruit.docs.parser.Parser;
+import net.rubygrapefruit.docs.parser.*;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -374,31 +371,31 @@ public class MarkdownParser extends Parser {
     }
 
     private static class Token {
-        private final CharToken type;
+        private final CharProduction type;
         private final String value;
 
-        private Token(CharToken type, String value) {
+        private Token(CharProduction type, String value) {
             this.type = type;
             this.value = value;
         }
     }
 
     private static class Lexer {
-        static final EndOfLineToken endOfLine = new EndOfLineToken();
-        static final WordToken word = new WordToken();
-        static final CharToken whiteSpace = new CharSequenceToken(' ', '\t');
-        static final CharToken equalsToken = new CharSequenceToken('=');
-        static final CharToken dashes = new CharSequenceToken('-');
-        static final CharToken plus = new SingleCharToken('+');
-        static final CharToken dash = new SingleCharToken('-');
-        static final CharToken backtick = new CharSequenceToken('`');
-        static final CharToken underscore = new SingleCharToken('_');
-        static final CharToken star = new SingleCharToken('*');
-        static final CharToken numberedListItem = new NumberedItemToken();
+        static final EndOfLineProduction endOfLine = new EndOfLineProduction();
+        static final WordProduction word = new WordProduction();
+        static final CharProduction whiteSpace = Productions.matchAtLeastOneOf(' ', '\t');
+        static final CharProduction equalsToken = Productions.matchAtLeastOneOf('=');
+        static final CharProduction dashes = Productions.matchAtLeastOneOf('-');
+        static final CharProduction plus = Productions.match('+');
+        static final CharProduction dash = Productions.match('-');
+        static final CharProduction backtick = Productions.matchAtLeastOneOf('`');
+        static final CharProduction underscore = Productions.match('_');
+        static final CharProduction star = Productions.match('*');
+        static final CharProduction numberedListItem = new NumberedItemProduction();
 
         private final Buffer buffer;
         private boolean atStartOfLine;
-        private CharToken type;
+        private CharProduction type;
 
         private Lexer(Reader input) {
             this.buffer = new Buffer(input);
@@ -408,7 +405,7 @@ public class MarkdownParser extends Parser {
             return new Token(type, buffer.getValue());
         }
 
-        CharToken getType() {
+        CharProduction getType() {
             return type;
         }
 
@@ -418,7 +415,7 @@ public class MarkdownParser extends Parser {
             return type != null;
         }
 
-        CharToken scanNext() {
+        CharProduction scanNext() {
             if (buffer.scanFor(endOfLine)) {
                 return endOfLine;
             }
@@ -453,59 +450,29 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class EndOfLineToken implements CharToken {
-        public void match(Buffer buffer) {
-            buffer.consume('\r');
-            buffer.consume('\n');
+    private static class EndOfLineProduction implements CharProduction {
+        public void match(CharStream charStream) {
+            charStream.consume('\r');
+            charStream.consume('\n');
         }
     }
 
-    private static class CharSequenceToken implements CharToken {
-        private final char[] candidates;
+    private static class NumberedItemProduction implements CharProduction {
+        private final CharProduction digits = Productions.matchFromRange('0', '9');
 
-        private CharSequenceToken(char... candidates) {
-            this.candidates = candidates;
-        }
-
-        public void match(Buffer buffer) {
-            while (buffer.consume(candidates)) {
-            }
-        }
-    }
-
-    private static class SingleCharToken implements CharToken {
-        private final char[] candidates;
-
-        private SingleCharToken(char... candidates) {
-            this.candidates = candidates;
-        }
-
-        public void match(Buffer buffer) {
-            for (char candidate : candidates) {
-                if (buffer.consume(candidate)) {
-                    return;
-                }
-            }
-        }
-    }
-
-    private static class NumberedItemToken implements CharToken {
-        public void match(Buffer buffer) {
-            if (!buffer.consumeRange('0', '9')) {
+        public void match(CharStream charStream) {
+            if (!charStream.consumeAtLeastOne(digits)) {
                 return;
             }
-            while (buffer.consumeRange('0', '9')) {
-                ;
-            }
-            if (!buffer.consume('.')) {
-                buffer.unwind();
+            if (!charStream.consume('.')) {
+                charStream.unwind();
             }
         }
     }
 
-    private static class WordToken implements CharToken {
-        public void match(Buffer buffer) {
-            while (buffer.consumeAnyExcept(' ', '\t', '\r', '\n', '`', '_', '*')) {
+    private static class WordProduction implements CharProduction {
+        public void match(CharStream charStream) {
+            while (charStream.consumeAnyExcept(' ', '\t', '\r', '\n', '`', '_', '*')) {
             }
         }
     }

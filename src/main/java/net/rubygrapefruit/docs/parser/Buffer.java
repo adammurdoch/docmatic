@@ -2,56 +2,62 @@ package net.rubygrapefruit.docs.parser;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Buffer {
-    private static final Reader EMPTY_READER = new Reader() {
-        @Override
-        public int read(char[] chars, int i, int i1) throws IOException {
-            return -1;
-        }
-
-        @Override
-        public void close() throws IOException {
-        }
-    };
+public class Buffer implements CharStream {
     private final Reader reader;
     private final char[] buffer;
-    int startToken = 0;
-    int endToken = 0;
-    int endBuffer = 0;
-    boolean matched;
+    private final List<Integer> stack = new ArrayList<Integer>();
+    private int startToken = 0;
+    private int endToken = 0;
+    private int endBuffer = 0;
 
     public Buffer(Reader reader) {
+        this(reader, 8192);
+    }
+
+    public Buffer(Reader reader, int bufferLen) {
         this.reader = reader;
-        buffer = new char[8192];
+        buffer = new char[bufferLen];
     }
 
-    public Buffer(CharSequence source) {
-        buffer = new char[source.length() + 1];
-        for (int i = 0; i < buffer.length - 1; i++) {
-            buffer[i] = source.charAt(i);
-        }
-        endBuffer = buffer.length - 1;
-        reader = EMPTY_READER;
-    }
-
-    public boolean scanFor(CharToken spec) {
-        startToken = endToken;
-        matched = false;
-        spec.match(this);
-        return matched;
+    public boolean scanFor(CharProduction production) {
+        return consume(production);
     }
 
     public String getValue() {
+        if (!stack.isEmpty()) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
         return new String(buffer, startToken, endToken - startToken);
     }
 
     public void unwind() {
-        endToken = startToken;
-        matched = false;
+        endToken = stack.get(stack.size() - 1);
     }
 
-    public boolean lookingAt(char... candidates) {
+    public boolean consume(CharProduction production) {
+        if (stack.isEmpty()) {
+            startToken = endToken;
+        }
+        stack.add(endToken);
+        production.match(this);
+        int startThisToken = stack.remove(stack.size() - 1);
+        return endToken > startThisToken;
+    }
+
+    public boolean consumeAtLeastOne(CharProduction production) {
+        if (!consume(production)) {
+            return false;
+        }
+        while (consume(production)) {
+            ;
+        }
+        return true;
+    }
+
+    private boolean lookingAt(char... candidates) {
         int ch = peek();
         if (ch < 0) {
             return false;
@@ -102,11 +108,18 @@ public class Buffer {
             if (startToken == 0 && endBuffer == buffer.length) {
                 throw new UnsupportedOperationException("Buffer overflow not implemented yet.");
             }
+
+            // Move any consumed characters to the start of the buffer
             System.arraycopy(buffer, startToken, buffer, 0, endBuffer - startToken);
             endToken -= startToken;
             endBuffer -= startToken;
+            for (int i = 0; i < stack.size(); i++) {
+                stack.set(i, stack.get(i) - startToken);
+            }
             startToken = 0;
-            int nread = 0;
+
+            // Read the next chunk
+            int nread;
             try {
                 nread = reader.read(buffer, endBuffer, buffer.length - endBuffer);
             } catch (IOException e) {
@@ -123,6 +136,5 @@ public class Buffer {
 
     private void next() {
         endToken++;
-        matched = true;
     }
 }
