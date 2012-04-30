@@ -4,6 +4,7 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import net.rubygrapefruit.docs.docbook.DocbookParser;
+import net.rubygrapefruit.docs.html.HtmlParser;
 import net.rubygrapefruit.docs.html.HtmlRenderer;
 import net.rubygrapefruit.docs.markdown.MarkdownParser;
 import net.rubygrapefruit.docs.model.Document;
@@ -78,6 +79,8 @@ public class Main {
             Parser parser;
             if (input.getName().endsWith(".xml")) {
                 parser = new DocbookParser();
+            } else if (input.getName().endsWith(".html")) {
+                parser = new HtmlParser();
             } else {
                 parser = new MarkdownParser();
             }
