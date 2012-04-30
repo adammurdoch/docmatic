@@ -36,7 +36,7 @@ Supported syntax:
 
 DocBook 4.5 and 5
 -----------------
-Supported elements:
+Supported DocBook 5 elements:
 
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
@@ -46,11 +46,13 @@ Supported elements:
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
 * `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>`, with text only.
 
-Supported 4.5 elements:
+Supported DocBook 4.5 elements:
 
 * `<book>`, with `<bookinfo>` child element.
 * `<bookinfo>`, with `<title>` child element only.
 * `<ulink>`, with text only.
+
+You can mix DocBook 5 and DocBook 4.5 elements in the same document.
 
 Supported Outputs
 =================
