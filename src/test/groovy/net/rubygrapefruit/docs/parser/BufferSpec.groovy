@@ -11,7 +11,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'ab'
     }
 
@@ -23,7 +23,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'a'
     }
 
@@ -37,7 +37,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        !buffer.scanFor(production)
+        !buffer.consume(production)
         buffer.value == ''
     }
 
@@ -52,8 +52,8 @@ class BufferSpec extends Specification {
         def production2 = matchAB()
 
         expect:
-        !buffer.scanFor(production1)
-        buffer.scanFor(production2)
+        !buffer.consume(production1)
+        buffer.consume(production2)
         buffer.value == 'ab'
     }
 
@@ -67,7 +67,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'ab'
     }
 
@@ -80,8 +80,24 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'abab'
+    }
+
+    def "value is made available for a nested production"() {
+        def buffer = buffer('abcd')
+        def nested1 = matchAB()
+        def nested2 = matchCD()
+        def production = { CharStream stream ->
+            stream.consume(nested1)
+            assert stream.value == 'ab'
+            stream.consume(nested2)
+            assert stream.value == 'cd'
+        } as CharProduction
+
+        expect:
+        buffer.consume(production)
+        buffer.value == 'abcd'
     }
 
     def "no characters are consumed when nested production unwinds"() {
@@ -98,7 +114,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'ab'
     }
 
@@ -110,7 +126,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'abab'
     }
 
@@ -122,7 +138,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        !buffer.scanFor(production)
+        !buffer.consume(production)
         buffer.value == ''
     }
 
@@ -134,7 +150,7 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
+        buffer.consume(production)
         buffer.value == 'ab'
     }
 
@@ -146,9 +162,51 @@ class BufferSpec extends Specification {
         } as CharProduction
 
         expect:
-        buffer.scanFor(production)
-        buffer.scanFor(production)
+        buffer.consume(production)
+        buffer.consume(production)
         buffer.value == 'ab'
+    }
+
+    def "commit removes the most recent mark"() {
+        def buffer = buffer('abcd')
+
+        expect:
+        buffer.start()
+        buffer.consume('a' as char)
+        buffer.start()
+        buffer.consume('b' as char)
+        buffer.commit()
+        buffer.consume('c' as char)
+        buffer.unwind()
+        buffer.consume('a' as char)
+    }
+
+    def "rollback moves cursor back to most recent mark and removes the mark"() {
+        def buffer = buffer('abcd')
+
+        expect:
+        buffer.start()
+        buffer.consume('a' as char)
+        buffer.start()
+        buffer.consume('b' as char)
+        buffer.rollback()
+        buffer.consume('b' as char)
+        buffer.rollback()
+        buffer.consume('a' as char)
+    }
+
+    def "unwind moves cursor back to most recent mark and leaves the mark"() {
+        def buffer = buffer('abcd')
+
+        expect:
+        buffer.start()
+        buffer.consume('a' as char)
+        buffer.start()
+        buffer.consume('b' as char)
+        buffer.unwind()
+        buffer.consume('b' as char)
+        buffer.unwind()
+        buffer.consume('b' as char)
     }
 
     def matchAB() {
@@ -157,6 +215,17 @@ class BufferSpec extends Specification {
                 return
             }
             if (!stream.consume('b' as char)) {
+                stream.unwind()
+            }
+        } as CharProduction
+    }
+
+    def matchCD() {
+        return { CharStream stream ->
+            if (!stream.consume('c' as char)) {
+                return
+            }
+            if (!stream.consume('d' as char)) {
                 stream.unwind()
             }
         } as CharProduction

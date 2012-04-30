@@ -43,7 +43,7 @@ public class BuildableInlineContainer implements InlineContainer {
         contents.clear();
     }
 
-    public void append(CharSequence src) {
+    public BuildableInlineContainer append(CharSequence src) {
         boolean isFirstElement = contents.isEmpty();
         int pos = 0;
         while (pos < src.length()) {
@@ -73,6 +73,7 @@ public class BuildableInlineContainer implements InlineContainer {
         if (isFirstElement && text == null) {
             needWhitespace = false;
         }
+        return this;
     }
 
     protected <T extends BuildableInline> T add(T element) {

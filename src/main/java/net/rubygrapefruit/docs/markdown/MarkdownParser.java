@@ -416,34 +416,34 @@ public class MarkdownParser extends Parser {
         }
 
         CharProduction scanNext() {
-            if (buffer.scanFor(endOfLine)) {
+            if (buffer.consume(endOfLine)) {
                 return endOfLine;
             }
-            if (atStartOfLine && buffer.scanFor(numberedListItem)) {
+            if (atStartOfLine && buffer.consume(numberedListItem)) {
                 return numberedListItem;
             }
-            if (atStartOfLine && buffer.scanFor(equalsToken)) {
+            if (atStartOfLine && buffer.consume(equalsToken)) {
                 return equalsToken;
             }
-            if (buffer.scanFor(plus)) {
+            if (buffer.consume(plus)) {
                 return plus;
             }
-            if (buffer.scanFor(dashes)) {
+            if (buffer.consume(dashes)) {
                 return dashes;
             }
-            if (buffer.scanFor(backtick)) {
+            if (buffer.consume(backtick)) {
                 return backtick;
             }
-            if (buffer.scanFor(underscore)) {
+            if (buffer.consume(underscore)) {
                 return underscore;
             }
-            if (buffer.scanFor(star)) {
+            if (buffer.consume(star)) {
                 return star;
             }
-            if (buffer.scanFor(whiteSpace)) {
+            if (buffer.consume(whiteSpace)) {
                 return whiteSpace;
             }
-            if (buffer.scanFor(word)) {
+            if (buffer.consume(word)) {
                 return word;
             }
             return null;

@@ -12,12 +12,17 @@ public interface CharStream extends RewindableStream {
      *
      * @return true if the production consumed any characters, false if not
      */
-    boolean consume(CharProduction production);
+    boolean consume(Production<? super CharStream> production);
 
     /**
      * Consumes at least one instance of the given production.
      *
      * @return true if the production consumed any characters, false if not
      */
-    boolean consumeAtLeastOne(CharProduction production);
+    boolean consumeAtLeastOne(Production<? super CharStream> production);
+
+    /**
+     * Returns the value of the most recently matched production.
+     */
+    String getValue();
 }

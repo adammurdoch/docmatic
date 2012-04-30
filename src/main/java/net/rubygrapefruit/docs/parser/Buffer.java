@@ -5,13 +5,15 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Buffer implements CharStream {
+public class Buffer implements CharStream, MarkableStream {
     private final Reader reader;
     private final char[] buffer;
-    private final List<Integer> stack = new ArrayList<Integer>();
-    private int startToken = 0;
-    private int endToken = 0;
+    private final List<Integer> marks = new ArrayList<Integer>();
+    private int firstMark = 0;
+    private int cursor = 0;
     private int endBuffer = 0;
+    private int startProduction = 0;
+    private int endProduction = 0;
 
     public Buffer(Reader reader) {
         this(reader, 8192);
@@ -22,32 +24,40 @@ public class Buffer implements CharStream {
         buffer = new char[bufferLen];
     }
 
-    public boolean scanFor(CharProduction production) {
-        return consume(production);
+    public String getValue() {
+        return new String(buffer, startProduction, endProduction - startProduction);
     }
 
-    public String getValue() {
-        if (!stack.isEmpty()) {
-            throw new UnsupportedOperationException("Not implemented");
+    public void start() {
+        if (marks.isEmpty()) {
+            firstMark = cursor;
         }
-        return new String(buffer, startToken, endToken - startToken);
+        marks.add(cursor);
+    }
+
+    public boolean commit() {
+        int startThisToken = marks.remove(marks.size() - 1);
+        startProduction = startThisToken;
+        endProduction = cursor;
+        return cursor > startThisToken;
+    }
+
+    public void rollback() {
+        unwind();
+        marks.remove(marks.size() - 1);
     }
 
     public void unwind() {
-        endToken = stack.get(stack.size() - 1);
+        cursor = marks.get(marks.size() - 1);
     }
 
-    public boolean consume(CharProduction production) {
-        if (stack.isEmpty()) {
-            startToken = endToken;
-        }
-        stack.add(endToken);
+    public boolean consume(Production<? super CharStream> production) {
+        start();
         production.match(this);
-        int startThisToken = stack.remove(stack.size() - 1);
-        return endToken > startThisToken;
+        return commit();
     }
 
-    public boolean consumeAtLeastOne(CharProduction production) {
+    public boolean consumeAtLeastOne(Production<? super CharStream> production) {
         if (!consume(production)) {
             return false;
         }
@@ -104,19 +114,19 @@ public class Buffer implements CharStream {
     }
 
     private int peek() {
-        if (endToken == endBuffer) {
-            if (startToken == 0 && endBuffer == buffer.length) {
+        if (cursor == endBuffer) {
+            if (firstMark == 0 && endBuffer == buffer.length) {
                 throw new UnsupportedOperationException("Buffer overflow not implemented yet.");
             }
 
             // Move any consumed characters to the start of the buffer
-            System.arraycopy(buffer, startToken, buffer, 0, endBuffer - startToken);
-            endToken -= startToken;
-            endBuffer -= startToken;
-            for (int i = 0; i < stack.size(); i++) {
-                stack.set(i, stack.get(i) - startToken);
+            System.arraycopy(buffer, firstMark, buffer, 0, endBuffer - firstMark);
+            cursor -= firstMark;
+            endBuffer -= firstMark;
+            for (int i = 0; i < marks.size(); i++) {
+                marks.set(i, marks.get(i) - firstMark);
             }
-            startToken = 0;
+            firstMark = 0;
 
             // Read the next chunk
             int nread;
@@ -131,10 +141,10 @@ public class Buffer implements CharStream {
             endBuffer += nread;
         }
 
-        return buffer[endToken];
+        return buffer[cursor];
     }
 
     private void next() {
-        endToken++;
+        cursor++;
     }
 }
