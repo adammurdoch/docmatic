@@ -33,7 +33,7 @@ class BufferSpec extends Specification {
             stream.consume('a' as char)
             stream.consume('b' as char)
             stream.consume('c' as char)
-            stream.unwind()
+            stream.rewind()
         } as Production<CharStream>
 
         expect:
@@ -47,7 +47,7 @@ class BufferSpec extends Specification {
             stream.consume('a' as char)
             stream.consume('b' as char)
             stream.consume('c' as char)
-            stream.unwind()
+            stream.rewind()
         } as Production<CharStream>
         def production2 = matchAB()
 
@@ -61,7 +61,7 @@ class BufferSpec extends Specification {
         def buffer = buffer('abc')
         def production = { CharStream stream ->
             stream.consume('c' as char)
-            stream.unwind()
+            stream.rewind()
             stream.consume('a' as char)
             stream.consume('b' as char)
         } as Production<CharStream>
@@ -148,7 +148,7 @@ class BufferSpec extends Specification {
         def nested1 = { CharStream stream ->
             stream.consume('a' as char)
             stream.consume('c' as char)
-            stream.unwind()
+            stream.rewind()
         } as Production<CharStream>
         def nested2 = matchAB()
         def production = { CharStream stream ->
@@ -184,7 +184,7 @@ class BufferSpec extends Specification {
         buffer.consume('b' as char)
         buffer.commit()
         buffer.consume('c' as char)
-        buffer.unwind()
+        buffer.rewind()
         buffer.consume('a' as char)
     }
 
@@ -210,9 +210,9 @@ class BufferSpec extends Specification {
         buffer.consume('a' as char)
         buffer.start()
         buffer.consume('b' as char)
-        buffer.unwind()
+        buffer.rewind()
         buffer.consume('b' as char)
-        buffer.unwind()
+        buffer.rewind()
         buffer.consume('b' as char)
     }
 
@@ -222,7 +222,7 @@ class BufferSpec extends Specification {
                 return
             }
             if (!stream.consume('b' as char)) {
-                stream.unwind()
+                stream.rewind()
             }
         } as Production<CharStream>
     }
@@ -233,7 +233,7 @@ class BufferSpec extends Specification {
                 return
             }
             if (!stream.consume('d' as char)) {
-                stream.unwind()
+                stream.rewind()
             }
         } as Production<CharStream>
     }

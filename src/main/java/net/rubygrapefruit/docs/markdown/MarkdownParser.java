@@ -465,7 +465,7 @@ public class MarkdownParser extends Parser {
                 return;
             }
             if (!charStream.consume('.')) {
-                charStream.unwind();
+                charStream.rewind();
             }
         }
     }

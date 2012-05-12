@@ -76,11 +76,11 @@ public class Buffer implements CharStream, MarkableStream {
     }
 
     public void rollback() {
-        unwind();
+        rewind();
         marks.remove(marks.size() - 1);
     }
 
-    public void unwind() {
+    public void rewind() {
         cursor = marks.get(marks.size() - 1).offset;
     }
 
