@@ -371,10 +371,10 @@ public class MarkdownParser extends Parser {
     }
 
     private static class Token {
-        private final CharProduction type;
+        private final Production<CharStream> type;
         private final String value;
 
-        private Token(CharProduction type, String value) {
+        private Token(Production<CharStream> type, String value) {
             this.type = type;
             this.value = value;
         }
@@ -383,19 +383,19 @@ public class MarkdownParser extends Parser {
     private static class Lexer {
         static final EndOfLineProduction endOfLine = new EndOfLineProduction();
         static final WordProduction word = new WordProduction();
-        static final CharProduction whiteSpace = Productions.matchAtLeastOneOf(' ', '\t');
-        static final CharProduction equalsToken = Productions.matchAtLeastOneOf('=');
-        static final CharProduction dashes = Productions.matchAtLeastOneOf('-');
-        static final CharProduction plus = Productions.match('+');
-        static final CharProduction dash = Productions.match('-');
-        static final CharProduction backtick = Productions.matchAtLeastOneOf('`');
-        static final CharProduction underscore = Productions.match('_');
-        static final CharProduction star = Productions.match('*');
-        static final CharProduction numberedListItem = new NumberedItemProduction();
+        static final Production<CharStream> whiteSpace = Productions.matchAtLeastOneOf(' ', '\t');
+        static final Production<CharStream> equalsToken = Productions.matchAtLeastOneOf('=');
+        static final Production<CharStream> dashes = Productions.matchAtLeastOneOf('-');
+        static final Production<CharStream> plus = Productions.match('+');
+        static final Production<CharStream> dash = Productions.match('-');
+        static final Production<CharStream> backtick = Productions.matchAtLeastOneOf('`');
+        static final Production<CharStream> underscore = Productions.match('_');
+        static final Production<CharStream> star = Productions.match('*');
+        static final Production<CharStream> numberedListItem = new NumberedItemProduction();
 
         private final Buffer buffer;
         private boolean atStartOfLine;
-        private CharProduction type;
+        private Production<CharStream> type;
 
         private Lexer(Reader input) {
             this.buffer = new Buffer(input);
@@ -405,7 +405,7 @@ public class MarkdownParser extends Parser {
             return new Token(type, buffer.getValue());
         }
 
-        CharProduction getType() {
+        Production<CharStream> getType() {
             return type;
         }
 
@@ -415,7 +415,7 @@ public class MarkdownParser extends Parser {
             return type != null;
         }
 
-        CharProduction scanNext() {
+        Production<CharStream> scanNext() {
             if (buffer.consume(endOfLine)) {
                 return endOfLine;
             }
@@ -450,18 +450,18 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class EndOfLineProduction implements CharProduction {
+    private static class EndOfLineProduction implements Production<CharStream> {
         public void match(CharStream charStream) {
             charStream.consume('\r');
             charStream.consume('\n');
         }
     }
 
-    private static class NumberedItemProduction implements CharProduction {
-        private final CharProduction digits = Productions.matchFromRange('0', '9');
+    private static class NumberedItemProduction implements Production<CharStream> {
+        private final Production<CharStream> digits = Productions.matchAtLeastOnce(Productions.matchFromRange('0', '9'));
 
         public void match(CharStream charStream) {
-            if (!charStream.consumeAtLeastOne(digits)) {
+            if (!charStream.consume(digits)) {
                 return;
             }
             if (!charStream.consume('.')) {
@@ -470,7 +470,7 @@ public class MarkdownParser extends Parser {
         }
     }
 
-    private static class WordProduction implements CharProduction {
+    private static class WordProduction implements Production<CharStream> {
         public void match(CharStream charStream) {
             while (charStream.consumeAnyExcept(' ', '\t', '\r', '\n', '`', '_', '*')) {
             }

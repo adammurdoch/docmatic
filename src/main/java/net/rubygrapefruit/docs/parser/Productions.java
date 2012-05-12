@@ -1,23 +1,36 @@
 package net.rubygrapefruit.docs.parser;
 
 public class Productions {
-    public static CharProduction match(char candidate) {
+    public static Production<CharStream> match(char candidate) {
         return new SingleCharProduction(candidate);
     }
 
-    public static CharProduction matchFromRange(char from, char to) {
+    public static Production<CharStream> matchFromRange(char from, char to) {
         return new CharRangeProduction(from, to);
     }
 
-    public static CharProduction matchOneOf(char... candidates) {
+    public static Production<CharStream> matchOneOf(char... candidates) {
         return new SingleCharProduction(candidates);
     }
 
-    public static CharProduction matchAtLeastOneOf(char... candidates) {
+    public static Production<CharStream> matchAtLeastOneOf(char... candidates) {
         return new CharSequenceProduction(candidates);
     }
 
-    private static class CharSequenceProduction implements CharProduction {
+    public static Production<CharStream> matchAtLeastOnce(final Production<? super CharStream> production) {
+        return new Production<CharStream>() {
+            public void match(CharStream charStream) {
+                if (!charStream.consume(production)) {
+                    return;
+                }
+                while (charStream.consume(production)) {
+                    ;
+                }
+            }
+        };
+    }
+
+    private static class CharSequenceProduction implements Production<CharStream> {
         private final char[] candidates;
 
         private CharSequenceProduction(char... candidates) {
@@ -30,7 +43,7 @@ public class Productions {
         }
     }
 
-    private static class CharRangeProduction implements CharProduction {
+    private static class CharRangeProduction implements Production<CharStream> {
         private final char from;
         private final char to;
 
@@ -44,7 +57,7 @@ public class Productions {
         }
     }
 
-    private static class SingleCharProduction implements CharProduction {
+    private static class SingleCharProduction implements Production<CharStream> {
         private final char[] candidates;
 
         private SingleCharProduction(char... candidates) {

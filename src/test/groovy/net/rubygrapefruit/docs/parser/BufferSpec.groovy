@@ -8,7 +8,7 @@ class BufferSpec extends Specification {
         def production = { CharStream stream ->
             assert stream.consume('a' as char)
             assert stream.consume('b' as char)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -20,7 +20,7 @@ class BufferSpec extends Specification {
         def production = { CharStream stream ->
             assert stream.consume('a' as char)
             assert !stream.consume('b' as char)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -34,7 +34,7 @@ class BufferSpec extends Specification {
             stream.consume('b' as char)
             stream.consume('c' as char)
             stream.unwind()
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         !buffer.consume(production)
@@ -48,7 +48,7 @@ class BufferSpec extends Specification {
             stream.consume('b' as char)
             stream.consume('c' as char)
             stream.unwind()
-        } as CharProduction
+        } as Production<CharStream>
         def production2 = matchAB()
 
         expect:
@@ -64,7 +64,7 @@ class BufferSpec extends Specification {
             stream.unwind()
             stream.consume('a' as char)
             stream.consume('b' as char)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -77,7 +77,7 @@ class BufferSpec extends Specification {
         def production = { CharStream stream ->
             assert stream.consume(nested)
             assert stream.consume(nested)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -93,7 +93,7 @@ class BufferSpec extends Specification {
             assert stream.value == 'ab'
             stream.consume(nested2)
             assert stream.value == 'cd'
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -133,7 +133,7 @@ class BufferSpec extends Specification {
             assert stream.startLine == 4
             assert stream.endColumn == 2
             assert stream.endLine == 4
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -149,48 +149,12 @@ class BufferSpec extends Specification {
             stream.consume('a' as char)
             stream.consume('c' as char)
             stream.unwind()
-        } as CharProduction
+        } as Production<CharStream>
         def nested2 = matchAB()
         def production = { CharStream stream ->
             assert !stream.consume(nested1)
             assert stream.consume(nested2)
-        } as CharProduction
-
-        expect:
-        buffer.consume(production)
-        buffer.value == 'ab'
-    }
-
-    def "production can match one or more nested production"() {
-        def buffer = buffer('ababc')
-        def nested = matchAB()
-        def production = { CharStream stream ->
-            assert stream.consumeAtLeastOne(nested)
-        } as CharProduction
-
-        expect:
-        buffer.consume(production)
-        buffer.value == 'abab'
-    }
-
-    def "atLeastOne match does not consume any characters when only a partial match is found"() {
-        def buffer = buffer('acabc')
-        def nested = matchAB()
-        def production = { CharStream stream ->
-            assert !stream.consumeAtLeastOne(nested)
-        } as CharProduction
-
-        expect:
-        !buffer.consume(production)
-        buffer.value == ''
-    }
-
-    def "atLeastOne match does not consume any characters from subsequent partial match is found"() {
-        def buffer = buffer('abac')
-        def nested = matchAB()
-        def production = { CharStream stream ->
-            assert stream.consumeAtLeastOne(nested)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -202,7 +166,7 @@ class BufferSpec extends Specification {
         def nested = matchAB()
         def production = { CharStream stream ->
             stream.consume(nested)
-        } as CharProduction
+        } as Production<CharStream>
 
         expect:
         buffer.consume(production)
@@ -260,7 +224,7 @@ class BufferSpec extends Specification {
             if (!stream.consume('b' as char)) {
                 stream.unwind()
             }
-        } as CharProduction
+        } as Production<CharStream>
     }
 
     def matchCD() {
@@ -271,14 +235,14 @@ class BufferSpec extends Specification {
             if (!stream.consume('d' as char)) {
                 stream.unwind()
             }
-        } as CharProduction
+        } as Production<CharStream>
     }
 
     def matchEOL() {
         return { CharStream stream ->
             stream.consume('\r' as char)
             stream.consume('\n' as char)
-        } as CharProduction
+        } as Production<CharStream>
     }
 
     def buffer(String value, int bufferLen = 256) {

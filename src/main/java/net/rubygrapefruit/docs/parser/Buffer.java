@@ -101,16 +101,6 @@ public class Buffer implements CharStream, MarkableStream {
         return value;
     }
 
-    public boolean consumeAtLeastOne(Production<? super CharStream> production) {
-        if (!consume(production)) {
-            return false;
-        }
-        while (consume(production)) {
-            ;
-        }
-        return true;
-    }
-
     private boolean lookingAt(char... candidates) {
         int ch = peek();
         if (ch < 0) {

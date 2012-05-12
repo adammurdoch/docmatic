@@ -17,16 +17,9 @@ public interface CharStream extends RewindableStream {
     /**
      * Consumes a single instance of the given production.
      *
-     * @return true if the production consumed any characters, false if not
+     * @return the value produced by the production, null if the production did not match.
      */
     <T> T consume(ValueProducingProduction<? super CharStream, T> production);
-
-    /**
-     * Consumes at least one instance of the given production.
-     *
-     * @return true if the production consumed any characters, false if not
-     */
-    boolean consumeAtLeastOne(Production<? super CharStream> production);
 
     /**
      * Returns the value of the most recently matched production.
