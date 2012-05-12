@@ -6,6 +6,22 @@ import net.rubygrapefruit.docs.model.Paragraph
 class HtmlParserSpec extends Specification {
     final HtmlParser parser = new HtmlParser()
 
+    def "parses whitespace-only document"() {
+        when:
+        def doc = parse '''
+
+'''
+        then:
+        doc.contents.size() == 0
+    }
+
+    def "parses empty document"() {
+        when:
+        def doc = parse '<html></html>'
+        then:
+        doc.contents.size() == 0
+    }
+
     def "converts p elements to Paragraphs"() {
         when:
         def doc = parse '''
@@ -22,13 +38,27 @@ class HtmlParserSpec extends Specification {
         doc.contents[1].text == 'other text'
     }
 
-    def "adds implicit paragraph for text"() {
+    def "adds implicit paragraph for text inside <html> element"() {
         when:
         def doc = parse '''
 <html>
     some text
     <p>other text
 </html>
+'''
+        then:
+        doc.contents.size() == 2
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
+        doc.contents[1] instanceof Paragraph
+        doc.contents[1].text == 'other text'
+    }
+
+    def "allows missing <html> element"() {
+        when:
+        def doc = parse '''
+    some text
+    <p>other text
 '''
         then:
         doc.contents.size() == 2
@@ -117,8 +147,8 @@ class HtmlParserSpec extends Specification {
         when:
         def doc = parse '''
 <html>
-    some text
 </html>
+some text
 '''
         then:
         doc.contents.size() == 1

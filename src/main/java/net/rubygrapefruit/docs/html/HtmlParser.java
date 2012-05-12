@@ -1,11 +1,9 @@
 package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.buildable.BuildableDocument;
-import net.rubygrapefruit.docs.model.buildable.BuildableParagraph;
 import net.rubygrapefruit.docs.parser.*;
 
 import java.io.Reader;
-import java.util.Collection;
 
 /**
  * doc = element element = empty-element | element-with-content empty-element = '<' element-name '/>'
@@ -13,68 +11,98 @@ import java.util.Collection;
  * end-element = '</' element-name '>' text = (!reserved-char | entity)+ cdata = ??
  */
 public class HtmlParser extends Parser {
+    private final Name name = new Name();
+    private final Whitespace whitespace = new Whitespace();
+    private final StartTag startTag = new StartTag();
+    private final EndTag endTag = new EndTag();
+    private final TextProduction textProduction = new TextProduction();
+
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
-        Buffer buffer = new Buffer(input);
-        ElementStream elementStream = new ElementStream(buffer);
-        BuildableParagraph paragraph = null;
-        while (elementStream.peek() != null) {
-            Token token = elementStream.next();
-            switch (token.type) {
-                case StartElement:
-                    if (token.value.equals("p")) {
-                        paragraph = document.addParagraph();
-                    } else {
-                        document.addError(String.format("<%s>unknown element</%s>", token.value, token.value));
-                    }
-                    break;
-                case EndElement:
-                    if (token.value.equals("p")) {
-                        paragraph = null;
-                    }
-                    break;
-                case Text:
-                    if (paragraph == null) {
-                        paragraph = document.addParagraph();
-                    }
-                    paragraph.append(token.value);
-                    break;
-            }
-        }
+        HtmlDocument documentProduction = new HtmlDocument(document, fileName);
+        documentProduction.match(new Buffer(input));
     }
-
-    private enum TokenType {StartElement, Text, EndElement}
 
     private static class Token {
-        private final TokenType type;
         private final String value;
+        private final int line;
+        private final int col;
 
-        private Token(TokenType type, String value) {
-            this.type = type;
+        private Token(String value, int line, int col) {
             this.value = value;
+            this.line = line;
+            this.col = col;
         }
     }
 
-    private static class ElementStream extends LookaheadStream<Token> {
-        private final TokenStream<Buffer, Token> stream;
-        private final Name name = new Name();
-        private final StartTag startTag = new StartTag(name);
-        private final EndTag endTag = new EndTag(name);
-        private final TextProduction text = new TextProduction();
+    private class HtmlDocument implements Production<CharStream> {
+        private final BuildableDocument document;
+        private final String fileName;
 
-        private ElementStream(Buffer buffer) {
-            this.stream = new TokenStream<Buffer, Token>(buffer);
+        private HtmlDocument(BuildableDocument document, String fileName) {
+            this.document = document;
+            this.fileName = fileName;
+        }
+
+        public void match(CharStream stream) {
+            stream.consume(whitespace);
+            if (stream.consume(new HtmlElement())) {
+            }
+            else {
+                stream.consume(new HtmlBody());
+            }
+            stream.consume(whitespace);
+            // TODO - handle extra stuff here
+        }
+    }
+
+    private class HtmlBody implements Production<CharStream> {
+        public void match(CharStream stream) {
+        }
+    }
+
+    private abstract class ElementProduction implements ValueProducingProduction<CharStream, Boolean> {
+        public Boolean match(CharStream stream) {
+            Token token = stream.consume(startTag);
+            if (token == null) {
+                return false;
+            }
+            if (!token.value.equals(getTagName())) {
+                return false;
+            }
+//            stream.accept();
+            stream.consume(getBody());
+            stream.consume(endTag);
+            // TODO - handle mismatched end tags here
+            return true;
+        }
+
+        protected abstract Production<? super CharStream> getBody();
+
+        protected abstract String getTagName();
+    }
+
+    private class HtmlElement extends ElementProduction {
+        @Override
+        protected String getTagName() {
+            return "html";
         }
 
         @Override
-        protected void readNext(Collection<Token> elements) {
-            if (stream.consume(startTag, elements)) {
-                ;
-            } else if (stream.consume(endTag, elements)) {
-                ;
-            } else if (stream.consume(text, elements)) {
-                ;
-            }
+        protected Production<? super CharStream> getBody() {
+            return new HtmlBody();
+        }
+    }
+
+    private class ParagraphElement extends ElementProduction {
+        @Override
+        protected String getTagName() {
+            return "p";
+        }
+
+        @Override
+        protected Production<? super CharStream> getBody() {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -89,61 +117,55 @@ public class HtmlParser extends Parser {
         }
     }
 
-    private static class StartTag implements TokenGeneratingProduction<CharStream, Token> {
-        private final Name name;
-
-        private StartTag(Name name) {
-            this.name = name;
-        }
-
-        public boolean match(CharStream charStream, TokenConsumer<Token> dest) {
+    private class StartTag implements ValueProducingProduction<CharStream, Token> {
+        public Token match(CharStream charStream) {
             if (!charStream.consume('<')) {
-                return false;
+                return null;
             }
             // TODO - whitespace here?
             if (!charStream.consume(name)) {
-                return false;
+                return null;
             }
             String name = charStream.getValue();
-            // TODO - need real whitespace here
-            while (charStream.consume(' ', '\t')) {
-            }
+            int line = charStream.getStartLine();
+            int col = charStream.getStartColumn();
+            charStream.consume(whitespace);
             // TODO - attributes here
             if (!charStream.consume('>')) {
-                return false;
+                return null;
             }
-            dest.consume(new Token(TokenType.StartElement, name));
-            return true;
+            return new Token(name, line, col);
         }
     }
 
-    private static class EndTag implements TokenGeneratingProduction<CharStream, Token> {
-        private final Name name;
-
-        private EndTag(Name name) {
-            this.name = name;
-        }
-
-        public boolean match(CharStream charStream, TokenConsumer<Token> dest) {
+    private class EndTag implements ValueProducingProduction<CharStream, Token> {
+        public Token match(CharStream charStream) {
             if (!charStream.consume('<')) {
-                return false;
+                return null;
             }
             if (!charStream.consume('/')) {
-                return false;
+                return null;
             }
             // TODO - whitespace here?
             if (!charStream.consume(name)) {
-                return false;
+                return null;
             }
             String name = charStream.getValue();
-            // TODO - need real whitespace here
+            int line = charStream.getStartLine();
+            int col = charStream.getStartColumn();
+            charStream.consume(whitespace);
+            if (!charStream.consume('>')) {
+                return null;
+            }
+            return new Token(name, line, col);
+        }
+    }
+
+    private static class Whitespace implements Production<CharStream> {
+        public void match(CharStream charStream) {
+            // TODO - legal whitespace characters here
             while (charStream.consume(' ', '\t')) {
             }
-            if (!charStream.consume('>')) {
-                return false;
-            }
-            dest.consume(new Token(TokenType.EndElement, name));
-            return true;
         }
     }
 
@@ -158,14 +180,17 @@ public class HtmlParser extends Parser {
         }
     }
 
-    private static class TextProduction implements TokenGeneratingProduction<CharStream, Token> {
+    private static class TextProduction implements ValueProducingProduction<CharStream, Token> {
         final Text text = new Text();
-        public boolean match(CharStream charStream, TokenConsumer<Token> dest) {
+
+        public Token match(CharStream charStream) {
             if (!charStream.consume(text)) {
-                return false;
+                return null;
             }
-            dest.consume(new Token(TokenType.Text, charStream.getValue()));
-            return true;
+            int line = charStream.getStartLine();
+            int col = charStream.getStartColumn();
+            String value = charStream.getValue();
+            return new Token(value, line, col);
         }
     }
 }

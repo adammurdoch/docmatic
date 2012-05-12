@@ -100,6 +100,49 @@ class BufferSpec extends Specification {
         buffer.value == 'abcd'
     }
 
+    def "location of start and end of production is made available"() {
+        def buffer = buffer('ab\nabab\r\nab\rab')
+        def nested1 = matchAB()
+        def nested2 = matchEOL()
+        def production = { CharStream stream ->
+            stream.consume(nested1)
+            assert stream.startColumn == 1
+            assert stream.startLine == 1
+            assert stream.endColumn == 2
+            assert stream.endLine == 1
+            stream.consume(nested2)
+            stream.consume(nested1)
+            assert stream.startColumn == 1
+            assert stream.startLine == 2
+            assert stream.endColumn == 2
+            assert stream.endLine == 2
+            stream.consume(nested1)
+            assert stream.startColumn == 3
+            assert stream.startLine == 2
+            assert stream.endColumn == 4
+            assert stream.endLine == 2
+            stream.consume(nested2)
+            stream.consume(nested1)
+            assert stream.startColumn == 1
+            assert stream.startLine == 3
+            assert stream.endColumn == 2
+            assert stream.endLine == 3
+            stream.consume(nested2)
+            stream.consume(nested1)
+            assert stream.startColumn == 1
+            assert stream.startLine == 4
+            assert stream.endColumn == 2
+            assert stream.endLine == 4
+        } as CharProduction
+
+        expect:
+        buffer.consume(production)
+        buffer.startColumn == 1
+        buffer.startLine == 1
+        buffer.endColumn == 2
+        buffer.endLine == 4
+    }
+
     def "no characters are consumed when nested production unwinds"() {
         def buffer = buffer('abab')
         def nested1 = { CharStream stream ->
@@ -228,6 +271,13 @@ class BufferSpec extends Specification {
             if (!stream.consume('d' as char)) {
                 stream.unwind()
             }
+        } as CharProduction
+    }
+
+    def matchEOL() {
+        return { CharStream stream ->
+            stream.consume('\r' as char)
+            stream.consume('\n' as char)
         } as CharProduction
     }
 
