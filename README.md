@@ -63,7 +63,8 @@ Supported HTML elements:
 * `<body>`, with `<p>` child elements only. Also allows text.
 * `<p>` elements with, text only.
 
-The HTML parser is lenient, and handles missing `<html>`, `<body>`, and `<p>` elements.
+The HTML parser is fairly lenient. You can leave out the doctype declaration, `<html>` and `<body>` elements. Any text
+outside a block element is wrapped in an implicit `<p>` element.
 
 Supported Outputs
 =================

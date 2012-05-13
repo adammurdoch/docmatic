@@ -51,6 +51,9 @@ public class HtmlParser extends Parser {
         public void match(CharStream stream) {
             while (stream.consume(ignorableContent)) {
             }
+            stream.consume(new Doctype());
+            while (stream.consume(ignorableContent)) {
+            }
             if (stream.consume(new HtmlElement(document))) {
             } else {
                 stream.consume(new BodyBody(document));
@@ -267,6 +270,34 @@ public class HtmlParser extends Parser {
             }
             while (!charStream.consume(endComment)) {
                 charStream.consumeAnyExcept();
+            }
+        }
+    }
+
+    private static class Doctype implements Production<CharStream> {
+        private final Production<CharStream> startComment = Productions.matchIgnoreCase("<!doctype");
+        private final Production<CharStream> type = Productions.matchIgnoreCase("html");
+        private final Production<CharStream> endComment = Productions.match(">");
+
+        public void match(CharStream charStream) {
+            if (!charStream.consume(startComment)) {
+                return;
+            }
+            if (!charStream.consume(' ')) {
+                charStream.rewind();
+                return;
+            }
+            while (charStream.consume(' ')) {
+            }
+            if (!charStream.consume(type)) {
+                charStream.rewind();
+                return;
+            }
+            while (charStream.consume(' ')) {
+            }
+            if (!charStream.consume(endComment)) {
+                charStream.rewind();
+                return;
             }
         }
     }

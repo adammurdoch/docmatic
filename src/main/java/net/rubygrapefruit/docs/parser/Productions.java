@@ -29,6 +29,24 @@ public class Productions {
     }
 
     /**
+     * Matches the given string, ignoring case.
+     */
+    public static Production<CharStream> matchIgnoreCase(final String chars) {
+        final String lcChars = chars.toLowerCase();
+        final String ucChars = chars.toUpperCase();
+        return new Production<CharStream>() {
+            public void match(CharStream stream) {
+                for (int i = 0; i < lcChars.length(); i++) {
+                    if (!stream.consume(lcChars.charAt(i), ucChars.charAt(i))) {
+                        stream.rewind();
+                        return;
+                    }
+                }
+            }
+        };
+    }
+
+    /**
      * Matches a character form the given range.
      */
     public static Production<CharStream> matchFromRange(final char from, final char to) {

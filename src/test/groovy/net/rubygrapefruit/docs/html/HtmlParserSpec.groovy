@@ -17,7 +17,7 @@ class HtmlParserSpec extends Specification {
 
     def "parses document with empty <html> element"() {
         when:
-        def doc = parse '<html></html>'
+        def doc = parse '<!doctype html><html></html>'
         then:
         doc.contents.size() == 0
     }
@@ -61,6 +61,21 @@ class HtmlParserSpec extends Specification {
         doc.contents[0].text == 'some text'
         doc.contents[1] instanceof Paragraph
         doc.contents[1].text == 'other text'
+    }
+
+    def "allows missing doctype declaration"() {
+        when:
+        def doc = parse '''
+<html>
+<body>
+    <p>some text</p>
+</body>
+</html>
+'''
+        then:
+        doc.contents.size() == 1
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
     }
 
     def "allows missing <html> element"() {
@@ -115,6 +130,7 @@ class HtmlParserSpec extends Specification {
         when:
         def doc = parse '''
 <!-- comment 1 -->
+<!doctype html>
 <!-- comment 2 -->
 <html>
     <!-- a comment -->
@@ -152,6 +168,33 @@ this is another comment.
 <HTML>
     <P>some text</P>
 </HTML>
+'''
+        then:
+        doc.contents.size() == 1
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
+    }
+
+    def "handles whitespace in doctype declaration"() {
+        when:
+        def doc = parse '''
+<!doctype   html   >
+<html>
+    <p>some text</p>
+</html>
+'''
+        then:
+        doc.contents.size() == 1
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
+    }
+
+    def "doctype declaration is case-insensitive"() {
+        when:
+        def doc = parse '''<!doCTYpe HtmL>
+<html>
+    <p>some text</p>
+</html>
 '''
         then:
         doc.contents.size() == 1
@@ -204,6 +247,10 @@ some text
     }
 
     def "handles unterminated comment"() {
+        expect: false
+    }
+
+    def "handles badly-formed doctype"() {
         expect: false
     }
 
