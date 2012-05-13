@@ -216,6 +216,37 @@ class BufferSpec extends Specification {
         buffer.consume('b' as char)
     }
 
+    def "topmost production cannot span more than one buffer"() {
+        def buffer = buffer('abab', 3)
+        def production = { CharStream stream ->
+            stream.consume('a' as char)
+            stream.consume('b' as char)
+            stream.consume('a' as char)
+            stream.consume('b' as char)
+        } as Production<CharStream>
+
+        when:
+        buffer.consume(production)
+
+        then:
+        UnsupportedOperationException e = thrown()
+    }
+
+    def "topmost production can span more than one buffer when it moves the mark"() {
+        def buffer = buffer('abab', 3)
+        def production = { CharStream stream ->
+            stream.consume('a' as char)
+            stream.consume('b' as char)
+            stream.accept()
+            stream.consume('a' as char)
+            stream.consume('b' as char)
+        } as Production<CharStream>
+
+        expect:
+        buffer.consume(production)
+        buffer.value == 'ab'
+    }
+
     def matchAB() {
         return { CharStream stream ->
             if (!stream.consume('a' as char)) {

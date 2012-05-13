@@ -10,7 +10,7 @@ public interface CharStream extends RewindableStream {
     /**
      * Consumes a single instance of the given production.
      *
-     * @return true if the production consumed any characters, false if not
+     * @return true if the production consumed any characters, false if not.
      */
     boolean consume(Production<? super CharStream> production);
 
@@ -22,7 +22,7 @@ public interface CharStream extends RewindableStream {
     <T> T consume(ValueProducingProduction<? super CharStream, T> production);
 
     /**
-     * Returns the value of the most recently matched production.
+     * Returns the value between the mark and cursor, as at the end of the most recently matched production.
      */
     String getValue();
 

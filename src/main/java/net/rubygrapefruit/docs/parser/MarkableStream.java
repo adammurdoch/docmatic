@@ -15,7 +15,8 @@ public interface MarkableStream extends RewindableStream {
     boolean commit();
 
     /**
-     * Moves the cursor back to the most recently pushed mark, and pops the mark.
+     * Moves the cursor back to the most recently pushed mark, and pops the mark. Fails if the mark has been moved by a
+     * call to {@link RewindableStream#accept()}.
      */
     void rollback();
 }

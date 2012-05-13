@@ -1,8 +1,8 @@
 
 What is it?
 ===========
-Docmatic is a JVM based toolkit for generating documentation. It accepts as input any combination of Markdown or
-DocBook, and generates HTML 4 or PDF output.
+Docmatic is a JVM based toolkit for generating documentation. It accepts as input any combination of Markdown,
+DocBook or HTML, and generates HTML or PDF output.
 
 Why?
 ----
@@ -20,7 +20,8 @@ Features
 
 Supported Inputs
 ================
-Docmatic can parse a subset of Markdown and DocBook 4.5 and 5. You can also use the API to build a document programmatically.
+Docmatic can parse a subset of Markdown, HTML 4.01 and 5, and DocBook 4.5 and 5. You can also use the API to build a
+document programmatically.
 
 Note that Docmatic is a very early work-in-progress, so not much of these input formats is supported yet.
 
@@ -53,6 +54,15 @@ Supported DocBook 4.5 elements:
 * `<ulink>`, with text only.
 
 You can mix DocBook 5 and DocBook 4.5 elements in the same document.
+
+HTML 4.01 and 5
+---------------
+Supported HTML elements:
+
+* `<html>`, with `<p>` child elements only.
+* `<p>` elements with, text only.
+
+The HTML parser is lenient, and handles missing `<html>` and `<p>` elements.
 
 Supported Outputs
 =================
@@ -92,6 +102,14 @@ Themes
 * `--fixed-width`
 
     Fixed page width (HTML only).
+
+Input files
+-----------
+Docmatic guesses the type of each input file based on its extension:
+
+* `.xml` is treated as a DocBook file.
+* `.html` is treated as an HTML file.
+* Everything else is treated as a Markdown file.
 
 API Usage
 =========

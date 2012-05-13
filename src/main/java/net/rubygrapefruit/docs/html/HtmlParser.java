@@ -1,6 +1,7 @@
 package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.buildable.BuildableDocument;
+import net.rubygrapefruit.docs.model.buildable.BuildableParagraph;
 import net.rubygrapefruit.docs.parser.*;
 
 import java.io.Reader;
@@ -46,10 +47,9 @@ public class HtmlParser extends Parser {
 
         public void match(CharStream stream) {
             stream.consume(whitespace);
-            if (stream.consume(new HtmlElement())) {
-            }
-            else {
-                stream.consume(new HtmlBody());
+            if (stream.consume(new HtmlElement(document))) {
+            } else {
+                stream.consume(new HtmlBody(document));
             }
             stream.consume(whitespace);
             // TODO - handle extra stuff here
@@ -57,7 +57,27 @@ public class HtmlParser extends Parser {
     }
 
     private class HtmlBody implements Production<CharStream> {
+        private final BuildableDocument document;
+
+        private HtmlBody(BuildableDocument document) {
+            this.document = document;
+        }
+
         public void match(CharStream stream) {
+            while (true) {
+                if (stream.consume(whitespace)) {
+                    continue;
+                }
+                if (stream.consume(new ParagraphElement(document))) {
+                    continue;
+                }
+                Token token = stream.consume(textProduction);
+                if (token != null) {
+                    document.addParagraph().append(token.value);
+                    continue;
+                }
+                break;
+            }
         }
     }
 
@@ -70,11 +90,15 @@ public class HtmlParser extends Parser {
             if (!token.value.equals(getTagName())) {
                 return false;
             }
-//            stream.accept();
+            stream.accept();
+            started();
             stream.consume(getBody());
             stream.consume(endTag);
             // TODO - handle mismatched end tags here
             return true;
+        }
+
+        protected void started() {
         }
 
         protected abstract Production<? super CharStream> getBody();
@@ -83,6 +107,12 @@ public class HtmlParser extends Parser {
     }
 
     private class HtmlElement extends ElementProduction {
+        private final BuildableDocument document;
+
+        private HtmlElement(BuildableDocument document) {
+            this.document = document;
+        }
+
         @Override
         protected String getTagName() {
             return "html";
@@ -90,11 +120,30 @@ public class HtmlParser extends Parser {
 
         @Override
         protected Production<? super CharStream> getBody() {
-            return new HtmlBody();
+            return new HtmlBody(document);
+        }
+    }
+
+    private class ParagraphBody implements Production<CharStream> {
+        private final BuildableParagraph paragraph;
+
+        private ParagraphBody(BuildableParagraph paragraph) {
+            this.paragraph = paragraph;
+        }
+
+        public void match(CharStream stream) {
+            Token value = stream.consume(textProduction);
+            paragraph.append(value.value);
         }
     }
 
     private class ParagraphElement extends ElementProduction {
+        private final BuildableDocument document;
+
+        private ParagraphElement(BuildableDocument document) {
+            this.document = document;
+        }
+
         @Override
         protected String getTagName() {
             return "p";
@@ -102,7 +151,7 @@ public class HtmlParser extends Parser {
 
         @Override
         protected Production<? super CharStream> getBody() {
-            throw new UnsupportedOperationException();
+            return new ParagraphBody(document.addParagraph());
         }
     }
 
@@ -164,16 +213,13 @@ public class HtmlParser extends Parser {
     private static class Whitespace implements Production<CharStream> {
         public void match(CharStream charStream) {
             // TODO - legal whitespace characters here
-            while (charStream.consume(' ', '\t')) {
+            while (charStream.consume(' ', '\t', '\r', '\n')) {
             }
         }
     }
 
     private static class Text implements Production<CharStream> {
         public void match(CharStream charStream) {
-            if (!charStream.consumeAnyExcept()) {
-                return;
-            }
             // TODO - legal text characters here
             while (charStream.consumeAnyExcept('<')) {
             }

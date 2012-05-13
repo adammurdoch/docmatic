@@ -84,6 +84,14 @@ public class Buffer implements CharStream, MarkableStream {
         cursor = marks.get(marks.size() - 1).offset;
     }
 
+    public void accept() {
+        if (marks.size() != 1) {
+            return;
+        }
+        firstMark = cursor;
+        marks.get(0).moveTo(cursor);
+    }
+
     public boolean consume(Production<? super CharStream> production) {
         start();
         production.match(this);
@@ -158,7 +166,7 @@ public class Buffer implements CharStream, MarkableStream {
             cursor -= firstMark;
             endBuffer -= firstMark;
             for (int i = 0; i < marks.size(); i++) {
-                marks.get(i).move(firstMark);
+                marks.get(i).retarget(firstMark);
             }
             firstMark = 0;
 
@@ -203,6 +211,7 @@ public class Buffer implements CharStream, MarkableStream {
         int offset;
         final int col;
         final int line;
+        boolean moved;
 
         private Mark(int offset, int line, int col) {
             this.offset = offset;
@@ -210,8 +219,13 @@ public class Buffer implements CharStream, MarkableStream {
             this.col = col;
         }
 
-        public void move(int offset) {
+        public void retarget(int offset) {
             this.offset -= offset;
+        }
+
+        public void moveTo(int offset) {
+            this.offset = offset;
+            moved = true;
         }
     }
 }
