@@ -1,71 +1,81 @@
 package net.rubygrapefruit.docs.parser;
 
 public class Productions {
-    public static Production<CharStream> match(char candidate) {
-        return new SingleCharProduction(candidate);
-    }
-
-    public static Production<CharStream> matchFromRange(char from, char to) {
-        return new CharRangeProduction(from, to);
-    }
-
-    public static Production<CharStream> matchOneOf(char... candidates) {
-        return new SingleCharProduction(candidates);
-    }
-
-    public static Production<CharStream> matchAtLeastOneOf(char... candidates) {
-        return new CharSequenceProduction(candidates);
-    }
-
-    public static Production<CharStream> matchAtLeastOnce(final Production<? super CharStream> production) {
+    /**
+     * Matches the given character.
+     */
+    public static Production<CharStream> match(final char candidate) {
         return new Production<CharStream>() {
-            public void match(CharStream charStream) {
-                if (!charStream.consume(production)) {
-                    return;
-                }
-                while (charStream.consume(production)) {
-                    ;
+            public void match(CharStream stream) {
+                stream.consume(candidate);
+            }
+        };
+    }
+
+    /**
+     * Matches the given string.
+     */
+    public static Production<CharStream> match(final String chars) {
+        return new Production<CharStream>() {
+            public void match(CharStream stream) {
+                for (int i = 0; i < chars.length(); i++) {
+                    if (!stream.consume(chars.charAt(i))) {
+                        stream.rewind();
+                        return;
+                    }
                 }
             }
         };
     }
 
-    private static class CharSequenceProduction implements Production<CharStream> {
-        private final char[] candidates;
-
-        private CharSequenceProduction(char... candidates) {
-            this.candidates = candidates;
-        }
-
-        public void match(CharStream charStream) {
-            while (charStream.consume(candidates)) {
+    /**
+     * Matches a character form the given range.
+     */
+    public static Production<CharStream> matchFromRange(final char from, final char to) {
+        return new Production<CharStream>() {
+            public void match(CharStream stream) {
+                stream.consumeRange(from, to);
             }
-        }
+        };
     }
 
-    private static class CharRangeProduction implements Production<CharStream> {
-        private final char from;
-        private final char to;
-
-        private CharRangeProduction(char from, char to) {
-            this.from = from;
-            this.to = to;
-        }
-
-        public void match(CharStream charStream) {
-            charStream.consumeRange(from, to);
-        }
+    /**
+     * Matches one or more of the given characters.
+     */
+    public static Production<CharStream> matchAtLeastOneOf(final char... candidates) {
+        return new Production<CharStream>() {
+            public void match(CharStream stream) {
+                while (stream.consume(candidates)) {
+                }
+            }
+        };
     }
 
-    private static class SingleCharProduction implements Production<CharStream> {
-        private final char[] candidates;
+    /**
+     * Matches one or more of the given production.
+     */
+    public static Production<CharStream> matchAtLeastOnce(final Production<? super CharStream> production) {
+        return new Production<CharStream>() {
+            public void match(CharStream charStream) {
+                while (charStream.consume(production)) {
+                }
+            }
+        };
+    }
 
-        private SingleCharProduction(char... candidates) {
-            this.candidates = candidates;
-        }
-
-        public void match(CharStream charStream) {
-            charStream.consume(candidates);
-        }
+    /**
+     * Matches the first of the given candidates.
+     */
+    public static Production<CharStream> matchFirstOf(final Production<? super CharStream>... candidates) {
+        return new Production<CharStream>() {
+            public void match(CharStream stream) {
+                for (int i = 0; i < candidates.length; i++) {
+                    Production<? super CharStream> candidate = candidates[i];
+                    if (stream.consume(candidate)) {
+                        return;
+                    }
+                }
+            }
+        };
     }
 }

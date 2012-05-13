@@ -9,25 +9,34 @@ class HtmlParserSpec extends Specification {
     def "parses whitespace-only document"() {
         when:
         def doc = parse '''
-
+    \t\f \n \r \r\n\t
 '''
         then:
         doc.contents.size() == 0
     }
 
-    def "parses empty document"() {
+    def "parses document with empty <html> element"() {
         when:
         def doc = parse '<html></html>'
         then:
         doc.contents.size() == 0
     }
 
-    def "converts p elements to Paragraphs"() {
+    def "parses document with empty <body> element"() {
+        when:
+        def doc = parse '<html><body></body></html>'
+        then:
+        doc.contents.size() == 0
+    }
+
+    def "converts <p> elements to paragraphs"() {
         when:
         def doc = parse '''
 <html>
+<body>
     <p>some text</p>
     <p>other text</p>
+</body>
 </html>
 '''
         then:
@@ -68,6 +77,22 @@ class HtmlParserSpec extends Specification {
         doc.contents[1].text == 'other text'
     }
 
+    def "allows missing <body> element"() {
+        when:
+        def doc = parse '''
+<html>
+    <p>some text</p>
+    <p>other text</p>
+</html>
+'''
+        then:
+        doc.contents.size() == 2
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
+        doc.contents[1] instanceof Paragraph
+        doc.contents[1].text == 'other text'
+    }
+
     def "handles whitespace in start and end tags"() {
         when:
         def doc = parse '''
@@ -84,6 +109,28 @@ class HtmlParserSpec extends Specification {
         doc.contents[0].text == 'some text'
         doc.contents[1] instanceof Paragraph
         doc.contents[1].text == 'other text'
+    }
+
+    def "handles comments"() {
+        when:
+        def doc = parse '''
+<!-- comment 1 -->
+<!-- comment 2 -->
+<html>
+    <!-- a comment -->
+<!--
+this is another comment.
+<p>this should be ignored.</p>
+-->
+    <p>some <!-- ignored: </p><p> --> text</p>
+    <!-- -- -> -->
+</html>
+<!-- a trailing comment -->
+'''
+        then:
+        doc.contents.size() == 1
+        doc.contents[0] instanceof Paragraph
+        doc.contents[0].text == 'some text'
     }
 
     def "handles badly formed start and end tags"() {
@@ -143,7 +190,7 @@ class HtmlParserSpec extends Specification {
         doc.contents[0].contents[0].message == '??'
     }
 
-    def "converts unknown text to Error elements"() {
+    def "converts trailing text to Error elements"() {
         when:
         def doc = parse '''
 <html>
@@ -156,8 +203,11 @@ some text
         doc.contents[0].message == '??'
     }
 
+    def "handles unterminated comment"() {
+        expect: false
+    }
+
     def parse(String string) {
         return parser.parse(string, "doc.html")
     }
-
 }

@@ -13,7 +13,9 @@ import java.io.Reader;
  */
 public class HtmlParser extends Parser {
     private final Name name = new Name();
-    private final Whitespace whitespace = new Whitespace();
+    private final Production<CharStream> whitespace = Productions.matchAtLeastOneOf(' ', '\t', '\r', '\n', '\f');
+    private final Comment comment = new Comment();
+    private final Production<CharStream> ignorableContent = Productions.matchFirstOf(whitespace, comment);
     private final StartTag startTag = new StartTag();
     private final EndTag endTag = new EndTag();
     private final TextProduction textProduction = new TextProduction();
@@ -21,7 +23,8 @@ public class HtmlParser extends Parser {
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
         HtmlDocument documentProduction = new HtmlDocument(document, fileName);
-        documentProduction.match(new Buffer(input));
+        Buffer buffer = new Buffer(input);
+        buffer.consume(documentProduction);
     }
 
     private static class Token {
@@ -46,59 +49,32 @@ public class HtmlParser extends Parser {
         }
 
         public void match(CharStream stream) {
-            stream.consume(whitespace);
+            while (stream.consume(ignorableContent)) {
+            }
             if (stream.consume(new HtmlElement(document))) {
             } else {
-                stream.consume(new HtmlBody(document));
+                stream.consume(new BodyBody(document));
             }
-            stream.consume(whitespace);
+            while (stream.consume(ignorableContent)) {
+            }
             // TODO - handle extra stuff here
         }
     }
 
-    private class HtmlBody implements Production<CharStream> {
-        private final BuildableDocument document;
-
-        private HtmlBody(BuildableDocument document) {
-            this.document = document;
-        }
-
+    private abstract class ElementProduction implements Production<CharStream> {
         public void match(CharStream stream) {
-            while (true) {
-                if (stream.consume(whitespace)) {
-                    continue;
-                }
-                if (stream.consume(new ParagraphElement(document))) {
-                    continue;
-                }
-                Token token = stream.consume(textProduction);
-                if (token != null) {
-                    document.addParagraph().append(token.value);
-                    continue;
-                }
-                break;
-            }
-        }
-    }
-
-    private abstract class ElementProduction implements ValueProducingProduction<CharStream, Boolean> {
-        public Boolean match(CharStream stream) {
             Token token = stream.consume(startTag);
             if (token == null) {
-                return false;
+                return;
             }
-            if (!token.value.equals(getTagName())) {
-                return false;
+            if (!token.value.equalsIgnoreCase(getTagName())) {
+                stream.rewind();
+                return;
             }
             stream.accept();
-            started();
             stream.consume(getBody());
-            stream.consume(endTag);
             // TODO - handle mismatched end tags here
-            return true;
-        }
-
-        protected void started() {
+            stream.consume(endTag);
         }
 
         protected abstract Production<? super CharStream> getBody();
@@ -124,16 +100,65 @@ public class HtmlParser extends Parser {
         }
     }
 
-    private class ParagraphBody implements Production<CharStream> {
-        private final BuildableParagraph paragraph;
+    private class HtmlBody implements Production<CharStream> {
+        private final BuildableDocument document;
 
-        private ParagraphBody(BuildableParagraph paragraph) {
-            this.paragraph = paragraph;
+        private HtmlBody(BuildableDocument document) {
+            this.document = document;
         }
 
         public void match(CharStream stream) {
-            Token value = stream.consume(textProduction);
-            paragraph.append(value.value);
+            while (stream.consume(ignorableContent)) {
+            }
+            if (stream.consume(new BodyElement(document))) {
+            } else {
+                stream.consume(new BodyBody(document));
+            }
+            while (stream.consume(ignorableContent)) {
+            }
+        }
+    }
+
+    private class BodyElement extends ElementProduction {
+        private final BuildableDocument document;
+
+        private BodyElement(BuildableDocument document) {
+            this.document = document;
+        }
+
+        @Override
+        protected String getTagName() {
+            return "body";
+        }
+
+        @Override
+        protected Production<? super CharStream> getBody() {
+            return new BodyBody(document);
+        }
+    }
+
+    private class BodyBody implements Production<CharStream> {
+        private final BuildableDocument document;
+
+        private BodyBody(BuildableDocument document) {
+            this.document = document;
+        }
+
+        public void match(CharStream stream) {
+            while (true) {
+                if (stream.consume(ignorableContent)) {
+                    continue;
+                }
+                if (stream.consume(new ParagraphElement(document))) {
+                    continue;
+                }
+                Token token = stream.consume(textProduction);
+                if (token != null) {
+                    document.addParagraph().append(token.value);
+                    continue;
+                }
+                break;
+            }
         }
     }
 
@@ -152,6 +177,28 @@ public class HtmlParser extends Parser {
         @Override
         protected Production<? super CharStream> getBody() {
             return new ParagraphBody(document.addParagraph());
+        }
+    }
+
+    private class ParagraphBody implements Production<CharStream> {
+        private final BuildableParagraph paragraph;
+
+        private ParagraphBody(BuildableParagraph paragraph) {
+            this.paragraph = paragraph;
+        }
+
+        public void match(CharStream stream) {
+            while (true) {
+                if (stream.consume(comment)) {
+                    continue;
+                }
+                Token value = stream.consume(textProduction);
+                if (value != null) {
+                    paragraph.append(value.value);
+                    continue;
+                }
+                break;
+            }
         }
     }
 
@@ -210,10 +257,16 @@ public class HtmlParser extends Parser {
         }
     }
 
-    private static class Whitespace implements Production<CharStream> {
+    private static class Comment implements Production<CharStream> {
+        private final Production<CharStream> startComment = Productions.match("<!--");
+        private final Production<CharStream> endComment = Productions.match("-->");
+
         public void match(CharStream charStream) {
-            // TODO - legal whitespace characters here
-            while (charStream.consume(' ', '\t', '\r', '\n')) {
+            if (!charStream.consume(startComment)) {
+                return;
+            }
+            while (!charStream.consume(endComment)) {
+                charStream.consumeAnyExcept();
             }
         }
     }

@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.markdown
 
 import spock.lang.Specification
 import net.rubygrapefruit.docs.model.*
+import spock.lang.Ignore
 
 class MarkdownParserSpec extends Specification {
     final MarkdownParser parser = new MarkdownParser()
@@ -416,6 +417,7 @@ para
         doc.contents[2].items[0].contents[0].text == 'item 1'
     }
 
+    @Ignore
     def "paragraphs can contain ordered list item marker"() {
         expect: false
     }
@@ -521,6 +523,7 @@ line   3  `
         doc.contents[1].contents[0].text == 'a b `` c d'
     }
 
+    @Ignore
     def "code inline does not contain other inlines"() {
         expect: false
     }
@@ -568,14 +571,17 @@ __ **
         doc.contents[6].contents[0].text == '__ **'
     }
 
+    @Ignore
     def "two _ or * characters delimits strong inline"() {
         expect: false
     }
 
+    @Ignore
     def "emphasis inline can contain other inlines"() {
         expect: false
     }
 
+    @Ignore
     def "strong inline can contain other inlines"() {
         expect: false
     }

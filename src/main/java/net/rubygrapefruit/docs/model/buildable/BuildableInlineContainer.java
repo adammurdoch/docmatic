@@ -11,6 +11,15 @@ public class BuildableInlineContainer implements InlineContainer {
     private BuildableText text;
     private boolean needWhitespace;
 
+    @Override
+    public String toString() {
+        return String.format("[%s text:%s]", getTypeName(), getText());
+    }
+
+    protected String getTypeName() {
+        return getClass().getSimpleName().replaceFirst("^Buildable", "").toLowerCase();
+    }
+
     public void finish() {
         ListIterator<BuildableInline> iter = contents.listIterator();
         while (iter.hasNext()) {

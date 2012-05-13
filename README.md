@@ -59,10 +59,11 @@ HTML 4.01 and 5
 ---------------
 Supported HTML elements:
 
-* `<html>`, with `<p>` child elements only.
+* `<html>`, with `<body>`, `<p>` child elements only. Also allows text.
+* `<body>`, with `<p>` child elements only. Also allows text.
 * `<p>` elements with, text only.
 
-The HTML parser is lenient, and handles missing `<html>` and `<p>` elements.
+The HTML parser is lenient, and handles missing `<html>`, `<body>`, and `<p>` elements.
 
 Supported Outputs
 =================
