@@ -22,7 +22,7 @@ public class HtmlParser extends Parser {
 
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
-        HtmlDocument documentProduction = new HtmlDocument(document, fileName);
+        LenientHtmlDocument documentProduction = new LenientHtmlDocument(document, fileName);
         Buffer buffer = new Buffer(input);
         buffer.consume(documentProduction);
     }
@@ -39,6 +39,23 @@ public class HtmlParser extends Parser {
         }
     }
 
+    private class LenientHtmlDocument implements Production<CharStream> {
+        private final BuildableDocument document;
+        private final String fileName;
+
+        private LenientHtmlDocument(BuildableDocument document, String fileName) {
+            this.document = document;
+            this.fileName = fileName;
+        }
+
+        public void match(CharStream stream) {
+            if (stream.consume(new HtmlDocument(document, fileName))) {
+            } else {
+                stream.consume(new BodyBody(document));
+            }
+        }
+    }
+
     private class HtmlDocument implements Production<CharStream> {
         private final BuildableDocument document;
         private final String fileName;
@@ -51,16 +68,31 @@ public class HtmlParser extends Parser {
         public void match(CharStream stream) {
             while (stream.consume(ignorableContent)) {
             }
-            stream.consume(new Doctype());
+            Token beforeDocType = stream.consume(textProduction);
+            boolean hasDocType = stream.consume(new Doctype());
             while (stream.consume(ignorableContent)) {
             }
-            if (stream.consume(new HtmlElement(document))) {
-            } else {
-                stream.consume(new BodyBody(document));
+            Token afterDocType = stream.consume(textProduction);
+            boolean hasHtmlElement = stream.consume(new HtmlElement(document));
+            if (!hasDocType && !hasHtmlElement) {
+                stream.rewind();
+                return;
             }
             while (stream.consume(ignorableContent)) {
             }
-            // TODO - handle extra stuff here
+            Token afterContent = stream.consume(textProduction);
+            if (beforeDocType != null) {
+                document.addError(String.format("unexpected text in %s, line %s, column %s.", fileName, beforeDocType.line,
+                        beforeDocType.col));
+            }
+            if (afterDocType != null) {
+                document.addError(String.format("unexpected text in %s, line %s, column %s.", fileName, afterDocType.line,
+                        afterDocType.col));
+            }
+            if (afterContent != null) {
+                document.addError(String.format("unexpected text in %s, line %s, column %s.", fileName, afterContent.line,
+                        afterContent.col));
+            }
         }
     }
 

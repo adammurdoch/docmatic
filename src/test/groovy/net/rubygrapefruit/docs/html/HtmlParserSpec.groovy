@@ -2,6 +2,7 @@ package net.rubygrapefruit.docs.html
 
 import spock.lang.Specification
 import net.rubygrapefruit.docs.model.Paragraph
+import net.rubygrapefruit.docs.model.Error
 
 class HtmlParserSpec extends Specification {
     final HtmlParser parser = new HtmlParser()
@@ -11,6 +12,13 @@ class HtmlParserSpec extends Specification {
         def doc = parse '''
     \t\f \n \r \r\n\t
 '''
+        then:
+        doc.contents.size() == 0
+    }
+
+    def "parses doctype only documment"() {
+        when:
+        def doc = parse '<!doctype html>'
         then:
         doc.contents.size() == 0
     }
@@ -233,12 +241,48 @@ this is another comment.
         doc.contents[0].contents[0].message == '??'
     }
 
-    def "converts trailing text to Error elements"() {
+    def "does not allow text outside of <html> element when doctype has been declared"() {
+        when:
+        def doc = parse '''
+    some text
+<!doctype html>
+some text
+<html>
+</html>
+some text
+'''
+        then:
+        doc.contents.size() == 3
+        doc.contents[0] instanceof Error
+        doc.contents[0].message == 'unexpected text in doc.html, line 2, column 5.'
+        doc.contents[1] instanceof Error
+        doc.contents[1].message == 'unexpected text in doc.html, line 4, column 1.'
+        doc.contents[2] instanceof Error
+        doc.contents[2].message == 'unexpected text in doc.html, line 7, column 1.'
+    }
+
+    def "does not allow text outside of <html> element when present"() {
+        when:
+        def doc = parse '''
+some text
+<html>
+</html>
+some text
+'''
+        then:
+        doc.contents.size() == 2
+        doc.contents[0] instanceof Error
+        doc.contents[0].message == 'unexpected text in doc.html, line 2, column 1.'
+        doc.contents[1] instanceof Error
+        doc.contents[1].message == 'unexpected text in doc.html, line 5, column 1.'
+    }
+
+    def "does not allow multiple <html> elements"() {
         when:
         def doc = parse '''
 <html>
 </html>
-some text
+<html></html>
 '''
         then:
         doc.contents.size() == 1

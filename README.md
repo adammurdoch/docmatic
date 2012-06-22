@@ -127,3 +127,4 @@ Known Issues
 
 * Paragraph fonts are used for inline elements in PDF headers.
 * Docbook `<xref/>` elements can refer to `<book>`, `<part>`, `<chapter>`, `<appendix>` and `<section>` elements only.
+* Cannot parse an HTML 4 doctype declaration.
