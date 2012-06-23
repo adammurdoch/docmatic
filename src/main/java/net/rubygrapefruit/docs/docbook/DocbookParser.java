@@ -23,6 +23,24 @@ import java.util.Map;
  * Builds a document for some Docbook input.
  */
 public class DocbookParser extends Parser {
+    private final NoOpElementHandler noOpElementHandler = new NoOpElementHandler();
+    private final LinkHandlerFactory linkHandlerFactory = new LinkHandlerFactory();
+    private final UlinkHandlerFactory ulinkHandlerFactory = new UlinkHandlerFactory();
+    private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
+    private final XrefHandler xrefHandler = new XrefHandler();
+    private final BookHandler bookHandler = new BookHandler();
+    private final TitleHandler titleHandler = new TitleHandler();
+    private final BookInfoHandler bookInfoHandler = new BookInfoHandler();
+    private final PartHandler partHandler = new PartHandler();
+    private final ChapterHandler chapterHandler = new ChapterHandler();
+    private final AppendixHandler appendixHandler = new AppendixHandler();
+    private final ParaHandler paraHandler = new ParaHandler();
+    private final SectionHandler sectionHandler = new SectionHandler();
+    private final CodeHandler codeHandler = new CodeHandler();
+    private final LiteralHandler literalHandler = new LiteralHandler();
+    private final EmphasisHandler emphasisHandler = new EmphasisHandler();
+    private final ClassNameHandler classNameHandler = new ClassNameHandler();
+
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
         final LinkedList<ElementHandler> handlerStack = new LinkedList<ElementHandler>();
@@ -250,7 +268,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class DefaultElementHandler extends AbstractElementHandler {
+    private class DefaultElementHandler extends AbstractElementHandler {
         public void start(String name, Attributes attributes, Context context) {
         }
 
@@ -258,7 +276,7 @@ public class DocbookParser extends Parser {
             String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber(), name);
             context.currentContainer().addError(message);
-            return new NoOpElementHandler();
+            return noOpElementHandler;
         }
 
         public void handleText(String text, Context context) {
@@ -274,17 +292,17 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class RootHandler extends DefaultElementHandler {
+    private class RootHandler extends DefaultElementHandler {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("book")) {
-                return new BookHandler();
+                return bookHandler;
             }
             return super.pushChild(name, attributes, context);
         }
     }
 
-    private abstract static class ComponentHandler extends DefaultElementHandler {
+    private abstract class ComponentHandler extends DefaultElementHandler {
         protected abstract BuildableComponent create(Context context);
 
         @Override
@@ -301,7 +319,7 @@ public class DocbookParser extends Parser {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("title")) {
-                return new TitleHandler();
+                return titleHandler;
             }
             return super.pushChild(name, attributes, context);
         }
@@ -312,7 +330,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class BookHandler extends ComponentHandler {
+    private class BookHandler extends ComponentHandler {
         @Override
         protected BuildableComponent create(Context context) {
             return context.currentComponent();
@@ -321,32 +339,32 @@ public class DocbookParser extends Parser {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("bookinfo")) {
-                return new BookInfoHandler();
+                return bookInfoHandler;
             }
             if (name.equals("part")) {
-                return new PartHandler();
+                return partHandler;
             }
             if (name.equals("chapter")) {
-                return new ChapterHandler();
+                return chapterHandler;
             }
             if (name.equals("appendix")) {
-                return new AppendixHandler();
+                return appendixHandler;
             }
             return super.pushChild(name, attributes, context);
         }
     }
 
-    private static class BookInfoHandler extends DefaultElementHandler {
+    private class BookInfoHandler extends DefaultElementHandler {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("title")) {
-                return new TitleHandler();
+                return titleHandler;
             }
             return super.pushChild(name, attributes, context);
         }
     }
 
-    private static class PartHandler extends ComponentHandler {
+    private class PartHandler extends ComponentHandler {
         @Override
         protected BuildableComponent create(Context context) {
             return context.currentComponent().addPart();
@@ -355,19 +373,19 @@ public class DocbookParser extends Parser {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("chapter")) {
-                return new ChapterHandler();
+                return chapterHandler;
             }
             if (name.equals("appendix")) {
-                return new AppendixHandler();
+                return appendixHandler;
             }
             return super.pushChild(name, attributes, context);
         }
     }
 
-    private static class ContainerHandler extends DefaultElementHandler {
+    private class ContainerHandler extends DefaultElementHandler {
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("para")) {
-                return new ParaHandler();
+                return paraHandler;
             }
             if (name.equals("itemizedlist")) {
                 return new ItemizedListHandler();
@@ -379,7 +397,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class SectionHandler extends ContainerHandler {
+    private class SectionHandler extends ContainerHandler {
         protected BuildableComponent create(Context context) {
             return context.currentComponent().addSection();
         }
@@ -398,10 +416,10 @@ public class DocbookParser extends Parser {
         @Override
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             if (name.equals("title")) {
-                return new TitleHandler();
+                return titleHandler;
             }
             if (name.equals("section")) {
-                return new SectionHandler();
+                return sectionHandler;
             }
             return super.pushChild(name, attributes, context);
         }
@@ -412,21 +430,21 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class ChapterHandler extends SectionHandler {
+    private class ChapterHandler extends SectionHandler {
         @Override
         protected BuildableComponent create(Context context) {
             return context.currentComponent().addChapter();
         }
     }
 
-    private static class AppendixHandler extends SectionHandler {
+    private class AppendixHandler extends SectionHandler {
         @Override
         protected BuildableComponent create(Context context) {
             return context.currentComponent().addAppendix();
         }
     }
 
-    private abstract static class ListHandler extends DefaultElementHandler {
+    private abstract class ListHandler extends DefaultElementHandler {
         private BuildableList list;
 
         abstract BuildableList create(Context context);
@@ -445,21 +463,21 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class ItemizedListHandler extends ListHandler {
+    private class ItemizedListHandler extends ListHandler {
         @Override
         BuildableList create(Context context) {
             return context.currentContainer().addItemisedList();
         }
     }
 
-    private static class OrderedListHandler extends ListHandler {
+    private class OrderedListHandler extends ListHandler {
         @Override
         BuildableList create(Context context) {
             return context.currentContainer().addOrderedList();
         }
     }
 
-    private static class ListItemHandler extends ContainerHandler {
+    private class ListItemHandler extends ContainerHandler {
         private final BuildableList list;
 
         public ListItemHandler(BuildableList list) {
@@ -477,7 +495,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class DefaultInlineHandler extends AbstractElementHandler {
+    private class DefaultInlineHandler extends AbstractElementHandler {
         public void start(String name, Attributes attributes, Context context) {
         }
 
@@ -485,7 +503,7 @@ public class DocbookParser extends Parser {
             String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber(), name);
             context.currentInline().addError(message);
-            return new NoOpElementHandler();
+            return noOpElementHandler;
         }
 
         public void handleText(String text, Context context) {
@@ -500,36 +518,32 @@ public class DocbookParser extends Parser {
         ElementHandler createHandler(String name, Attributes attributes, Context context);
     }
 
-    private static class InlineHandlerFactory {
+    private class InlineHandlerFactory {
         ElementHandler createHandler(String name, Attributes attributes, Context context) {
             if (name.equals("code")) {
-                return new CodeHandler();
+                return codeHandler;
             }
             if (name.equals("literal")) {
-                return new LiteralHandler();
+                return literalHandler;
             }
             if (name.equals("emphasis")) {
-                return new EmphasisHandler();
+                return emphasisHandler;
             }
             if (name.equals("classname")) {
-                return new ClassNameHandler();
+                return classNameHandler;
             }
             return null;
         }
     }
 
-    private static class InlineHandler extends DefaultInlineHandler {
-        private final LinkHandlerFactory linkHandlerFactory = new LinkHandlerFactory();
-        private final UlinkHandlerFactory ulinkHandlerFactory = new UlinkHandlerFactory();
-        private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
-
+    private class InlineContainerHandler extends DefaultInlineHandler {
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             ElementHandler handler = inlineHandlerFactory.createHandler(name, attributes, context);
             if (handler != null) {
                 return handler;
             }
             if (name.equals("xref")) {
-                return new XrefHandler();
+                return xrefHandler;
             }
             if (name.equals("link")) {
                 return linkHandlerFactory.createHandler(name, attributes, context);
@@ -541,9 +555,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static abstract class TextOnlyInlineHandler extends DefaultInlineHandler {
-        private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
-
+    private abstract class InlineHandler extends DefaultInlineHandler {
         abstract BuildableInlineContainer create(Context context, Attributes attributes);
 
         @Override
@@ -566,7 +578,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class XrefHandler extends DefaultElementHandler {
+    private class XrefHandler extends DefaultElementHandler {
         @Override
         public void start(String name, Attributes attributes, final Context context) {
             final String target = normalise(attributes.getValue("linkend"));
@@ -581,7 +593,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class LinkHandlerFactory implements ElementHandlerFactory {
+    private class LinkHandlerFactory implements ElementHandlerFactory {
         public ElementHandler createHandler(String name, Attributes attributes, Context context) {
             String linkend = normalise(attributes.getValue("linkend"));
             String href = normalise(attributes.getValue("http://www.w3.org/1999/xlink", "href"));
@@ -607,7 +619,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class CrossReferenceHandler extends TextOnlyInlineHandler {
+    private class CrossReferenceHandler extends InlineHandler {
         private final String linkend;
 
         public CrossReferenceHandler(String linkend) {
@@ -620,7 +632,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class UlinkHandlerFactory implements ElementHandlerFactory {
+    private class UlinkHandlerFactory implements ElementHandlerFactory {
         public ElementHandler createHandler(String name, Attributes attributes, Context context) {
             String href = normalise(attributes.getValue("url"));
             if (href != null) {
@@ -629,11 +641,11 @@ public class DocbookParser extends Parser {
             String message = String.format("<ulink>no \"url\" attribute specified in %s, line %s, column %s</ulink>",
                     context.getFileName(), context.getLineNumber(), context.getColumnNumber());
             context.currentInline().addError(String.format(message));
-            return new NoOpElementHandler();
+            return noOpElementHandler;
         }
     }
 
-    private static class LinkHandler extends TextOnlyInlineHandler {
+    private class LinkHandler extends InlineHandler {
         private final String href;
 
         public LinkHandler(String href) {
@@ -646,35 +658,35 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class CodeHandler extends TextOnlyInlineHandler {
+    private class CodeHandler extends InlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addCode();
         }
     }
 
-    private static class LiteralHandler extends TextOnlyInlineHandler {
+    private class LiteralHandler extends InlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addLiteral();
         }
     }
 
-    private static class EmphasisHandler extends TextOnlyInlineHandler {
+    private class EmphasisHandler extends InlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addEmphasis();
         }
     }
 
-    private static class ClassNameHandler extends TextOnlyInlineHandler {
+    private class ClassNameHandler extends InlineHandler {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addClassName();
         }
     }
 
-    private static class ParaHandler extends InlineHandler {
+    private class ParaHandler extends InlineContainerHandler {
         @Override
         public void start(String name, Attributes attributes, Context context) {
             context.pushInline(context.currentContainer().addParagraph());
@@ -686,7 +698,7 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private static class TitleHandler extends InlineHandler {
+    private class TitleHandler extends InlineContainerHandler {
         @Override
         public void start(String name, Attributes attributes, Context context) {
             context.pushInline(context.currentComponent().getTitle());
