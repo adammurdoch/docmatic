@@ -9,6 +9,10 @@ public interface TextTheme extends Aspect {
 
     public Color getColour();
 
+    public String getHeaderFontName();
+
+    public Color getHeaderColour();
+
     /**
      * Returns line spacing, in points.
      */

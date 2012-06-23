@@ -27,6 +27,14 @@ public class DefaultTheme implements Theme, TextTheme {
         return new Color(60, 60, 60);
     }
 
+    public String getHeaderFontName() {
+        return getFontName();
+    }
+
+    public Color getHeaderColour() {
+        return getColour();
+    }
+
     public BigDecimal getLineSpacing() {
         return BigDecimal.valueOf(14, 1);
     }

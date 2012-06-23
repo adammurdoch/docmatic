@@ -1,7 +1,9 @@
 package net.rubygrapefruit.docs.html;
 
 import net.rubygrapefruit.docs.model.*;
+import net.rubygrapefruit.docs.model.Component;
 import net.rubygrapefruit.docs.model.Error;
+import net.rubygrapefruit.docs.model.List;
 import net.rubygrapefruit.docs.renderer.Chunk;
 import net.rubygrapefruit.docs.renderer.MultiPageRenderer;
 import net.rubygrapefruit.docs.renderer.Page;
@@ -12,6 +14,7 @@ import net.rubygrapefruit.docs.theme.Theme;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+import java.awt.*;
 import java.io.OutputStream;
 
 public class HtmlRenderer extends MultiPageRenderer {
@@ -39,14 +42,27 @@ public class HtmlRenderer extends MultiPageRenderer {
             if (textTheme != null) {
                 writer.writeCharacters("html { font-family: ");
                 writer.writeCharacters(textTheme.getFontName());
-                writer.writeCharacters("; font-size: 12pt; color: #");
-                writer.writeCharacters(String.format("%02x%02x%02x", textTheme.getColour().getRed(),
-                        textTheme.getColour().getGreen(), textTheme.getColour().getBlue()));
+                writer.writeCharacters("; font-size: 12pt; color: ");
+                writer.writeCharacters(toRGB(textTheme.getColour()));
                 writer.writeCharacters("; line-height: normal;");
                 writer.writeCharacters("}\n");
                 writer.writeCharacters("body { margin: 3em 5em; background-color: white; }\n");
+                writer.writeCharacters("h1, h2, h3, h4, h5, h6 { font-family: ");
+                writer.writeCharacters(textTheme.getHeaderFontName());
+                writer.writeCharacters("; color: ");
+                writer.writeCharacters(toRGB(textTheme.getHeaderColour()));
+                writer.writeCharacters("; }\n");
                 writer.writeCharacters("p { line-height: ");
                 writer.writeCharacters(textTheme.getLineSpacing().toString());
+                writer.writeCharacters("; }\n");
+                writer.writeCharacters("a:visited { color: ");
+                writer.writeCharacters(toRGB(textTheme.getColour()));
+                writer.writeCharacters("; }\n");
+                writer.writeCharacters("h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { color: ");
+                writer.writeCharacters(toRGB(textTheme.getHeaderColour()));
+                writer.writeCharacters("; }\n");
+                writer.writeCharacters("h1 a:visited, h2 a:visited, h3 a:visited, h4 a:visited, h5 a:visited, h6 a:visited { color: ");
+                writer.writeCharacters(toRGB(textTheme.getHeaderColour()));
                 writer.writeCharacters("; }\n");
                 writer.writeCharacters("div.header { overflow: auto; height: 2em; margin-bottom: 1.5em; }\n");
                 writer.writeCharacters("div.footer { overflow: auto; margin-top: 6.5em; }\n");
@@ -77,6 +93,11 @@ public class HtmlRenderer extends MultiPageRenderer {
         } finally {
             writer.close();
         }
+    }
+
+    private String toRGB(Color colour) {
+        return String.format("#%02x%02x%02x", colour.getRed(), colour.getGreen(),
+                colour.getBlue());
     }
 
     private void writeHeader(Page page, XMLStreamWriter writer) throws XMLStreamException {
