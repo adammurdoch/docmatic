@@ -181,15 +181,16 @@ para 3
     def "renders code inlines"() {
         given:
         def doc = docbook '''<book><chapter>
-<para>
-    <code>code</code>
-    <literal>literal</literal>
-</para>
+<para><code>code</code></para>
+<para><literal>literal</literal></para>
+<para><classname>classname</classname></para>
 </chapter></book>'''
 
         expect:
         rendered doc contains '''<body>
-<a name="chapter1"></a><p><code class="code">code</code> <code class="literal">literal</code></p>
+<a name="chapter1"></a><p><code class="code">code</code></p>
+<p><code class="literal">literal</code></p>
+<p><code class="classname">classname</code></p>
 </body>
 '''
     }

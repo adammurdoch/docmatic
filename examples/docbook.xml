@@ -69,16 +69,19 @@
                     <emphasis>
                         emphasis
                     </emphasis>
+                    <classname>
+                        classname
+                    </classname>
                 </para>
 
                 <section>
                     <title>Title with <code>code</code> and <literal>literal text</literal> and <emphasis>emphasis</emphasis></title>
                 </section>
             </section>
-            <section>
+            <section id="links">
                 <title>Links</title>
                 <para>Here is a <link linkend="part_2_chapter">cross reference</link> to <xref linkend="part_2_chapter"/>.
-                    Here is another cross reference: <xref linkend="home"/>.
+                    Here is another cross reference: <xref linkend="home"/>. Here is a cross reference: <link linkend="links">with <literal>literal</literal> inlines</link>
                 </para>
                 <para>Here is a <link xlink:href="https://github.com/adammurdoch/docmatic">link</link> to <ulink url="https://github.com/adammurdoch/docmatic"/>.
                 </para>

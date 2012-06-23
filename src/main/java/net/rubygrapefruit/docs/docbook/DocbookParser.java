@@ -500,11 +500,8 @@ public class DocbookParser extends Parser {
         ElementHandler createHandler(String name, Attributes attributes, Context context);
     }
 
-    private static class InlineHandler extends DefaultInlineHandler {
-        private final LinkHandlerFactory linkHandlerFactory = new LinkHandlerFactory();
-        private final UlinkHandlerFactory ulinkHandlerFactory = new UlinkHandlerFactory();
-
-        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+    private static class InlineHandlerFactory {
+        ElementHandler createHandler(String name, Attributes attributes, Context context) {
             if (name.equals("code")) {
                 return new CodeHandler();
             }
@@ -513,6 +510,23 @@ public class DocbookParser extends Parser {
             }
             if (name.equals("emphasis")) {
                 return new EmphasisHandler();
+            }
+            if (name.equals("classname")) {
+                return new ClassNameHandler();
+            }
+            return null;
+        }
+    }
+
+    private static class InlineHandler extends DefaultInlineHandler {
+        private final LinkHandlerFactory linkHandlerFactory = new LinkHandlerFactory();
+        private final UlinkHandlerFactory ulinkHandlerFactory = new UlinkHandlerFactory();
+        private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
+
+        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+            ElementHandler handler = inlineHandlerFactory.createHandler(name, attributes, context);
+            if (handler != null) {
+                return handler;
             }
             if (name.equals("xref")) {
                 return new XrefHandler();
@@ -528,6 +542,8 @@ public class DocbookParser extends Parser {
     }
 
     private static abstract class TextOnlyInlineHandler extends DefaultInlineHandler {
+        private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
+
         abstract BuildableInlineContainer create(Context context, Attributes attributes);
 
         @Override
@@ -538,6 +554,15 @@ public class DocbookParser extends Parser {
         @Override
         public void finish(Context context) {
             context.popInline();
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+            ElementHandler handler = inlineHandlerFactory.createHandler(name, attributes, context);
+            if (handler != null) {
+                return handler;
+            }
+            return super.pushChild(name, attributes, context);
         }
     }
 
@@ -639,6 +664,13 @@ public class DocbookParser extends Parser {
         @Override
         BuildableInlineContainer create(Context context, Attributes attributes) {
             return context.currentInline().addEmphasis();
+        }
+    }
+
+    private static class ClassNameHandler extends TextOnlyInlineHandler {
+        @Override
+        BuildableInlineContainer create(Context context, Attributes attributes) {
+            return context.currentInline().addClassName();
         }
     }
 

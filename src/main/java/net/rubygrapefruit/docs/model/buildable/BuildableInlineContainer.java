@@ -119,6 +119,10 @@ public class BuildableInlineContainer implements InlineContainer {
         return add(new BuildableEmphasis());
     }
 
+    public BuildableClassName addClassName() {
+        return add(new BuildableClassName());
+    }
+
     public BuildableInlineContainer addCrossReference(LinkResolver resolver) {
         return add(new UnresolvedLink(resolver));
     }

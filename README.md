@@ -42,16 +42,17 @@ Supported DocBook 5 elements:
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
 * `<chapter>`, `<appendix>`, `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<title>`, `<para>`, with text and `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
+* `<title>`, `<para>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
 * `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>`, with text only.
+* `<classname>`, `<code>`, `<literal>`, `<emphasis>`, with text only.
+* `<xref>`, `<link>`, with `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements and text only.
 
 Supported DocBook 4.5 elements:
 
 * `<book>`, with `<bookinfo>` child element.
 * `<bookinfo>`, with `<title>` child element only.
-* `<ulink>`, with text only.
+* `<ulink>`, with `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements and text only.
 
 You can mix DocBook 5 and DocBook 4.5 elements in the same document.
 

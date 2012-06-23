@@ -228,18 +228,27 @@ chapter
         def doc = parse '''
 <book>
     <chapter>
-        <para><code>code</code><literal>literal</literal><emphasis>emphasis</emphasis></para>
+        <para><code>code</code></para>
+        <para><literal>literal</literal></para>
+        <para><emphasis>emphasis</emphasis></para>
+        <para><classname>class-name</classname></para>
     </chapter>
 </book>'''
 
         then:
-        doc.contents[0].contents[0].contents.size() == 3
-        doc.contents[0].contents[0].contents[0] instanceof Code
-        doc.contents[0].contents[0].contents[0].text == 'code'
-        doc.contents[0].contents[0].contents[1] instanceof Literal
-        doc.contents[0].contents[0].contents[1].text == 'literal'
-        doc.contents[0].contents[0].contents[2] instanceof Emphasis
-        doc.contents[0].contents[0].contents[2].text == 'emphasis'
+        def chapter = doc.contents[0]
+        chapter.contents[0].contents.size() == 1
+        chapter.contents[0].contents[0] instanceof Code
+        chapter.contents[0].contents[0].text == 'code'
+        chapter.contents[1].contents.size() == 1
+        chapter.contents[1].contents[0] instanceof Literal
+        chapter.contents[1].contents[0].text == 'literal'
+        chapter.contents[2].contents.size() == 1
+        chapter.contents[2].contents[0] instanceof Emphasis
+        chapter.contents[2].contents[0].text == 'emphasis'
+        chapter.contents[3].contents.size() == 1
+        chapter.contents[3].contents[0] instanceof ClassName
+        chapter.contents[3].contents[0].text == 'class-name'
     }
 
     def "converts a mix of text and inline elements"() {
@@ -392,6 +401,7 @@ chapter
         <para>
             <link linkend="chapter2">another chapter</link>
             <link xlink:href="http://somehost/">some link</link>
+            <link linkend="chapter2"><classname>A Class</classname></link>
         </para>
     </chapter>
     <chapter id="chapter2"/>
@@ -399,13 +409,18 @@ chapter
 
         then:
         def para = doc.contents[0].contents[0]
-        para.contents.size() == 3
+        para.contents.size() == 5
         para.contents[0] instanceof CrossReference
         para.contents[0].target == doc.contents[1]
         para.contents[0].text == 'another chapter'
         para.contents[2] instanceof Link
         para.contents[2].target == new URI("http://somehost/")
         para.contents[2].text == 'some link'
+        para.contents[4] instanceof CrossReference
+        para.contents[4].target == doc.contents[1]
+        para.contents[4].contents.size() == 1
+        para.contents[4].contents[0] instanceof ClassName
+        para.contents[4].contents[0].text == 'A Class'
     }
 
     def "converts ulink elements"() {
@@ -416,19 +431,25 @@ chapter
         <para>
             <ulink url="http://somehost/">some link</ulink>
             <ulink url="http://somehost/"/>
+            <ulink url="http://somehost/"><classname>A Class</classname></ulink>
         </para>
     </chapter>
 </book>'''
 
         then:
         def para = doc.contents[0].contents[0]
-        para.contents.size() == 3
+        para.contents.size() == 5
         para.contents[0] instanceof Link
         para.contents[0].target == new URI("http://somehost/")
         para.contents[0].text == 'some link'
         para.contents[2] instanceof Link
         para.contents[2].target == new URI("http://somehost/")
         para.contents[2].text == 'http://somehost/'
+        para.contents[4] instanceof Link
+        para.contents[4].target == new URI("http://somehost/")
+        para.contents[4].contents.size() == 1
+        para.contents[4].contents[0] instanceof ClassName
+        para.contents[4].contents[0].text == 'A Class'
     }
 
     def "converts unexpected elements and text"() {

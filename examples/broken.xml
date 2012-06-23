@@ -5,10 +5,15 @@
     <chapter id="some_chapter">
         <title>A chapter <broken/></title>
         <para>Some text with an <unknown/> element.</para>
-        <para>Some invalid cross references: <xref/>, <xref linkend="unknown"/>, <xref linkend=""/>,
-            <link/>, <link linkend="unknown"/>, <link xlink:hrref=""/>, <ulink/>.
-        </para>
-        <para><xref linkend="some_chapter">some content</xref>.</para>
+        <para>missing xref: <xref/></para>
+        <para>unknown xref: <xref linkend="unknown"/></para>
+        <para>empty xref: <xref linkend=""/></para>
+        <para>content inside an xref: <xref linkend="some_chapter">some content</xref></para>
+        <para>missing linkend: <link/></para>
+        <para>unknown linkend: <link linkend="unknown"/></para>
+        <para>empty href: <link xlink:href=""/></para>
+        <para>missing href: <ulink/></para>
+        <para>link inside a link: <link linkend="some_chapter"><link linkend="some_chapter"/></link></para>
     </chapter>
     <unknown-3/>
 </book>

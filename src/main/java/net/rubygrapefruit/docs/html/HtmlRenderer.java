@@ -220,6 +220,8 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writeCodeInline(element, "code", writer);
             } else if (element instanceof Literal) {
                 writeCodeInline(element, "literal", writer);
+            } else if (element instanceof ClassName) {
+                writeCodeInline(element, "classname", writer);
             } else if (element instanceof Emphasis) {
                 writeEmphasisInline(element, writer);
             } else if (element instanceof CrossReference) {

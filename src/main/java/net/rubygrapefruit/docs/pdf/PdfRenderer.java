@@ -185,7 +185,7 @@ public class PdfRenderer extends SingleFileRenderer {
             if (inline instanceof Text) {
                 Text text = (Text) inline;
                 current.add(text.getText());
-            } else if (inline instanceof Code || inline instanceof Literal) {
+            } else if (inline instanceof Code || inline instanceof Literal || inline instanceof ClassName) {
                 current.add(new Chunk(inline.getText(), this.code));
             } else if (inline instanceof Emphasis) {
                 current.add(new Chunk(inline.getText(), this.emphasis));
