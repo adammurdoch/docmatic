@@ -27,6 +27,7 @@ public class DocbookParser extends Parser {
     private final LinkHandlerFactory linkHandlerFactory = new LinkHandlerFactory();
     private final UlinkHandlerFactory ulinkHandlerFactory = new UlinkHandlerFactory();
     private final InlineHandlerFactory inlineHandlerFactory = new InlineHandlerFactory();
+    private final BlockHandlerFactory blockHandlerFactory = new BlockHandlerFactory();
     private final XrefHandler xrefHandler = new XrefHandler();
     private final BookHandler bookHandler = new BookHandler();
     private final TitleHandler titleHandler = new TitleHandler();
@@ -40,6 +41,7 @@ public class DocbookParser extends Parser {
     private final LiteralHandler literalHandler = new LiteralHandler();
     private final EmphasisHandler emphasisHandler = new EmphasisHandler();
     private final ClassNameHandler classNameHandler = new ClassNameHandler();
+    private final ExampleHandler exampleHandler = new ExampleHandler();
 
     @Override
     protected void doParse(Reader input, String fileName, BuildableDocument document) throws Exception {
@@ -50,7 +52,7 @@ public class DocbookParser extends Parser {
             fileName = fileName.substring(pos + 1);
         }
         final DefaultContext context = new DefaultContext(fileName);
-        context.pushContainer(document);
+        context.push(document);
         handlerStack.add(new RootHandler());
         SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(true);
@@ -110,17 +112,17 @@ public class DocbookParser extends Parser {
 
         BuildableComponent currentComponent();
 
+        BuildableBlockContainer ownerContainer();
+
         BuildableBlockContainer currentContainer();
+
+        BuildableTitledBlockContainer currentTitled();
 
         BuildableInlineContainer currentInline();
 
-        void pushInline(BuildableInlineContainer container);
+        void push(Object element);
 
-        void popInline();
-
-        void pushContainer(BuildableBlockContainer container);
-
-        void popContainer();
+        void pop();
 
         Map<String, Component> getComponentsById();
 
@@ -129,9 +131,7 @@ public class DocbookParser extends Parser {
 
     private static class DefaultContext implements Context {
         final String fileName;
-        final LinkedList<BuildableBlockContainer> containerStack = new LinkedList<BuildableBlockContainer>();
-        final LinkedList<BuildableComponent> componentStack = new LinkedList<BuildableComponent>();
-        final LinkedList<BuildableInlineContainer> inlineStack = new LinkedList<BuildableInlineContainer>();
+        final LinkedList<Object> stack = new LinkedList<Object>();
         final Map<String, Component> componentsById = new HashMap<String, Component>();
         Locator location;
         private String elementName;
@@ -156,39 +156,37 @@ public class DocbookParser extends Parser {
             return componentsById;
         }
 
+        public BuildableBlockContainer ownerContainer() {
+            for (Object element : stack) {
+                if (element instanceof BuildableBlockContainer) {
+                    return (BuildableBlockContainer) element;
+                }
+            }
+            throw new IllegalStateException("No container available.");
+        }
+
         public BuildableComponent currentComponent() {
-            return componentStack.getLast();
+            return (BuildableComponent) stack.getFirst();
         }
 
         public BuildableBlockContainer currentContainer() {
-            return containerStack.getLast();
+            return (BuildableBlockContainer) stack.getFirst();
         }
 
         public BuildableInlineContainer currentInline() {
-            return inlineStack.getLast();
+            return (BuildableInlineContainer) stack.getFirst();
         }
 
-        public void pushInline(BuildableInlineContainer container) {
-            inlineStack.add(container);
+        public BuildableTitledBlockContainer currentTitled() {
+            return (BuildableTitledBlockContainer) stack.getFirst();
         }
 
-        public void popInline() {
-            inlineStack.removeLast();
+        public void push(Object element) {
+            stack.addFirst(element);
         }
 
-        public void pushContainer(BuildableBlockContainer container) {
-            containerStack.add(container);
-            if (container instanceof BuildableComponent) {
-                componentStack.add((BuildableComponent) container);
-            }
-        }
-
-        public void popContainer() {
-            assert inlineStack.isEmpty();
-            BuildableBlockContainer old = containerStack.removeLast();
-            if (old == componentStack.getLast()) {
-                componentStack.removeLast();
-            }
+        public void pop() {
+            stack.removeFirst();
         }
 
         public String getElementName() {
@@ -275,7 +273,7 @@ public class DocbookParser extends Parser {
         public ElementHandler pushChild(String name, Attributes attributes, Context context) {
             String message = String.format("<%s>%s, line %s, column %s</%s>", name, context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber(), name);
-            context.currentContainer().addError(message);
+            context.ownerContainer().addError(message);
             return noOpElementHandler;
         }
 
@@ -285,7 +283,7 @@ public class DocbookParser extends Parser {
             }
             String message = String.format("(text %s, line %s, column %s)", context.getFileName(),
                     context.getLineNumber(), context.getColumnNumber());
-            context.currentContainer().addError(message);
+            context.ownerContainer().addError(message);
         }
 
         public void finish(Context context) {
@@ -313,7 +311,7 @@ public class DocbookParser extends Parser {
                 container.setId(id);
                 context.getComponentsById().put(id, container);
             }
-            context.pushContainer(container);
+            context.push(container);
         }
 
         @Override
@@ -326,7 +324,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.popContainer();
+            context.pop();
         }
     }
 
@@ -382,8 +380,8 @@ public class DocbookParser extends Parser {
         }
     }
 
-    private class ContainerHandler extends DefaultElementHandler {
-        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+    private class BlockHandlerFactory {
+        public ElementHandler createHandler(String name, Attributes attributes, Context context) {
             if (name.equals("para")) {
                 return paraHandler;
             }
@@ -392,6 +390,22 @@ public class DocbookParser extends Parser {
             }
             if (name.equals("orderedlist")) {
                 return new OrderedListHandler();
+            }
+            if (name.equals("programlisting")) {
+                return new ProgramListingHandler();
+            }
+            return null;
+        }
+    }
+
+    private class ContainerHandler extends DefaultElementHandler {
+        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+            ElementHandler handler = blockHandlerFactory.createHandler(name, attributes, context);
+            if (handler != null) {
+                return handler;
+            }
+            if (name.equals("example")) {
+                return exampleHandler;
             }
             return super.pushChild(name, attributes, context);
         }
@@ -410,7 +424,7 @@ public class DocbookParser extends Parser {
                 container.setId(id);
                 context.getComponentsById().put(id, container);
             }
-            context.pushContainer(container);
+            context.push(container);
         }
 
         @Override
@@ -426,7 +440,7 @@ public class DocbookParser extends Parser {
 
         @Override
         public void finish(Context context) {
-            context.popContainer();
+            context.pop();
         }
     }
 
@@ -486,12 +500,50 @@ public class DocbookParser extends Parser {
 
         @Override
         public void start(String name, Attributes attributes, Context context) {
-            context.pushContainer(list.addItem());
+            context.push(list.addItem());
         }
 
         @Override
         public void finish(Context context) {
-            context.popContainer();
+            context.pop();
+        }
+    }
+
+    private class ExampleHandler extends DefaultElementHandler {
+        @Override
+        public void start(String name, Attributes attributes, Context context) {
+            context.push(context.currentContainer().addExample());
+        }
+
+        @Override
+        public ElementHandler pushChild(String name, Attributes attributes, Context context) {
+            ElementHandler handler = blockHandlerFactory.createHandler(name, attributes, context);
+            if (handler != null) {
+                return handler;
+            }
+            if (name.equals("title")) {
+                return titleHandler;
+            }
+            return super.pushChild(name, attributes, context);
+        }
+
+        @Override
+        public void finish(Context context) {
+            context.pop();
+        }
+    }
+
+    private class ProgramListingHandler extends DefaultElementHandler {
+        private BuildableProgramListing programListing;
+
+        @Override
+        public void start(String name, Attributes attributes, Context context) {
+            programListing = context.currentContainer().addProgramListing();
+        }
+
+        @Override
+        public void handleText(String text, Context context) {
+            programListing.append(text);
         }
     }
 
@@ -560,12 +612,12 @@ public class DocbookParser extends Parser {
 
         @Override
         public void start(String name, Attributes attributes, Context context) {
-            context.pushInline(create(context, attributes));
+            context.push(create(context, attributes));
         }
 
         @Override
         public void finish(Context context) {
-            context.popInline();
+            context.pop();
         }
 
         @Override
@@ -689,24 +741,24 @@ public class DocbookParser extends Parser {
     private class ParaHandler extends InlineContainerHandler {
         @Override
         public void start(String name, Attributes attributes, Context context) {
-            context.pushInline(context.currentContainer().addParagraph());
+            context.push(context.currentContainer().addParagraph());
         }
 
         @Override
         public void finish(Context context) {
-            context.popInline();
+            context.pop();
         }
     }
 
     private class TitleHandler extends InlineContainerHandler {
         @Override
         public void start(String name, Attributes attributes, Context context) {
-            context.pushInline(context.currentComponent().getTitle());
+            context.push(context.currentTitled().getTitle());
         }
 
         @Override
         public void finish(Context context) {
-            context.popInline();
+            context.pop();
         }
     }
 }

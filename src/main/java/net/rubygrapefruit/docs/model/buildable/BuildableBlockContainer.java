@@ -49,4 +49,12 @@ public class BuildableBlockContainer implements BlockContainer {
     public BuildableErrorElement addError(String message) {
         return add(new BuildableErrorElement(message));
     }
+
+    public BuildableProgramListing addProgramListing() {
+        return add(new BuildableProgramListing());
+    }
+
+    public BuildableExample addExample() {
+        return add(new BuildableExample());
+    }
 }

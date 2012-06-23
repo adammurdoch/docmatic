@@ -116,10 +116,10 @@ public class PdfRenderer extends SingleFileRenderer {
     }
 
     private void writeComponentBlock(Block block, FontStack fonts, Document target) throws DocumentException {
-        target.add(convertBlock(block, fonts));
+        convertBlock(block, fonts, new DocumentBackedElementContainer(target));
     }
 
-    private Element convertBlock(Block block, FontStack fonts) throws DocumentException {
+    private void convertBlock(Block block, FontStack fonts, ElementContainer container) throws DocumentException {
         if (block instanceof Paragraph) {
             Paragraph paragraph = (Paragraph) block;
             com.itextpdf.text.Paragraph pdfParagraph = new com.itextpdf.text.Paragraph();
@@ -130,22 +130,38 @@ public class PdfRenderer extends SingleFileRenderer {
             pdfParagraph.setSpacingAfter(4);
             pdfParagraph.setMultipliedLeading(lineHeight.floatValue());
             writeContents(paragraph, fonts, new PhraseBackedContainer(pdfParagraph));
-            return pdfParagraph;
+            container.add(pdfParagraph);
         } else if (block instanceof ItemisedList) {
             ItemisedList list = (ItemisedList) block;
             // TODO - theme indent
             com.itextpdf.text.List pdfList = new com.itextpdf.text.List(false, 24);
             pdfList.setListSymbol("\u2022   ");
             addItems(list, fonts, pdfList);
-            return pdfList;
+            container.add(pdfList);
         } else if (block instanceof OrderedList) {
             OrderedList list = (OrderedList) block;
             // TODO - theme indent
             com.itextpdf.text.List pdfList = new com.itextpdf.text.List(true, 24);
             addItems(list, fonts, pdfList);
-            return pdfList;
+            container.add(pdfList);
+        } else if (block instanceof ProgramListing) {
+            ProgramListing programListing = (ProgramListing) block;
+            com.itextpdf.text.Paragraph para = new com.itextpdf.text.Paragraph();
+            para.setFont(fonts.getMonospaced().getBase());
+            para.add(programListing.getText());
+            container.add(para);
+        } else if (block instanceof Example) {
+            Example example = (Example) block;
+            for (Block childBlock : example.getContents()) {
+                convertBlock(childBlock, fonts, container);
+            }
+            if (!example.getTitle().isEmpty()) {
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph();
+                writeContents(example.getTitle(), fonts.getBold(), new PhraseBackedContainer(title));
+                container.add(title);
+            }
         } else if (block instanceof Error) {
-            return createErrorBlock((Error) block, fonts);
+            container.add(createErrorBlock((Error) block, fonts));
         } else {
             throw new IllegalStateException(String.format("Don't know how to render block of type '%s'.",
                     block.getClass().getSimpleName()));
@@ -211,10 +227,39 @@ public class PdfRenderer extends SingleFileRenderer {
             // TODO - theme spacing
             pdfItem.setSpacingBefore(4);
             pdfItem.setSpacingAfter(4);
+            ListItemBackedElementContainer container = new ListItemBackedElementContainer(pdfItem);
             for (Block childBlock : item.getContents()) {
-                pdfItem.add(convertBlock(childBlock, fonts));
+                convertBlock(childBlock, fonts, container);
             }
             pdfItem.getListSymbol().setFont(fonts.getBase());
+        }
+    }
+
+    private interface ElementContainer {
+        void add(Element element) throws DocumentException;
+    }
+
+    private static class DocumentBackedElementContainer implements ElementContainer {
+        private final Document document;
+
+        private DocumentBackedElementContainer(Document document) {
+            this.document = document;
+        }
+
+        public void add(Element element) throws DocumentException {
+            document.add(element);
+        }
+    }
+
+    private static class ListItemBackedElementContainer implements ElementContainer {
+        private final com.itextpdf.text.ListItem listItem;
+
+        private ListItemBackedElementContainer(com.itextpdf.text.ListItem listItem) {
+            this.listItem = listItem;
+        }
+
+        public void add(Element element) throws DocumentException {
+            listItem.add(element);
         }
     }
 
@@ -241,13 +286,11 @@ public class PdfRenderer extends SingleFileRenderer {
     }
 
     private static class AnchorBackedContainer implements PhraseContainer {
-        private final Anchor anchor;
         private final Phrase parent;
         private Phrase current;
 
         private AnchorBackedContainer(Phrase parent, Anchor anchor) {
             this.parent = parent;
-            this.anchor = anchor;
             current = anchor;
         }
 

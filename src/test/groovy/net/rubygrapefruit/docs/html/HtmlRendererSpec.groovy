@@ -225,6 +225,40 @@ para 3
 '''
     }
 
+    def "renders programlisting"() {
+        given:
+        def doc = docbook '''<book><chapter>
+<programlisting>abc
+def</programlisting>
+</chapter></book>'''
+
+        expect:
+        rendered doc contains '''<body>
+<a name="chapter1"></a><pre class="programlisting">abc
+def</pre>
+</body>
+'''
+    }
+
+    def "renders example"() {
+        given:
+        def doc = docbook '''<book><chapter>
+<example>
+<title>example</title>
+<programlisting>abc
+def</programlisting>
+</example>
+</chapter></book>'''
+
+        expect:
+        rendered doc contains '''<body>
+<a name="chapter1"></a><pre class="programlisting">abc
+def</pre>
+<p class="title">example</p>
+</body>
+'''
+    }
+
     def "renders cross-reference to element on same page"() {
         given:
         def doc = docbook '''<book>

@@ -90,6 +90,22 @@
                     <title>A title with a cross reference to <xref linkend="appendix1"/> and some <code>code</code></title>
                 </section>
             </section>
+            <section>
+                <title>Examples and Program listings</title>
+                <para>This is a program listing:</para>
+                <programlisting>
+// Some code goes here
+int a = 12;
+                </programlisting>
+                <para>This is an example:</para>
+                <example>
+                    <title>An example with a cross reference to <xref linkend="appendix1"/></title>
+                    <programlisting>
+// Some code goes here
+int a = 12;
+                    </programlisting>
+                </example>
+            </section>
         </chapter>
         <chapter>
             <title>

@@ -55,13 +55,11 @@ public class HtmlRenderer extends MultiPageRenderer {
                 writer.writeCharacters("p { line-height: ");
                 writer.writeCharacters(textTheme.getLineSpacing().toString());
                 writer.writeCharacters("; }\n");
-                writer.writeCharacters("a:visited { color: ");
+                writer.writeCharacters("p.title { font-weight: bold; }");
+                writer.writeCharacters("a { color: ");
                 writer.writeCharacters(toRGB(textTheme.getColour()));
                 writer.writeCharacters("; }\n");
                 writer.writeCharacters("h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { color: ");
-                writer.writeCharacters(toRGB(textTheme.getHeaderColour()));
-                writer.writeCharacters("; }\n");
-                writer.writeCharacters("h1 a:visited, h2 a:visited, h3 a:visited, h4 a:visited, h5 a:visited, h6 a:visited { color: ");
                 writer.writeCharacters(toRGB(textTheme.getHeaderColour()));
                 writer.writeCharacters("; }\n");
                 writer.writeCharacters("div.header { overflow: auto; height: 2em; margin-bottom: 1.5em; }\n");
@@ -216,6 +214,25 @@ public class HtmlRenderer extends MultiPageRenderer {
             writeItems(page, list, writer);
             writer.writeEndElement();
             writer.writeCharacters(EOL);
+        } else if (block instanceof ProgramListing) {
+            ProgramListing programListing = (ProgramListing) block;
+            writer.writeStartElement("pre");
+            writer.writeAttribute("class", "programlisting");
+            writer.writeCharacters(programListing.getText());
+            writer.writeEndElement();
+            writer.writeCharacters(EOL);
+        } else if (block instanceof Example) {
+            Example example = (Example) block;
+            for (Block childBlock : example.getContents()) {
+                writeComponentChildBlock(page, childBlock, writer);
+            }
+            if (!example.getTitle().isEmpty()) {
+                writer.writeStartElement("p");
+                writer.writeAttribute("class", "title");
+                writeInline(page, example.getTitle(), writer);
+                writer.writeEndElement();
+                writer.writeCharacters(EOL);
+            }
         } else if (block instanceof Error) {
             writeErrorBlock((Error) block, writer);
         } else {

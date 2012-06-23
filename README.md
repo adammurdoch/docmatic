@@ -41,20 +41,22 @@ Supported DocBook 5 elements:
 
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
-* `<chapter>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<appendix>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<chapter>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>`, `<example>`, `<programlisting>` child elements only.
+* `<appendix>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>`, `<example>`, `<programlisting>` child elements only.
+* `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>`, `<example>`, `<programlisting>` child elements only.
 * `<para>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
 * `<title>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
 * `<itemizedlist>`, with `<listitem>` child elements only.
 * `<orderedlist>`, with `<listitem>` child elements only.
-* `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>`, `<example>`, `<programlisting>` child elements only.
+* `<example>`, with `<title>`, `<para>`, `<itemizedlist>`, `<orderedlist>`, `<programlisting>` child elements only.
+* `<programlisting>`, with text only.
 * `<classname>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 * `<code>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 * `<literal>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 * `<emphasis>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 * `<link>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
-* `<xref>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<xref>`
 
 Supported DocBook 4.5 elements:
 

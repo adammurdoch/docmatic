@@ -17,7 +17,7 @@ public class FontStack {
         }
 
         // TODO - theme font sizes
-        base = new Font(fontFamily, 12, Font.NORMAL, textColor);
+        base = new Font(fontFamily, 10, Font.NORMAL, textColor);
         theme = textTheme;
     }
 
@@ -49,11 +49,11 @@ public class FontStack {
             case 0:
                 return withBase(new Font(fontFamily, 22, Font.BOLD, textColor));
             case 1:
-                return withBase(new Font(fontFamily, 16, Font.BOLD, textColor));
-            case 2:
                 return withBase(new Font(fontFamily, 14, Font.BOLD, textColor));
-            default:
+            case 2:
                 return withBase(new Font(fontFamily, 12, Font.BOLD, textColor));
+            default:
+                return withBase(new Font(fontFamily, 10, Font.BOLD, textColor));
         }
     }
 
@@ -75,5 +75,9 @@ public class FontStack {
 
     public FontStack getUnderline() {
         return withBase(new Font(base.getFamily(), base.getSize(), base.getStyle() | Font.UNDERLINE, base.getColor()));
+    }
+
+    public FontStack getBold() {
+        return withBase(new Font(base.getFamily(), base.getSize(), base.getStyle() | Font.BOLD, base.getColor()));
     }
 }

@@ -7,8 +7,7 @@ import net.rubygrapefruit.docs.model.Referenceable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BuildableComponent extends BuildableBlockContainer implements Component, BuildableBlock {
-    private final BuildableTitle title = new BuildableTitle();
+public abstract class BuildableComponent extends BuildableTitledBlockContainer implements Component, BuildableBlock {
     private final List<BuildableComponent> components = new ArrayList<BuildableComponent>();
     private BuildableComponent current;
     private String id;
@@ -24,23 +23,13 @@ public abstract class BuildableComponent extends BuildableBlockContainer impleme
         }
     }
 
-    public BuildableTitle getTitle() {
-        return title;
-    }
-
     public String getReferenceText() {
-        return title.getText();
+        return getTitle().getText();
     }
 
     @Override
     public String toString() {
-        return String.format("[%s id:%s title:%s]", getTypeName().toLowerCase(), id, title.getText());
-    }
-
-    @Override
-    public void finish() {
-        title.finish();
-        super.finish();
+        return String.format("[%s id:%s title:%s]", getTypeName().toLowerCase(), id, getTitle().getText());
     }
 
     public List<? extends BuildableComponent> getComponents() {

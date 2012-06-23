@@ -452,6 +452,46 @@ chapter
         para.contents[4].contents[0].text == 'A Class'
     }
 
+    def "converts programlisting elements"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <programlisting>
+a  bc
+    d e f
+
+        </programlisting>
+    </chapter>
+</book>'''
+
+        then:
+        def listing = doc.contents[0].contents[0]
+        listing instanceof ProgramListing
+        listing.text == '''a  bc
+    d e f'''
+    }
+
+    def "converts example elements"() {
+        when:
+        def doc = parse '''
+<book>
+    <chapter>
+        <example>
+            <title>an example</title>
+            <para>some content</para>
+        </example>
+    </chapter>
+</book>'''
+
+        then:
+        def example = doc.contents[0].contents[0]
+        example instanceof Example
+        example.title.text == 'an example'
+        example.contents.size() == 1
+        example.contents[0].text == 'some content'
+    }
+
     def "converts unexpected elements and text"() {
         when:
         def doc = parse '''
