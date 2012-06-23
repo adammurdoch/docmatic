@@ -7,6 +7,4 @@ There's plenty to do. Beyond the obvious, here are some things to tidy up:
 * Generated HTML links should have a title attribute.
 * Tidy-up output file naming scheme.
 * Add some static analysis to the build.
-* Split out the model interfaces from the model implementations.
-* Errors are not rendered properly inside inline container elements (eg inside Code elements).
 * Log a warning when an Error element is added to the document.

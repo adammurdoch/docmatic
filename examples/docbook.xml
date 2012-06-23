@@ -73,6 +73,7 @@
                         classname
                     </classname>
                 </para>
+                <para>Can also mix inlines: <code>code<emphasis>Emphasis</emphasis></code> or <emphasis>emphasis<code>Code</code></emphasis></para>
 
                 <section>
                     <title>Title with <code>code</code> and <literal>literal text</literal> and <emphasis>emphasis</emphasis></title>

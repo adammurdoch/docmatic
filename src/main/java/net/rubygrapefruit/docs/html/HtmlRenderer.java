@@ -217,13 +217,13 @@ public class HtmlRenderer extends MultiPageRenderer {
                 Text text = (Text) element;
                 writer.writeCharacters(text.getText());
             } else if (element instanceof Code) {
-                writeCodeInline(element, "code", writer);
+                writeCodeInline(page, (Code) element, "code", writer);
             } else if (element instanceof Literal) {
-                writeCodeInline(element, "literal", writer);
+                writeCodeInline(page, (Literal) element, "literal", writer);
             } else if (element instanceof ClassName) {
-                writeCodeInline(element, "classname", writer);
+                writeCodeInline(page, (ClassName) element, "classname", writer);
             } else if (element instanceof Emphasis) {
-                writeEmphasisInline(element, writer);
+                writeEmphasisInline(page, (Emphasis) element, writer);
             } else if (element instanceof CrossReference) {
                 writeCrossReference(page, (CrossReference) element, writer);
             } else if (element instanceof Link) {
@@ -265,16 +265,16 @@ public class HtmlRenderer extends MultiPageRenderer {
         writer.writeCharacters(EOL);
     }
 
-    private void writeCodeInline(Inline code, String htmlClass, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeCodeInline(Page page, InlineContainer code, String htmlClass, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("code");
         writer.writeAttribute("class", htmlClass);
-        writer.writeCharacters(code.getText());
+        writeInline(page, code, writer);
         writer.writeEndElement();
     }
 
-    private void writeEmphasisInline(Inline code, XMLStreamWriter writer) throws XMLStreamException {
+    private void writeEmphasisInline(Page page, InlineContainer emphasis, XMLStreamWriter writer) throws XMLStreamException {
         writer.writeStartElement("em");
-        writer.writeCharacters(code.getText());
+        writeInline(page, emphasis, writer);
         writer.writeEndElement();
     }
 

@@ -41,18 +41,26 @@ Supported DocBook 5 elements:
 
 * `<book>`, with `<title>`, `<part>`, `<chapter>`, `<appendix>` child elements only.
 * `<part>`, with `<title>`, `<chapter>`, `<appendix>` child elements only.
-* `<chapter>`, `<appendix>`, `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<title>`, `<para>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
-* `<itemizedlist>`, `<orderedlist>`, with `<listitem>` child elements only.
+* `<chapter>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<appendix>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<section>`, with `<title>`, `<section>`, `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
+* `<para>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
+* `<title>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>`, `<xref>`, `<link>` child elements only.
+* `<itemizedlist>`, with `<listitem>` child elements only.
+* `<orderedlist>`, with `<listitem>` child elements only.
 * `<listitem>`, with `<para>`, `<itemizedlist>`, `<orderedlist>` child elements only.
-* `<classname>`, `<code>`, `<literal>`, `<emphasis>`, with text only.
-* `<xref>`, `<link>`, with `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements and text only.
+* `<classname>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<code>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<literal>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<emphasis>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<link>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
+* `<xref>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 
 Supported DocBook 4.5 elements:
 
 * `<book>`, with `<bookinfo>` child element.
 * `<bookinfo>`, with `<title>` child element only.
-* `<ulink>`, with `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements and text only.
+* `<ulink>`, with text and `<classname>`, `<code>`, `<literal>`, `<emphasis>` child elements only.
 
 You can mix DocBook 5 and DocBook 4.5 elements in the same document.
 
@@ -126,6 +134,6 @@ Docmatic is licensed under the ASL 2.0.
 Known Issues
 ============
 
-* Paragraph fonts are used for inline elements in PDF headers.
 * Docbook `<xref/>` elements can refer to `<book>`, `<part>`, `<chapter>`, `<appendix>` and `<section>` elements only.
 * Cannot parse an HTML 4 doctype declaration.
+* Inlines nested in PDF links are separately clickable.

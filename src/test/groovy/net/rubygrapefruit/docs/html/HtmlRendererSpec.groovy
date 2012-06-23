@@ -210,6 +210,21 @@ para 3
 '''
     }
 
+    def "renders nested inlines"() {
+        given:
+        def doc = docbook '''<book><chapter>
+<para>
+    <emphasis>emphasis<code>code</code></emphasis>
+</para>
+</chapter></book>'''
+
+        expect:
+        rendered doc contains '''<body>
+<a name="chapter1"></a><p><em>emphasis<code class="code">code</code></em></p>
+</body>
+'''
+    }
+
     def "renders cross-reference to element on same page"() {
         given:
         def doc = docbook '''<book>
